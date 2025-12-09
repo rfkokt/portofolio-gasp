@@ -82,6 +82,25 @@ export function FractureAbout() {
       fractureContainer?.addEventListener("mousemove", onMouseMove as any);
       fractureContainer?.addEventListener("mouseleave", onMouseLeave);
 
+      // Section Label Highlight
+      const label = container.current?.querySelector(".section-label");
+      if (label) {
+        gsap.fromTo(label, 
+            { color: "#666", borderColor: "#222" },
+            { 
+                color: "#fff", 
+                borderColor: "rgba(255,255,255,0.5)",
+                duration: 0.5,
+                scrollTrigger: {
+                    trigger: container.current,
+                    start: "top center",
+                    end: "bottom center",
+                    toggleActions: "play reverse play reverse",
+                }
+            }
+        );
+      }
+
       return () => {
         fractureContainer?.removeEventListener("mousemove", onMouseMove as any);
         fractureContainer?.removeEventListener("mouseleave", onMouseLeave);
@@ -92,7 +111,7 @@ export function FractureAbout() {
 
   return (
     <section id="about" ref={container} className="h-screen w-full bg-black overflow-hidden flex flex-col items-center justify-center relative border-t border-[#222]">
-      <div className="section-label">[ 02. MOUSE FRACTURE ]</div>
+      <div className="section-label transition-colors duration-500">[ 02. ABOUT ]</div>
       
       {/* Container for the fractured slices */}
       <div className="fracture-container flex w-[90%] md:w-[80%] h-[60vh] md:h-[70vh] gap-1 md:gap-2 relative z-10">

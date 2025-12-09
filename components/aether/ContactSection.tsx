@@ -1,11 +1,36 @@
 "use client";
 
+import { useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import { LucideIcon, Mail, Twitter, Linkedin, MessageSquare } from "lucide-react";
 
 export function ContactSection() {
+  const container = useRef<HTMLElement>(null);
+
+  useGSAP(() => {
+    const label = container.current?.querySelector(".section-label");
+    if (label) {
+        gsap.fromTo(label, 
+            { color: "#666", borderColor: "#222" },
+            { 
+                color: "#fff", 
+                borderColor: "rgba(255,255,255,0.5)",
+                duration: 0.5,
+                scrollTrigger: {
+                    trigger: container.current,
+                    start: "top center",
+                    end: "bottom center",
+                    toggleActions: "play reverse play reverse",
+                }
+            }
+        );
+    }
+  }, { scope: container });
+
   return (
-    <section id="contact" className="min-h-[50vh] flex flex-col items-center justify-center relative border-t border-[#222] bg-black">
-      <div className="section-label">[ 05. SATELLITE UPLINK ]</div>
+    <section id="contact" ref={container} className="min-h-[50vh] flex flex-col items-center justify-center relative border-t border-[#222] bg-black">
+      <div className="section-label transition-colors duration-500">[ 04. CONTACT ]</div>
       
       <div className="w-full max-w-2xl px-6 relative z-10">
         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-12 text-center">

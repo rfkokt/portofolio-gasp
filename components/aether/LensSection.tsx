@@ -57,7 +57,7 @@ export function LensSection() {
       }
     >
       <div className="section-label text-white border-white absolute top-8 left-8 z-20 font-mono text-[10px] tracking-widest border px-2 py-1 rounded backdrop-blur-sm bg-black/50 uppercase">
-        [ 03. MY MISSION ]
+        [ 01. MISSION ]
       </div>
 
       {/* LAYER 1: BLURRED */}
