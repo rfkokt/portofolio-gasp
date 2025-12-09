@@ -49,40 +49,67 @@ export function FractureAbout() {
 
   useGSAP(
     () => {
-      const slices = container.current?.querySelectorAll(".f-slice");
+      const slices = container.current?.querySelectorAll(".folder-slice");
+      if (!slices) return;
       
-      const onMouseMove = (e: MouseEvent) => {
-        if (!container.current) return;
-        const rect = container.current.getBoundingClientRect();
-        const yVal = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2);
+      // Use matchMedia for responsive brightness
+      const mm = gsap.matchMedia();
 
-        slices?.forEach((slice) => {
-          const dir = parseFloat(slice.getAttribute("data-dir") || "1");
-          gsap.to(slice, {
-            y: yVal * 60 * dir, // Increased movement range for more fluid feel
-            duration: 1.2, // Increased duration for smoothness
-            ease: "power3.out", // Smoother easing
-            overwrite: true
-          });
+      mm.add("(min-width: 768px)", () => {
+         // Desktop: Start dim
+         gsap.set(slices, { 
+            x: (i) => i * -20,
+            zIndex: (i) => i,
+            filter: "brightness(0.7)"
+         });
+      });
+
+      mm.add("(max-width: 767px)", () => {
+         // Mobile: Start bright
+         gsap.set(slices, { 
+            x: (i) => i * -15, // Slightly less overlap on mobile
+            zIndex: (i) => i,
+            filter: "brightness(1)" // Full brightness
+         });
+      });
+
+      // Reset on leave
+      const resetState = () => {
+        // Check window width for reset state
+        const isMobile = window.innerWidth < 768;
+        
+        gsap.to(slices, {
+            x: (i) => i * (isMobile ? -15 : -20),
+            scale: 1,
+            width: "20%",
+            filter: isMobile ? "brightness(1)" : "brightness(0.7)",
+            duration: 0.5,
+            ease: "power3.out"
         });
       };
 
-      const onMouseLeave = () => {
-        slices?.forEach((slice) => {
-          gsap.to(slice, {
-            y: 0,
-            duration: 1.2,
-            ease: "power3.out",
-            overwrite: true
-          });
+      slices?.forEach((slice, i) => {
+        slice.addEventListener("mouseenter", () => {
+            // Darken all
+            gsap.to(slices, { filter: "brightness(0.4)", duration: 0.3 });
+            
+            // Highlight current
+            gsap.to(slice, { 
+                filter: "brightness(1)", 
+                width: "40%", // Expand
+                duration: 0.5,
+                ease: "power3.out"
+            });
+            
+            // Adjust siblings (simple accordion logic handled by flex-grow in CSS usually, but here mixing with absolute-ish feel)
+            // Actually, mixed implementation: Flex with negative margin is tricky to animate smoothly with just transforms if we want expansion.
+            // Let's rely on Flexbox + GSAP 'flex-grow' or 'width' for smoothness.
         });
-      };
+        
+        slice.addEventListener("mouseleave", resetState);
+      });
 
-      const fractureContainer = container.current?.querySelector(".fracture-container");
-      fractureContainer?.addEventListener("mousemove", onMouseMove as any);
-      fractureContainer?.addEventListener("mouseleave", onMouseLeave);
-
-      // Section Label Highlight
+      // Section Label Highlight (Existing)
       const label = container.current?.querySelector(".section-label");
       if (label) {
         gsap.fromTo(label, 
@@ -100,11 +127,6 @@ export function FractureAbout() {
             }
         );
       }
-
-      return () => {
-        fractureContainer?.removeEventListener("mousemove", onMouseMove as any);
-        fractureContainer?.removeEventListener("mouseleave", onMouseLeave);
-      };
     },
     { scope: container }
   );
@@ -113,26 +135,46 @@ export function FractureAbout() {
     <section id="about" ref={container} className="h-screen w-full bg-black overflow-hidden flex flex-col items-center justify-center relative border-t border-[#222]">
       <div className="section-label transition-colors duration-500">[ 02. ABOUT ]</div>
       
-      {/* Container for the fractured slices */}
-      <div className="fracture-container flex w-[90%] md:w-[80%] h-[60vh] md:h-[70vh] gap-1 md:gap-2 relative z-10">
+      {/* Container for the stacked folders */}
+      <div className="fracture-container flex w-[90%] md:w-[80%] h-[60vh] md:h-[70vh] relative z-10 items-center justify-center px-4">
         {projects.map((project, i) => (
           <Link 
             key={project.id} 
             href={`/projects/${project.slug}`}
-            className="f-slice flex-1 relative overflow-hidden h-full bg-[#111] transition-transform will-change-transform group cursor-pointer"
-            data-dir={project.dir}
+            className="folder-slice relative h-full bg-[#111] border-r border-white/20 transition-all duration-500 ease-out overflow-hidden group first:rounded-l-xl last:rounded-r-xl last:border-r-0 hover:z-20"
+            style={{
+                flex: "1 1 0%", // Start equal
+                minWidth: "60px", // Prevent crushing
+                marginRight: "-20px", // Overlap effect
+                zIndex: i,
+                maskImage: "linear-gradient(to right, black 95%, transparent 100%)" // Soft edge for overlap
+            }}
           >
             <div 
-                className="f-bg absolute top-[-20%] left-0 w-full h-[140%] bg-cover bg-center grayscale-0 md:grayscale md:group-hover:grayscale-0 transition-all duration-700 ease-out"
+                className="absolute inset-0 bg-cover bg-center grayscale-0 md:grayscale md:group-hover:grayscale-0 transition-all duration-700 ease-out opacity-100 md:opacity-60 md:group-hover:opacity-100"
                 style={{
                     backgroundImage: `url('${project.image}')`,
-                    backgroundPosition: "center",
                 }}
             />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
-                <span className="text-white font-mono text-xs md:text-sm tracking-widest uppercase border border-white/50 px-2 py-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                    {project.title}
-                </span>
+            
+            {/* Folder Tab/Label */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
+                <div className="relative w-full h-full flex items-center justify-center">
+                    {/* ID Background - Visible on mobile now, increased contrast */}
+                    <span className="absolute top-2 left-2 text-xl md:top-4 md:left-4 md:text-4xl font-black text-white/50 md:text-white/20 group-hover:text-white/60 transition-colors">
+                        0{project.id}
+                    </span>
+
+                    {/* Vertical Title Group */}
+                    <div className="flex flex-col items-center gap-4 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                         {/* Rotated Title */}
+                        <div className="rotate-[-90deg] whitespace-nowrap origin-center transform">
+                            <span className="text-white font-mono text-sm md:text-lg tracking-widest uppercase border border-white/50 px-3 py-1 bg-black/50 backdrop-blur-sm">
+                                {project.title}
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
           </Link>
         ))}
@@ -148,11 +190,6 @@ export function FractureAbout() {
                 </p>
                 <p>
                     Since 2018, I've been on a mission to merge cutting-edge frontend development with accessibility best practices. 
-                    Because great UI isn't just about pixels—it's about removing barriers.
-                </p>
-                <p>
-                    When I'm not crafting components, you'll find me exploring new tools or sharing accessibility insights.
-                    I believe the best tech adapts to people—not the other way around.
                 </p>
             </div>
             
