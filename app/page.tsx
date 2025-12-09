@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { VelocityHero } from "@/components/aether/VelocityHero";
 import { FractureAbout } from "@/components/aether/FractureAbout";
-import { SpotlightGrid } from "@/components/aether/SpotlightGrid";
 import { LiquidSection } from "@/components/aether/LiquidSection";
 import { LensSection } from "@/components/aether/LensSection";
+import { ContactSection } from "@/components/aether/ContactSection";
 
 export const revalidate = 60; // ISR
 
@@ -23,11 +23,12 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <VelocityHero />
-      <FractureAbout />
-      <SpotlightGrid projects={projects} />
-      <LiquidSection posts={posts} />
       <LensSection />
+      <FractureAbout />
+      <LiquidSection posts={posts} />
+      <ContactSection />
     </main>
+
 
   );
 }

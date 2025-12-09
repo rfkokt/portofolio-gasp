@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils";
 import { useRef } from "react";
 
 const navItems = [
-  { name: "01. Velocity", path: "/#velocity" },
-  { name: "02. Fracture", path: "/#about" }, // Mapped to FractureAbout which has id="about" (Wait, I should check this again)
-  { name: "03. Spotlight", path: "/#spotlight" },
-  { name: "04. Liquid", path: "/#liquid" },
+  { name: "01. MISSION", path: "/#lens" },
+  { name: "02. ABOUT", path: "/#about" },
+  { name: "03. ARTICLES", path: "/#liquid" },
+  { name: "04. CONTACT", path: "/#contact" },
 ];
 
 export function Header() {

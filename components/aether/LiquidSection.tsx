@@ -51,7 +51,7 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
 
   return (
     <section id="liquid" className="liquid-section min-h-screen relative flex items-center justify-center border-t border-[#222] overflow-hidden">
-      <div className="section-label">[ 03. SVG TURBULENCE ]</div>
+      <div className="section-label">[ 04. SHARING ]</div>
       
       {/* SVG Filter Definition */}
       <svg className="absolute w-0 h-0 overflow-hidden" aria-hidden="true">
@@ -81,7 +81,7 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
         <div className="text-right max-w-sm order-2 md:order-1 z-10 pointer-events-none mix-blend-difference">
           <Link href={`/blog/${featuredPost.slug}`} className="pointer-events-auto block group">
               <h2 className="text-6xl font-bold mb-6 tracking-tighter group-hover:text-neutral-400 transition-colors">
-                LATEST<br/>THOUGHTS
+                ARTICLES<br/>& SHARING
               </h2>
               <div className="text-neutral-400 text-sm leading-relaxed mb-4">
                 <span className="block text-white font-bold mb-2">{featuredPost.title}</span>

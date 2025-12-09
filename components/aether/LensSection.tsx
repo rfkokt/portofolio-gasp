@@ -1,11 +1,22 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function LensSection() {
   const containerRef = useRef<HTMLElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -24,11 +35,20 @@ export function LensSection() {
     return () => container.removeEventListener("mousemove", onMouseMove);
   }, []);
 
+  const maskStyle = isMobile
+    ? { maskImage: "none", WebkitMaskImage: "none" }
+    : {
+        maskImage: `radial-gradient(${isHovered ? "350px" : "0px"} circle at var(--lens-x) var(--lens-y), black 0%, transparent 100%)`,
+        WebkitMaskImage: `radial-gradient(${isHovered ? "350px" : "0px"} circle at var(--lens-x) var(--lens-y), black 0%, transparent 100%)`,
+      };
+
   return (
     <section
       id="lens"
       ref={containerRef}
       className="relative h-screen w-full bg-black overflow-hidden border-t border-[#222] select-none cursor-crosshair"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={
         {
           "--lens-x": "50%",
@@ -37,7 +57,7 @@ export function LensSection() {
       }
     >
       <div className="section-label text-white border-white absolute top-8 left-8 z-20 font-mono text-[10px] tracking-widest border px-2 py-1 rounded backdrop-blur-sm bg-black/50 uppercase">
-        [ 07. FOCUS LENS ]
+        [ 03. MY MISSION ]
       </div>
 
       {/* LAYER 1: BLURRED */}
@@ -53,83 +73,72 @@ export function LensSection() {
       <div className="lens-ui absolute inset-0 grid grid-cols-[1fr_2fr_1fr] gap-16 p-16 place-content-center pointer-events-none text-[#333]">
         <div className="flex flex-col justify-between h-full py-20 border-r pr-10 border-white/5">
           <div className="space-y-4 font-mono">
-            <div className="flex justify-between border-b border-[#222] py-4">
-              <span>SYS_ID</span>
-              <span>--</span>
-            </div>
-            <div className="flex justify-between border-b border-[#222] py-4">
-              <span>STATUS</span>
-              <span>OFFLINE</span>
-            </div>
+           {/* Placeholder dimmed UI */}
           </div>
         </div>
-        <div className="flex justify-center items-center">
-          <h2 className="text-[8vw] font-black leading-none">DATA</h2>
+        <div className="flex justify-center items-center text-center">
+            <div className="space-y-2">
+                <h2 className="text-[6vw] font-black leading-none opacity-50">MISSION</h2>
+                <p className="max-w-md mx-auto text-sm opacity-60 hidden md:block">
+                    Hover to reveal the core directive.
+                </p>
+            </div>
         </div>
         <div className="flex flex-col justify-end h-full py-20 border-l pl-10 text-right border-white/5">
           <div className="flex justify-between border-b border-[#222] py-4 font-mono">
-            <span>ENCRYPTED</span>
+            {/* Placeholder dimmed UI */}
           </div>
         </div>
       </div>
 
       {/* LAYER 2: FOCUSED */}
       <div
-        className="lens-focus-layer absolute inset-0 bg-cover bg-center"
+        className="lens-focus-layer absolute inset-0 bg-cover bg-center transition-[mask-image] duration-300 ease-in-out"
         style={{
           backgroundImage:
             "url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672')",
-          maskImage:
-            "radial-gradient(250px circle at var(--lens-x) var(--lens-y), black 0%, transparent 100%)",
-          WebkitMaskImage:
-            "radial-gradient(250px circle at var(--lens-x) var(--lens-y), black 0%, transparent 100%)",
+          ...maskStyle,
         }}
       />
 
       <div
-        className="lens-ui absolute inset-0 grid grid-cols-[1fr_2fr_1fr] gap-16 p-16 place-content-center pointer-events-none text-white"
+        className="lens-ui absolute inset-0 flex items-center justify-center pointer-events-none text-white p-12 transition-[mask-image] duration-300 ease-in-out"
         style={{
-          maskImage:
-            "radial-gradient(250px circle at var(--lens-x) var(--lens-y), black 0%, transparent 100%)",
-          WebkitMaskImage:
-            "radial-gradient(250px circle at var(--lens-x) var(--lens-y), black 0%, transparent 100%)",
+          ...maskStyle,
         }}
       >
-        <div className="flex flex-col justify-between h-full py-20 border-r pr-10 border-white/20">
-          <div className="space-y-4 font-mono text-[#06b6d4]">
-            <div className="flex justify-between border-b border-white/20 py-4 font-bold">
-              <span className="text-white">SYS_ID</span>
-              <span>AE-9000</span>
+        <div className="max-w-4xl text-center space-y-8 bg-black/40 backdrop-blur-md p-12 rounded-2xl border border-white/10">
+            <h2 className="text-5xl font-bold tracking-tight font-mono text-[#06b6d4]">
+                Engineering empathy into every component
+            </h2>
+            <div className="space-y-6 text-lg leading-relaxed text-neutral-200">
+                <p>
+                    Here's the deal: I believe every line of code I write should make the web a little more welcoming. 
+                    No fancy jargon, no "good enough" - just digital spaces that work how you need them to.
+                </p>
+                <p className="text-sm font-mono text-[#06b6d4]">
+                    Got a disability? Different device? Unique needs? Cool — my job is to make sure none of that stops you from doing what you came to do.
+                </p>
             </div>
-            <div className="flex justify-between border-b border-white/20 py-4 font-bold">
-              <span className="text-white">STATUS</span>
-              <span className="text-emerald-400">ONLINE</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-center items-center">
-          <h2 className="text-[8vw] font-black leading-none text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">
-            DATA
-          </h2>
-        </div>
-        <div className="flex flex-col justify-end h-full py-20 border-l pl-10 text-right border-white/20">
-          <div className="flex justify-between border-b border-white/20 py-4 font-bold font-mono text-[#06b6d4]">
-            <span className="text-white">PACKET_01</span>
-            <span>0x44..F2</span>
-          </div>
         </div>
       </div>
 
-      {/* HUD */}
-      <div
-        ref={hudRef}
-        className="absolute w-[250px] h-[250px] border border-white/50 rounded-full z-50 pointer-events-none animate-spin-slow"
-        style={{
-          left: "calc(var(--lens-x) - 125px)",
-          top: "calc(var(--lens-y) - 125px)",
-          animation: "spin 10s linear infinite",
-        }}
-      />
+
+      {/* HUD - Hidden on mobile */}
+      {!isMobile && (
+        <div
+            ref={hudRef}
+            className={cn(
+                "absolute w-[250px] h-[250px] border border-white/50 rounded-full z-50 pointer-events-none animate-spin-slow transition-opacity duration-300",
+                isHovered ? "opacity-100" : "opacity-0"
+            )}
+            style={{
+            left: "calc(var(--lens-x) - 125px)",
+            top: "calc(var(--lens-y) - 125px)",
+            animation: "spin 10s linear infinite",
+            }}
+        />
+      )}
       <style jsx>{`
         @keyframes spin {
           from {

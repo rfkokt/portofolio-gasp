@@ -52,20 +52,25 @@ export function VelocityHero() {
         [ SCROLL TO DEFORM ]
       </div>
       
-      <div className="text-center space-y-4">
-        <h1 
-            ref={(el) => { textRefs.current[0] = el; }}
-            className="text-[12vw] font-black leading-[0.8] tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-600 will-change-transform"
-        >
-            KINETIC
-        </h1>
-        <h1 
-            ref={(el) => { textRefs.current[1] = el; }}
-            className="text-[12vw] font-black leading-[0.8] tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-neutral-600 to-neutral-900 will-change-transform"
-        >
-            ENGINE
-        </h1>
+      <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
+        <div className="text-center space-y-4 mb-12">
+            <h1 
+                ref={(el) => { textRefs.current[0] = el; }}
+                className="text-[15vw] font-black leading-[0.8] tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-600 will-change-transform whitespace-nowrap"
+            >
+                RDEV •
+            </h1>
+            <h1 
+                ref={(el) => { textRefs.current[1] = el; }}
+                className="text-[15vw] font-black leading-[0.8] tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-neutral-600 to-neutral-900 will-change-transform whitespace-nowrap"
+            >
+                PORTFOLIO
+            </h1>
+        </div>
+
+
       </div>
+
     </section>
   );
 }

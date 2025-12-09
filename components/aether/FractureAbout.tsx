@@ -4,6 +4,46 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
+import Link from "next/link";
+
+const projects = [
+  {
+    id: 1,
+    title: "Project Alpha",
+    slug: "project-alpha",
+    image: "https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=2600",
+    dir: 1.2
+  },
+  {
+    id: 2,
+    title: "Project Beta",
+    slug: "project-beta",
+    image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2600",
+    dir: -1.1
+  },
+  {
+    id: 3,
+    title: "Project Gamma", 
+    slug: "project-gamma",
+    image: "https://images.unsplash.com/photo-1519638399535-1b036603ac77?q=80&w=2600",
+    dir: 1.5
+  },
+  {
+    id: 4,
+    title: "Project Delta",
+    slug: "project-delta",
+    image: "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=2600",
+    dir: -1.3
+  },
+  {
+    id: 5,
+    title: "Project Epsilon",
+    slug: "project-epsilon",
+    image: "https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?q=80&w=2600",
+    dir: 1.0
+  }
+];
+
 export function FractureAbout() {
   const container = useRef<HTMLDivElement>(null);
 
@@ -19,9 +59,9 @@ export function FractureAbout() {
         slices?.forEach((slice) => {
           const dir = parseFloat(slice.getAttribute("data-dir") || "1");
           gsap.to(slice, {
-            y: yVal * 40 * dir,
-            duration: 0.5,
-            ease: "power2.out",
+            y: yVal * 60 * dir, // Increased movement range for more fluid feel
+            duration: 1.2, // Increased duration for smoothness
+            ease: "power3.out", // Smoother easing
             overwrite: true
           });
         });
@@ -31,8 +71,8 @@ export function FractureAbout() {
         slices?.forEach((slice) => {
           gsap.to(slice, {
             y: 0,
-            duration: 0.5,
-            ease: "power2.out",
+            duration: 1.2,
+            ease: "power3.out",
             overwrite: true
           });
         });
@@ -55,27 +95,50 @@ export function FractureAbout() {
       <div className="section-label">[ 02. MOUSE FRACTURE ]</div>
       
       {/* Container for the fractured slices */}
-      <div className="fracture-container flex w-[80%] h-[70vh] gap-1 relative z-10">
-        {[1.5, -1.2, 2, -1.5, 1].map((dir, i) => (
-          <div key={i} className="f-slice flex-1 relative overflow-hidden h-full bg-[#111] transition-transform will-change-transform" data-dir={dir}>
+      <div className="fracture-container flex w-[90%] md:w-[80%] h-[60vh] md:h-[70vh] gap-1 md:gap-2 relative z-10">
+        {projects.map((project, i) => (
+          <Link 
+            key={project.id} 
+            href={`/projects/${project.slug}`}
+            className="f-slice flex-1 relative overflow-hidden h-full bg-[#111] transition-transform will-change-transform group cursor-pointer"
+            data-dir={project.dir}
+          >
             <div 
-                className="f-bg absolute top-[-20%] left-0 w-full h-[140%] bg-cover bg-center grayscale hover:grayscale-0 transition-all duration-500"
+                className="f-bg absolute top-[-20%] left-0 w-full h-[140%] bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700 ease-out"
                 style={{
-                    backgroundImage: "url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2600')",
-                    backgroundPosition: `${5 + i * 22.5}% 50%`
+                    backgroundImage: `url('${project.image}')`,
+                    backgroundPosition: "center",
                 }}
             />
-          </div>
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
+                <span className="text-white font-mono text-xs md:text-sm tracking-widest uppercase border border-white/50 px-2 py-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                    {project.title}
+                </span>
+            </div>
+          </Link>
         ))}
       </div>
 
-       <div className="absolute bottom-20 left-10 max-w-md pointer-events-none mix-blend-difference z-20">
-         <h2 className="text-4xl font-bold mb-4">About Me</h2>
-         <p className="text-sm text-neutral-400">
-           Front-end developer traversing the digital void. I build kinetic interfaces that respond to human intent. 
-           Specializing in React, WebGL, and Next.js.
-         </p>
+       <div className="absolute bottom-10 left-6 md:left-20 max-w-2xl pointer-events-none z-20">
+         <div className="bg-black/60 backdrop-blur-md p-8 border border-white/10 rounded-xl">
+            <h2 className="text-4xl font-bold mb-6 font-mono">About RDev</h2>
+            <div className="space-y-4 text-sm text-neutral-300 leading-relaxed">
+                <p>
+                    I'm a Frontend Developer with a passion for React, Next.js, and TypeScript. 
+                    But what really drives me is building interfaces that don't just look good—they work for everyone.
+                </p>
+                <p>
+                    Since 2018, I've been on a mission to merge cutting-edge frontend development with accessibility best practices. 
+                    Because great UI isn't just about pixels—it's about removing barriers.
+                </p>
+                <p>
+                    When I'm not crafting components, you'll find me exploring new tools or sharing accessibility insights.
+                    I believe the best tech adapts to people—not the other way around.
+                </p>
+            </div>
+         </div>
        </div>
+
     </section>
   );
 }
