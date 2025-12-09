@@ -138,7 +138,7 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
         ref={sectionRef} 
         className="liquid-section min-h-screen relative flex items-center border-t border-[#222] bg-black overflow-hidden"
     >
-      <div className="section-label fixed top-32 left-8 z-20 mix-blend-difference">[ 03. ARTICLES ]</div>
+      <div className="section-label absolute top-32 left-8 z-20 mix-blend-difference">[ 03. ARTICLES ]</div>
       
       {/* SVG Filter Definition */}
       <svg className="absolute w-0 h-0 overflow-hidden" aria-hidden="true">
