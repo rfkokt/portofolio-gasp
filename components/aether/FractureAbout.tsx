@@ -123,7 +123,7 @@ export function FractureAbout() {
             data-dir={project.dir}
           >
             <div 
-                className="f-bg absolute top-[-20%] left-0 w-full h-[140%] bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700 ease-out"
+                className="f-bg absolute top-[-20%] left-0 w-full h-[140%] bg-cover bg-center grayscale-0 md:grayscale md:group-hover:grayscale-0 transition-all duration-700 ease-out"
                 style={{
                     backgroundImage: `url('${project.image}')`,
                     backgroundPosition: "center",
@@ -138,8 +138,8 @@ export function FractureAbout() {
         ))}
       </div>
 
-       <div className="absolute bottom-10 left-6 md:left-20 max-w-2xl pointer-events-none z-20">
-         <div className="bg-black/60 backdrop-blur-md p-8 border border-white/10 rounded-xl">
+       <div className="absolute bottom-10 left-6 md:left-20 max-w-2xl z-20 pointer-events-none">
+         <div className="bg-black/60 backdrop-blur-md p-8 border border-white/10 rounded-xl pointer-events-auto">
             <h2 className="text-4xl font-bold mb-6 font-mono">About RDev</h2>
             <div className="space-y-4 text-sm text-neutral-300 leading-relaxed">
                 <p>
@@ -154,6 +154,12 @@ export function FractureAbout() {
                     When I'm not crafting components, you'll find me exploring new tools or sharing accessibility insights.
                     I believe the best tech adapts to people—not the other way around.
                 </p>
+            </div>
+            
+            <div className="mt-8">
+                <Link href="/projects" className="inline-block border border-white/20 hover:bg-white hover:text-black text-white px-6 py-3 rounded-lg font-mono text-sm tracking-widest uppercase transition-colors">
+                    View All Projects
+                </Link>
             </div>
          </div>
        </div>

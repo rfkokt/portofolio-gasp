@@ -33,6 +33,12 @@ const DUMMY_PROJECTS: Record<string, { title: string; image: string; description
     image: "https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?q=80&w=2600",
     description: "AI-driven content generation tool. Epsilon bridges the gap between human creativity and machine intelligence, offering a collaborative workspace for writers.",
     category: "AI Tooling"
+  },
+  "neon-commerce": {
+    title: "Neon Commerce",
+    image: "https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=2600",
+    description: "High-performance headless e-commerce storefront with 3D product previews and localized pricing.",
+    category: "E-Commerce"
   }
 };
 

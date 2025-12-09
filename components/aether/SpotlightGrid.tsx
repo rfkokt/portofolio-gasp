@@ -38,7 +38,7 @@ export function SpotlightGrid({ projects }: SpotlightGridProps) {
         {projects.map((project) => (
           <Link
             key={project.id}
-            href={project.link || "#"}
+            href={project.link || `/projects/${project.title.toLowerCase().replace(/\s+/g, '-')}`}
             onMouseMove={onMouseMove}
             className="spotlight-card group relative h-[400px] overflow-hidden rounded-2xl bg-white/5 border border-white/5"
             style={{

@@ -53,7 +53,7 @@ export function ProjectPreview({ projects }: ProjectPreviewProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {projects.map((project) => (
-          <Link href={project.link || "#"} key={project.id} className="project-card-home group">
+          <Link href={project.link || `/projects/${project.title.toLowerCase().replace(/\s+/g, '-')}`} key={project.id} className="project-card-home group">
             <div className="aspect-[4/3] rounded-2xl bg-zinc-900 border border-white/10 overflow-hidden relative mb-6">
                 <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                  {/* Placeholder for project image */}
