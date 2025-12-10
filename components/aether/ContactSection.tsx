@@ -50,19 +50,24 @@ export function ContactSection() {
                 Open for collaborations, freelance projects, or just a chat about code and design.
             </p>
 
-            <div className="flex flex-col gap-6 w-full max-w-sm">
-                <div className="space-y-2">
-                    <h3 className="text-2xl font-bold mb-2 text-foreground">Also follow me on other social media!</h3>
-                <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-6 w-full max-w-xl">
+                <div className="space-y-4">
+                    <h3 className="text-2xl font-bold mb-4 text-foreground">Also follow me on other social media!</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Email */}
-                      <a href="mailto:contact@rdev.cloud" className="bg-foreground/5 hover:bg-foreground/10 border border-border transition-colors text-foreground py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold">
+                      <a href="mailto:rifkiokta105@gmail.com" className="bg-foreground/5 hover:bg-foreground/10 border border-border transition-colors text-foreground py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold">
                           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/>
                           EMAIL
                       </a>
                       
                       {/* GitHub */}
-                      <a href="#" className="bg-foreground/5 hover:bg-foreground/10 border border-border transition-colors text-foreground py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold">
+                      <a href="https://github.com/rfkokt" target="_blank" rel="noopener noreferrer" className="bg-foreground/5 hover:bg-foreground/10 border border-border transition-colors text-foreground py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold">
                           GITHUB
+                      </a>
+
+                      {/* LinkedIn */}
+                      <a href="https://www.linkedin.com/in/rifkiokta/" target="_blank" rel="noopener noreferrer" className="bg-foreground/5 hover:bg-foreground/10 border border-border transition-colors text-foreground py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold">
+                          LINKEDIN
                       </a>
                 </div>
                 </div>
