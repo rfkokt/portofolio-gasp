@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useId } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -13,11 +13,118 @@ interface LiquidSectionProps {
   posts: Post[];
 }
 
+const ARTICLE_IMAGES = [
+  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200", // Original
+  "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=1200", // Gradient
+  "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1200", // Dark waves
+  "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1200", // Purple Tech
+  "https://images.unsplash.com/photo-1620641788421-7f1c33b74bc4?q=80&w=1200", // Abstract
+];
+
+// Inner component for isolated liquid effect
+function LiquidCard({ post, image, index }: { post: Post; image: string; index: number }) {
+  const turbulenceRef = useRef<SVGFETurbulenceElement>(null);
+  const filterId = useId().replace(/:/g, ""); // React 18 useId for unique ID
+  
+  // Independent loop for this card
+  useEffect(() => {
+    let val = 0.00;
+    let target = 0.00;
+    let animationFrameId: number;
+
+    const loopLiquid = () => {
+       val += (target - val) * 0.05;
+       if (turbulenceRef.current) {
+           turbulenceRef.current.setAttribute("baseFrequency", `${val} ${val}`);
+       }
+       animationFrameId = requestAnimationFrame(loopLiquid);
+    };
+
+    loopLiquid();
+
+    const card = document.getElementById(`liquid-card-${filterId}`);
+    
+    const onMouseEnter = () => { target = 0.02; };
+    const onMouseLeave = () => { target = 0.00; };
+
+    if (card) {
+        card.addEventListener('mouseenter', onMouseEnter);
+        card.addEventListener('mouseleave', onMouseLeave);
+    }
+
+    return () => {
+        cancelAnimationFrame(animationFrameId);
+        if (card) {
+            card.removeEventListener('mouseenter', onMouseEnter);
+            card.removeEventListener('mouseleave', onMouseLeave);
+        }
+    };
+  }, [filterId]);
+
+  return (
+    <div className="flex-shrink-0 flex flex-col justify-center h-full max-w-xs md:max-w-md">
+        <Link href={`/blog/${post.slug}`} id={`liquid-card-${filterId}`} className="liquid-card group cursor-pointer relative block">
+            {/* SVG Filter Definition - scoped to this card */}
+            <svg className="absolute w-0 h-0 overflow-hidden" aria-hidden="true">
+                <defs>
+                    <filter id={`liquid-filter-${filterId}`}>
+                        <feTurbulence 
+                            ref={turbulenceRef} 
+                            type="fractalNoise" 
+                            baseFrequency="0.0" 
+                            numOctaves="2" 
+                            result="noise" 
+                        />
+                        <feDisplacementMap 
+                            in="SourceGraphic" 
+                            in2="noise" 
+                            scale="30" 
+                            xChannelSelector="R" 
+                            yChannelSelector="G" 
+                        />
+                    </filter>
+                </defs>
+            </svg>
+
+            <div 
+                className="w-[300px] h-[400px] md:w-[400px] md:h-[500px] overflow-hidden border border-[#333] relative mb-8"
+            >
+                    <div 
+                    className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                    style={{
+                        backgroundImage: `url('${image}')`, 
+                        filter: `url(#liquid-filter-${filterId})`
+                    }}
+                />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                    
+                    <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 border border-white/10 rounded-full">
+                    <span className="text-xs font-mono text-white">
+                        {new Date(post.createdAt).toLocaleDateString()}
+                    </span>
+                    </div>
+            </div>
+            
+            <div className="space-y-4 min-h-[160px]">
+                <h3 className="text-2xl md:text-3xl font-bold group-hover:text-neutral-400 transition-colors text-white line-clamp-2">
+                    {post.title}
+                </h3>
+                    <div className="text-neutral-400 text-sm leading-relaxed line-clamp-3">
+                    {post.excerpt}
+                </div>
+                <span className="text-xs font-mono uppercase text-white border-b border-white pb-1 inline-block">
+                    Read Article
+                </span>
+            </div>
+        </Link>
+    </div>
+  );
+}
+
 export function LiquidSection({ posts }: LiquidSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
-  const turbulenceRef = useRef<SVGFETurbulenceElement>(null);
   
   // Create multiple dummy posts if we don't have enough to demonstrate scrolling
   const displayPosts = posts.length > 0 ? [...posts, ...posts, ...posts].slice(0, 5) : [];
@@ -72,7 +179,7 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
         });
     }
 
-    // Section Label Highlight
+    // Section Label Highlight (Existing)
     const labels = sectionRef.current?.querySelectorAll(".section-label");
     labels?.forEach(label => {
         gsap.fromTo(label, 
@@ -90,45 +197,9 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
             }
         );
     });
-
-    return () => {
-        tl.kill();
-    };
   }, { scope: sectionRef, dependencies: [displayPosts] });
 
-  // Liquid effect logic (reused)
-  useEffect(() => {
-    let val = 0.00;
-    let target = 0.00;
-    let animationFrameId: number;
-
-    const loopLiquid = () => {
-       val += (target - val) * 0.05;
-       if (turbulenceRef.current) {
-           turbulenceRef.current.setAttribute("baseFrequency", `${val} ${val}`);
-       }
-       animationFrameId = requestAnimationFrame(loopLiquid);
-    };
-
-    loopLiquid();
-
-    const onMouseEnter = () => { target = 0.02; };
-    const onMouseLeave = () => { target = 0.00; };
-
-    const cards = document.querySelectorAll('.liquid-card');
-    cards.forEach(card => {
-        card.addEventListener('mouseenter', onMouseEnter);
-        card.addEventListener('mouseleave', onMouseLeave);
-    });
-
-    return () => {
-        cancelAnimationFrame(animationFrameId);
-        cards.forEach(card => {
-            card.removeEventListener('mouseenter', onMouseEnter);
-            card.removeEventListener('mouseleave', onMouseLeave);
-        });
-    };
-  }, [displayPosts]);
+  // Liquid effect logic MOVED to LiquidCard to be independent
 
   if (displayPosts.length === 0) return null;
 
@@ -140,36 +211,16 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
     >
       <div className="section-label absolute top-32 left-8 z-20 mix-blend-difference">[ 03. ARTICLES ]</div>
       
-      {/* SVG Filter Definition */}
-      <svg className="absolute w-0 h-0 overflow-hidden" aria-hidden="true">
-        <defs>
-          <filter id="liquid-filter">
-            <feTurbulence 
-                ref={turbulenceRef} 
-                type="fractalNoise" 
-                baseFrequency="0.0" 
-                numOctaves="2" 
-                result="noise" 
-            />
-            <feDisplacementMap 
-                in="SourceGraphic" 
-                in2="noise" 
-                scale="30" 
-                xChannelSelector="R" 
-                yChannelSelector="G" 
-            />
-          </filter>
-        </defs>
-      </svg>
-
       {/* Intro Text */}
-      <div ref={titleRef} className="absolute left-6 md:left-20 z-10 max-w-xs md:max-w-sm pointer-events-none">
-          <h2 className="text-5xl md:text-6xl font-black mb-6 tracking-tighter text-white mix-blend-difference">
-            THOUGHTS<br/>& PROCESS
-          </h2>
-          <p className="text-neutral-400 text-sm leading-relaxed mix-blend-difference">
-            Scroll to explore recent articles and technical breakdowns.
-          </p>
+      <div ref={titleRef} className="absolute left-6 md:left-20 z-10 max-w-xs md:max-w-sm pointer-events-none h-full flex flex-col justify-center top-0">
+          <div>
+            <h2 className="text-5xl md:text-6xl font-black mb-6 tracking-tighter text-white mix-blend-difference">
+                THOUGHTS<br/>& PROCESS
+            </h2>
+            <p className="text-neutral-400 text-sm leading-relaxed mix-blend-difference">
+                Scroll to explore recent articles and technical breakdowns.
+            </p>
+          </div>
       </div>
 
       {/* Scroll Container */}
@@ -178,40 +229,12 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
         className="flex gap-12 md:gap-20 items-center pl-[80vw] md:pl-[40vw] pr-[10vw] h-full relative z-30"
       >
         {displayPosts.map((post, i) => (
-            <div key={i} className="flex-shrink-0 flex flex-col justify-center h-full max-w-xs md:max-w-md">
-                <Link href={`/blog/${post.slug}`} className="liquid-card group cursor-pointer relative block">
-                    <div 
-                        className="w-[300px] h-[400px] md:w-[400px] md:h-[500px] overflow-hidden border border-[#333] relative mb-8"
-                    >
-                         <div 
-                            className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                            style={{
-                                backgroundImage: `url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200' )`, 
-                                filter: "url('#liquid-filter')"
-                            }}
-                        />
-                         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                         
-                         <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 border border-white/10 rounded-full">
-                            <span className="text-xs font-mono text-white">
-                                {new Date(post.createdAt).toLocaleDateString()}
-                            </span>
-                         </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                        <h3 className="text-2xl md:text-3xl font-bold group-hover:text-neutral-400 transition-colors text-white">
-                            {post.title}
-                        </h3>
-                         <div className="text-neutral-400 text-sm leading-relaxed line-clamp-3">
-                            {post.excerpt}
-                        </div>
-                        <span className="text-xs font-mono uppercase text-white border-b border-white pb-1 inline-block">
-                            Read Article
-                        </span>
-                    </div>
-                </Link>
-            </div>
+            <LiquidCard 
+                key={i} 
+                post={post} 
+                image={ARTICLE_IMAGES[i % ARTICLE_IMAGES.length]} 
+                index={i} 
+            />
         ))}
 
         {/* View All Button */}
