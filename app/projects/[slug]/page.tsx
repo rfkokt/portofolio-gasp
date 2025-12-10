@@ -66,7 +66,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="absolute inset-0 flex items-end">
             <div className="container mx-auto px-6 pb-20">
-                <div className="flex justify-between items-end">
+                <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-6 md:gap-0">
                     <div className="space-y-4 max-w-4xl">
                          <Link href="/#about" className="inline-flex items-center gap-2 text-sm font-mono text-white/80 mb-4 hover:text-white transition-colors">
                             <MoveLeft size={16} /> BACK TO PROJECTS
@@ -81,7 +81,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                         </div>
                     </div>
                     <div className="mb-4">
-                        <ShareButton title={project.title} text={project.description} className="text-white border-white/20 hover:bg-white/10" />
+                        <ShareButton title={project.title} text={project.description} className="text-white border-white/20 hover:bg-white/10" side="top" align="responsive" />
                     </div>
                 </div>
             </div>

@@ -9,33 +9,25 @@ interface ShareButtonProps {
   text?: string;
   url?: string;
   className?: string;
+  side?: "top" | "bottom";
+  align?: "left" | "right" | "responsive";
 }
 
-export function ShareButton({ title, text, url, className }: ShareButtonProps) {
+export function ShareButton({ title, text, url, className, side = "bottom", align = "right" }: ShareButtonProps) {
   const [isSupported, setIsSupported] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
+
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     setIsSupported(typeof navigator !== "undefined" && !!navigator.share);
     setCurrentUrl(url || window.location.href);
   }, [url]);
 
-  const handleShare = async () => {
-    if (isSupported) {
-      try {
-        await navigator.share({
-          title,
-          text,
-          url: currentUrl,
-        });
-      } catch (err) {
-        console.error("Error sharing:", err);
-      }
-    } else {
-      setIsOpen(!isOpen);
-    }
+  const handleShare = () => {
+    setIsOpen(!isOpen);
   };
 
   const copyToClipboard = () => {
@@ -61,6 +53,24 @@ export function ShareButton({ title, text, url, className }: ShareButtonProps) {
     };
   }, [isOpen]);
 
+  const getAlignmentClasses = () => {
+    switch (align) {
+      case "left":
+        return "left-0 origin-top-left";
+      case "responsive":
+        return "left-0 origin-top-left md:left-auto md:right-0 md:origin-top-right";
+      case "right":
+      default:
+        return "right-0 origin-top-right";
+    }
+  };
+
+  const getSideClasses = () => {
+      return side === "bottom" 
+        ? "top-full mt-2 slide-in-from-top-2" 
+        : "bottom-full mb-2 slide-in-from-bottom-2";
+  };
+
   return (
     <div className={cn("relative share-container inline-block", className)}>
       <button
@@ -74,9 +84,15 @@ export function ShareButton({ title, text, url, className }: ShareButtonProps) {
         <span>Share</span>
       </button>
 
-      {/* Desktop Fallback Dropdown */}
-      {!isSupported && isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-background border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 animate-in fade-in slide-in-from-top-2">
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <div 
+            className={cn(
+                "absolute w-56 bg-background border border-border rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-200",
+                getSideClasses(),
+                getAlignmentClasses()
+            )}
+        >
           
           <button
             onClick={copyToClipboard}
@@ -96,6 +112,16 @@ export function ShareButton({ title, text, url, className }: ShareButtonProps) {
           >
             <Twitter size={16} />
             <span>X / Twitter</span>
+          </a>
+
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-foreground/5 text-sm text-foreground/80 hover:text-foreground transition-colors"
+          >
+            <Facebook size={16} />
+            <span>Facebook</span>
           </a>
 
           <a

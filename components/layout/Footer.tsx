@@ -7,9 +7,9 @@ export function Footer() {
           </div>
           
           <div className="flex items-center gap-6 text-sm text-muted-foreground font-mono uppercase tracking-wider">
-            <a href="#" className="hover:text-foreground transition-colors">GitHub</a>
+            <a href="https://github.com/rfkokt" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
             <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
-            <a href="#" className="hover:text-foreground transition-colors">LinkedIn</a>
+            <a href="https://www.linkedin.com/in/rifkiokta/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">LinkedIn</a>
           </div>
   
           <div className="text-xs text-muted-foreground">

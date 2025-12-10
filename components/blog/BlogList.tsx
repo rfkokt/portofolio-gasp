@@ -59,12 +59,13 @@ export function BlogList({ posts }: BlogListProps) {
                   <span className="text-xs font-mono text-muted-foreground border border-border px-2 py-1 rounded inline-block">
                        {new Date(post.createdAt).toLocaleDateString()}
                   </span>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="transition-opacity duration-300">
                     <ShareButton 
                         title={post.title} 
                         text={post.excerpt} 
                         url={`${typeof window !== 'undefined' ? window.location.origin : ''}/blog/${post.slug}`}
-                        className="text-foreground border-border hover:bg-foreground/10" 
+                        className="text-foreground border-border hover:bg-foreground/10"
+                        align="responsive"
                     />
                   </div>
                 </div>
