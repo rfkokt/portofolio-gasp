@@ -5,6 +5,7 @@ import { GSAPProvider } from "@/components/providers/GSAPProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { CustomCursor } from "@/components/layout/CustomCursor";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -29,6 +30,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <GSAPProvider>
+            <CustomCursor />
             <Header />
             {children}
             <Footer />

@@ -125,7 +125,7 @@ export function FractureAbout() {
   );
 
   return (
-    <section id="about" ref={container} className="h-screen w-full bg-background overflow-hidden flex flex-col items-center justify-center relative border-t border-border">
+    <section id="about" ref={container} className="h-screen w-full bg-background overflow-hidden flex flex-col items-center justify-center relative border-t border-border md:cursor-none">
       <div className="section-label transition-colors duration-500">[ 02. ABOUT ]</div>
       
       {/* Container for the stacked folders */}
@@ -174,7 +174,7 @@ export function FractureAbout() {
       </div>
 
        <div className="absolute bottom-10 left-6 md:left-20 max-w-2xl z-20 pointer-events-none">
-         <div className="bg-background/60 backdrop-blur-md p-8 border border-border rounded-xl pointer-events-auto">
+         <div className="bg-background/60 backdrop-blur-md p-8 border border-border rounded-xl pointer-events-none">
             <h2 className="text-4xl font-bold mb-6 font-mono text-foreground">About RDev</h2>
             <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
                 <p>
