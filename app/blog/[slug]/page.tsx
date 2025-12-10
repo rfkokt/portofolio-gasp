@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ShareButton } from "@/components/aether/ShareButton";
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -26,32 +27,36 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   return (
-    <article className="min-h-screen bg-[#050505] pt-32 pb-20">
+    <article className="min-h-screen bg-background pt-32 pb-20 transition-colors duration-300">
       <div className="max-w-4xl mx-auto px-6">
         <Link 
             href="/blog" 
-            className="inline-flex items-center gap-2 text-xs font-mono text-neutral-500 mb-12 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-mono text-muted-foreground mb-12 hover:text-foreground transition-colors"
         >
             ← BACK TO JOURNAL
         </Link>
         
-        <header className="mb-20 pb-12 border-b border-[#222]">
-            <div className="flex gap-4 text-xs font-mono text-neutral-500 mb-6 uppercase tracking-widest">
-                <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                <span>//</span>
-                <span>{post.viewCount} Views</span>
+        <header className="mb-20 pb-12 border-b border-border">
+            <div className="flex justify-between items-start mb-6">
+                 <div className="flex gap-4 text-xs font-mono text-muted-foreground uppercase tracking-widest">
+                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                    <span>//</span>
+                    <span>{post.viewCount} Views</span>
+                </div>
+                <ShareButton title={post.title} text={post.excerpt} />
             </div>
-            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-8 leading-none">
+            
+            <h1 className="text-5xl md:text-7xl font-black text-foreground tracking-tighter mb-8 leading-none">
                 {post.title}
             </h1>
-            <p className="text-xl text-neutral-400 leading-relaxed max-w-2xl">
+            <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
                 {post.excerpt}
             </p>
         </header>
 
-        <div className="prose prose-invert prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-p:text-neutral-400 prose-li:text-neutral-400">
+        <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-li:text-muted-foreground">
             {/* Simple rendering for now, can be upgraded to Markdown component later */}
-            <div className="whitespace-pre-wrap font-sans text-neutral-300">
+            <div className="whitespace-pre-wrap font-sans text-foreground/90">
                 {post.content}
             </div>
         </div>

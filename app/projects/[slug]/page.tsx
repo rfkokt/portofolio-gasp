@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MoveLeft } from "lucide-react";
+import { ShareButton } from "@/components/aether/ShareButton";
 
 // Dummy data matching FractureAbout.tsx
 const DUMMY_PROJECTS: Record<string, { title: string; image: string; description: string; category: string }> = {
@@ -55,7 +56,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {/* Hero Header */}
       <div className="relative h-[60vh] w-full overflow-hidden">
         <div 
@@ -65,16 +66,23 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="absolute inset-0 flex items-end">
             <div className="container mx-auto px-6 pb-20">
-                <Link href="/#about" className="inline-flex items-center gap-2 text-sm font-mono text-neutral-400 mb-8 hover:text-white transition-colors">
-                    <MoveLeft size={16} /> BACK TO PROJECTS
-                </Link>
-                <div className="space-y-4">
-                    <span className="inline-block px-3 py-1 border border-white/20 text-xs font-mono tracking-widest uppercase rounded-full bg-black/30 backdrop-blur-md">
-                        {project.category}
-                    </span>
-                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter mix-blend-overlay opacity-90">
-                        {project.title}
-                    </h1>
+                <div className="flex justify-between items-end">
+                    <div className="space-y-4 max-w-4xl">
+                         <Link href="/#about" className="inline-flex items-center gap-2 text-sm font-mono text-white/80 mb-4 hover:text-white transition-colors">
+                            <MoveLeft size={16} /> BACK TO PROJECTS
+                        </Link>
+                        <div>
+                             <span className="inline-block px-3 py-1 border border-white/20 text-xs font-mono tracking-widest uppercase rounded-full bg-black/30 backdrop-blur-md mb-4 text-white">
+                                {project.category}
+                            </span>
+                            <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white mix-blend-overlay opacity-90">
+                                {project.title}
+                            </h1>
+                        </div>
+                    </div>
+                    <div className="mb-4">
+                        <ShareButton title={project.title} text={project.description} className="text-white border-white/20 hover:bg-white/10" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -82,24 +90,24 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-20">
-         <div className="prose prose-invert prose-lg">
-            <h2 className="text-3xl font-bold mb-8 font-mono">Overview</h2>
-            <p className="text-xl text-neutral-300 leading-relaxed leading-8">
+         <div className="prose prose-lg max-w-none dark:prose-invert">
+            <h2 className="text-3xl font-bold mb-8 font-mono text-foreground">Overview</h2>
+            <p className="text-xl text-muted-foreground leading-relaxed leading-8">
                 {project.description}
             </p>
             
-            <div className="my-16 p-8 border border-white/10 rounded-2xl bg-white/5">
-                <h3 className="text-lg font-bold mb-4 font-mono text-neutral-400 uppercase tracking-widest">Tech Stack</h3>
+            <div className="my-16 p-8 border border-border rounded-2xl bg-foreground/5">
+                <h3 className="text-lg font-bold mb-4 font-mono text-muted-foreground uppercase tracking-widest">Tech Stack</h3>
                 <div className="flex flex-wrap gap-3">
                     {["React", "Next.js", "TypeScript", "Tailwind CSS", "Framer Motion"].map((tech) => (
-                        <span key={tech} className="px-4 py-2 bg-black border border-white/10 rounded-lg text-sm font-medium">
+                        <span key={tech} className="px-4 py-2 bg-background border border-border rounded-lg text-sm font-medium text-foreground">
                             {tech}
                         </span>
                     ))}
                 </div>
             </div>
 
-            <p className="text-neutral-500 italic">
+            <p className="text-muted-foreground italic">
                 (This is a placeholder project detail page content to demonstrate the routing from the landing page slices.)
             </p>
          </div>

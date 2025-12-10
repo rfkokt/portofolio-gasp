@@ -19,7 +19,7 @@ export function SpotlightGrid({ projects }: SpotlightGridProps) {
   };
 
   return (
-    <section id="spotlight" className="py-32 px-6 container mx-auto border-t border-[#222]">
+    <section id="spotlight" className="py-32 px-6 container mx-auto border-t border-border">
       <div className="flex justify-between items-end mb-16">
         <div>
           <span className="section-label relative top-0 left-0 mb-4 inline-block">
@@ -29,7 +29,7 @@ export function SpotlightGrid({ projects }: SpotlightGridProps) {
             SELECTED <br /> WORK
           </h2>
         </div>
-        <Link href="/projects" className="text-xs font-bold bg-white text-black px-3 py-1 rounded hover:scale-105 transition-transform uppercase">
+        <Link href="/projects" className="text-xs font-bold bg-foreground text-background px-3 py-1 rounded hover:scale-105 transition-transform uppercase">
             View All
         </Link>
       </div>

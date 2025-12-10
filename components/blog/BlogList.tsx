@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Link from "next/link";
+import { ShareButton } from "@/components/aether/ShareButton";
 import { Post } from "@prisma/client";
 
 interface BlogListProps {
@@ -32,36 +33,43 @@ export function BlogList({ posts }: BlogListProps) {
 
   return (
     <div ref={container} className="max-w-7xl mx-auto px-6 mb-20">
-      <div className="border-t border-[#222]">
+      <div className="border-t border-border">
         {posts.map((post, i) => (
-          <article
-            key={post.id}
-            className="blog-row group relative border-b border-[#222] hover:bg-[#111] transition-colors duration-300"
-          >
-            <Link
-              href={`/blog/${post.slug}`}
-              className="flex flex-col md:flex-row gap-8 py-12 items-baseline"
+            <article
+              key={post.id}
+              className="blog-row group relative border-b border-border hover:bg-foreground/5 transition-colors duration-300"
             >
-              <div className="w-24 text-neutral-500 font-mono text-xs">
-                {String(i + 1).padStart(2, "0")}
-              </div>
-              
-              <div className="flex-1">
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 group-hover:translate-x-4 transition-transform duration-500 ease-out">
-                  {post.title}
-                </h2>
-                <p className="text-neutral-400 max-w-2xl leading-relaxed">
-                    {post.excerpt}
-                </p>
-              </div>
+              <div className="flex flex-col md:flex-row gap-8 py-12 items-baseline">
+                <div className="w-24 text-muted-foreground font-mono text-xs">
+                  {String(i + 1).padStart(2, "0")}
+                </div>
+                
+                <div className="flex-1">
+                  <Link href={`/blog/${post.slug}`} className="block">
+                    <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 group-hover:translate-x-4 transition-transform duration-500 ease-out">
+                      {post.title}
+                    </h2>
+                  </Link>
+                  <p className="text-muted-foreground max-w-2xl leading-relaxed">
+                      {post.excerpt}
+                  </p>
+                </div>
 
-              <div className="text-right md:w-32">
-                <span className="text-xs font-mono text-neutral-600 border border-neutral-800 px-2 py-1 rounded inline-block">
-                     {new Date(post.createdAt).toLocaleDateString()}
-                </span>
+                <div className="text-right md:w-32 flex flex-col items-end gap-4">
+                  <span className="text-xs font-mono text-muted-foreground border border-border px-2 py-1 rounded inline-block">
+                       {new Date(post.createdAt).toLocaleDateString()}
+                  </span>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <ShareButton 
+                        title={post.title} 
+                        text={post.excerpt} 
+                        url={`${typeof window !== 'undefined' ? window.location.origin : ''}/blog/${post.slug}`}
+                        className="text-foreground border-border hover:bg-foreground/10" 
+                    />
+                  </div>
+                </div>
               </div>
-            </Link>
-          </article>
+            </article>
         ))}
       </div>
     </div>

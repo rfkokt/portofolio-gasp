@@ -9,10 +9,10 @@ export default async function ProjectsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#050505] pt-32 pb-20">
+    <div className="min-h-screen bg-background text-foreground pt-32 pb-20 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6 mb-20">
         <div className="section-label mb-8">[ 02. ARCHIVE ]</div>
-        <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter mix-blend-difference">
+        <h1 className="text-6xl md:text-8xl font-black text-foreground tracking-tighter">
           SELECTED<br />WORKS
         </h1>
       </div>
@@ -20,7 +20,7 @@ export default async function ProjectsPage() {
       <SpotlightGrid projects={projects} />
       
       <div className="max-w-7xl mx-auto px-6 mt-12 text-right">
-        <div className="text-neutral-500 text-sm font-mono uppercase">
+        <div className="text-muted-foreground text-sm font-mono uppercase">
             Total Projects: {projects.length}
         </div>
       </div>
