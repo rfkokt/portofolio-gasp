@@ -78,8 +78,8 @@ export function LensSection() {
         </div>
         <div className="flex justify-center items-center text-center">
             <div className="space-y-2">
-                <h2 className="text-[6vw] font-black leading-none opacity-50 text-foreground">MISSION</h2>
-                <p className="max-w-md mx-auto text-sm opacity-60 hidden md:block text-muted-foreground">
+                <h2 className="text-[6vw] font-black leading-none opacity-50 text-white">MISSION</h2>
+                <p className="max-w-md mx-auto text-sm opacity-60 hidden md:block text-muted-white">
                     Hover to reveal the core directive.
                 </p>
             </div>

@@ -56,12 +56,15 @@ export function Header() {
         </nav>
 
         {/* Mobile Menu Toggle */}
-        <button 
-            className="md:hidden text-xs font-bold border border-border px-4 py-2 rounded hover:bg-foreground hover:text-background transition-colors text-foreground z-50 uppercase w-[80px]"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          {isMenuOpen ? "CLOSE" : "MENU"}
-        </button>
+        <div className="flex items-center gap-4 md:hidden">
+            <ThemeToggle />
+            <button 
+                className="text-xs font-bold border border-border px-4 py-2 rounded hover:bg-foreground hover:text-background transition-colors text-foreground z-50 uppercase w-[80px]"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+            {isMenuOpen ? "CLOSE" : "MENU"}
+            </button>
+        </div>
       </header>
 
       {/* Mobile Menu Overlay */}

@@ -42,7 +42,7 @@ export function ContactSection() {
     <section id="contact" ref={container} className="min-h-[50vh] flex flex-col items-center justify-center relative border-t border-border bg-background">
       <div className="section-label absolute top-12 left-8 z-20 text-muted-foreground">[ 04. CONTACT ]</div>
 
-      <div className="items-center flex flex-col z-10 p-8 max-w-2xl text-center">
+      <div className="items-center flex flex-col z-10 px-8 pt-32 pb-8 md:p-8 max-w-2xl text-center">
             <h2 className="text-5xl md:text-7xl font-black mb-8 tracking-tighter text-foreground">
                 LET'S BUILD<br/>THE FUTURE
             </h2>
@@ -70,7 +70,7 @@ export function ContactSection() {
       </div>
 
       {/* Footer / Copyright */}
-      <footer className="absolute bottom-6 flex justify-between w-full px-8 text-[10px] uppercase font-mono text-muted-foreground tracking-widest opacity-80">
+      <footer className="mt-16 md:mt-0 md:absolute md:bottom-6 flex justify-between w-full px-8 text-[10px] uppercase font-mono text-muted-foreground tracking-widest opacity-80">
           <span>© 2024 RDEV • PORTFOLIO</span>
           <span>JAKARTA, ID</span>
       </footer>
