@@ -40,7 +40,7 @@ export function SpotlightGrid({ projects }: SpotlightGridProps) {
             key={project.id}
             href={project.link || `/projects/${project.title.toLowerCase().replace(/\s+/g, '-')}`}
             onMouseMove={onMouseMove}
-            className="spotlight-card group relative h-[400px] overflow-hidden rounded-2xl bg-white/5 border border-white/5"
+            className="spotlight-card group relative h-[400px] overflow-hidden rounded-2xl bg-background/5 border border-border/50"
             style={{
                 // Default values to prevent errors before JS runs
                 "--mouse-x": "-100px",
@@ -53,30 +53,32 @@ export function SpotlightGrid({ projects }: SpotlightGridProps) {
             <div 
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10"
                 style={{
-                    background: `radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.06), transparent 40%)`
+                    background: `radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), var(--foreground), transparent 40%)`,
+                    opacity: 0.1
                 }}
             />
             <div 
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-20"
                 style={{
-                    background: `radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.4), transparent 40%)`,
+                    background: `radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), var(--foreground), transparent 40%)`,
                     maskImage: `linear-gradient(#fff 0 0)`,
                     WebkitMaskImage: `linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)`,
                     WebkitMaskComposite: `xor`,
                     maskComposite: `exclude`,
-                    padding: `1px`
+                    padding: `1px`,
+                    opacity: 0.4
                 }}
             />
 
             <div className="card-content relative z-30 h-full flex flex-col justify-end p-8">
               <div className="mb-auto opacity-50 group-hover:opacity-100 transition-opacity">
-                 <span className="text-xs font-mono uppercase tracking-widest border border-white/20 px-2 py-1 rounded">
+                 <span className="text-xs font-mono uppercase tracking-widest border border-border px-2 py-1 rounded">
                     {project.category}
                  </span>
               </div>
               
-              <h3 className="text-2xl font-bold mb-2 group-hover:text-white transition-colors">{project.title}</h3>
-              <p className="text-neutral-400 text-sm leading-relaxed line-clamp-2">
+              <h3 className="text-2xl font-bold mb-2 group-hover:text-foreground transition-colors">{project.title}</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
                 {project.description}
               </p>
             </div>

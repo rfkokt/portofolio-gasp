@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import Link from "next/link";
 
@@ -109,30 +110,22 @@ export function FractureAbout() {
         slice.addEventListener("mouseleave", resetState);
       });
 
-      // Section Label Highlight (Existing)
+      // Section Label Highlight (Class Toggle)
       const label = container.current?.querySelector(".section-label");
       if (label) {
-        gsap.fromTo(label, 
-            { color: "#666", borderColor: "#222" },
-            { 
-                color: "#fff", 
-                borderColor: "rgba(255,255,255,0.5)",
-                duration: 0.5,
-                scrollTrigger: {
-                    trigger: container.current,
-                    start: "top center",
-                    end: "bottom center",
-                    toggleActions: "play reverse play reverse",
-                }
-            }
-        );
+        ScrollTrigger.create({
+            trigger: container.current,
+            start: "top center",
+            end: "bottom center",
+            toggleClass: { targets: label, className: "active" }
+        });
       }
     },
     { scope: container }
   );
 
   return (
-    <section id="about" ref={container} className="h-screen w-full bg-black overflow-hidden flex flex-col items-center justify-center relative border-t border-[#222]">
+    <section id="about" ref={container} className="h-screen w-full bg-background overflow-hidden flex flex-col items-center justify-center relative border-t border-border">
       <div className="section-label transition-colors duration-500">[ 02. ABOUT ]</div>
       
       {/* Container for the stacked folders */}
@@ -141,7 +134,7 @@ export function FractureAbout() {
           <Link 
             key={project.id} 
             href={`/projects/${project.slug}`}
-            className="folder-slice relative h-full bg-[#111] border-r border-white/20 transition-all duration-500 ease-out overflow-hidden group first:rounded-l-xl last:rounded-r-xl last:border-r-0 hover:z-20"
+            className="folder-slice relative h-full bg-muted border-r border-border transition-all duration-500 ease-out overflow-hidden group first:rounded-l-xl last:rounded-r-xl last:border-r-0 hover:z-20"
             style={{
                 flex: "1 1 0%", // Start equal
                 minWidth: "60px", // Prevent crushing
@@ -161,7 +154,7 @@ export function FractureAbout() {
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
                 <div className="relative w-full h-full flex items-center justify-center">
                     {/* ID Background - Visible on mobile now, increased contrast */}
-                    <span className="absolute top-2 left-2 text-xl md:top-4 md:left-4 md:text-4xl font-black text-white/50 md:text-white/20 group-hover:text-white/60 transition-colors">
+                    <span className="absolute top-2 left-2 text-xl md:top-4 md:left-4 md:text-4xl font-black text-foreground/50 md:text-foreground/20 group-hover:text-foreground/60 transition-colors">
                         0{project.id}
                     </span>
 
@@ -169,7 +162,7 @@ export function FractureAbout() {
                     <div className="flex flex-col items-center gap-4 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                          {/* Rotated Title */}
                         <div className="rotate-[-90deg] whitespace-nowrap origin-center transform">
-                            <span className="text-white font-mono text-sm md:text-lg tracking-widest uppercase border border-white/50 px-3 py-1 bg-black/50 backdrop-blur-sm">
+                            <span className="text-foreground font-mono text-sm md:text-lg tracking-widest uppercase border border-border px-3 py-1 bg-background/50 backdrop-blur-sm">
                                 {project.title}
                             </span>
                         </div>
@@ -181,9 +174,9 @@ export function FractureAbout() {
       </div>
 
        <div className="absolute bottom-10 left-6 md:left-20 max-w-2xl z-20 pointer-events-none">
-         <div className="bg-black/60 backdrop-blur-md p-8 border border-white/10 rounded-xl pointer-events-auto">
-            <h2 className="text-4xl font-bold mb-6 font-mono">About RDev</h2>
-            <div className="space-y-4 text-sm text-neutral-300 leading-relaxed">
+         <div className="bg-background/60 backdrop-blur-md p-8 border border-border rounded-xl pointer-events-auto">
+            <h2 className="text-4xl font-bold mb-6 font-mono text-foreground">About RDev</h2>
+            <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
                 <p>
                     I'm a Frontend Developer with a passion for React, Next.js, and TypeScript. 
                     But what really drives me is building interfaces that don't just look good—they work for everyone.
@@ -194,7 +187,7 @@ export function FractureAbout() {
             </div>
             
             <div className="mt-8">
-                <Link href="/projects" className="inline-block border border-white/20 hover:bg-white hover:text-black text-white px-6 py-3 rounded-lg font-mono text-sm tracking-widest uppercase transition-colors">
+                <Link href="/projects" className="inline-block border border-border hover:bg-foreground hover:text-background text-foreground px-6 py-3 rounded-lg font-mono text-sm tracking-widest uppercase transition-colors">
                     View All Projects
                 </Link>
             </div>

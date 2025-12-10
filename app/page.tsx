@@ -21,7 +21,7 @@ export default async function Home() {
   ]);
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white">
+    <main className="min-h-screen bg-background text-foreground">
       <VelocityHero />
       <LensSection />
       <FractureAbout />

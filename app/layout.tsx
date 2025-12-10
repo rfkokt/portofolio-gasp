@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { GSAPProvider } from "@/components/providers/GSAPProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
@@ -22,15 +23,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} font-sans antialiased bg-[#050505] text-white cursor-crosshair`}
+        className={`${spaceGrotesk.variable} font-sans antialiased bg-background text-foreground cursor-crosshair`}
       >
-        <GSAPProvider>
-          <Header />
-          {children}
-          <Footer />
-        </GSAPProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <GSAPProvider>
+            <Header />
+            {children}
+            <Footer />
+          </GSAPProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -46,7 +46,7 @@ export function LensSection() {
     <section
       id="lens"
       ref={containerRef}
-      className="relative h-screen w-full bg-black overflow-hidden border-t border-[#222] select-none cursor-crosshair"
+      className="relative h-screen w-full bg-background overflow-hidden border-t border-border select-none cursor-crosshair"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={
@@ -56,7 +56,7 @@ export function LensSection() {
         } as React.CSSProperties
       }
     >
-      <div className="section-label text-white border-white absolute top-8 left-8 z-20 font-mono text-[10px] tracking-widest border px-2 py-1 rounded backdrop-blur-sm bg-black/50 uppercase">
+      <div className="section-label text-foreground border-foreground absolute top-8 left-8 z-20 font-mono text-[10px] tracking-widest border px-2 py-1 rounded backdrop-blur-sm bg-background/50 uppercase">
         [ 01. MISSION ]
       </div>
 
@@ -70,22 +70,22 @@ export function LensSection() {
         }}
       />
 
-      <div className="lens-ui absolute inset-0 grid grid-cols-[1fr_2fr_1fr] gap-16 p-16 place-content-center pointer-events-none text-[#333]">
-        <div className="flex flex-col justify-between h-full py-20 border-r pr-10 border-white/5">
+      <div className="lens-ui absolute inset-0 grid grid-cols-[1fr_2fr_1fr] gap-16 p-16 place-content-center pointer-events-none text-muted-foreground">
+        <div className="flex flex-col justify-between h-full py-20 border-r pr-10 border-border/50">
           <div className="space-y-4 font-mono">
            {/* Placeholder dimmed UI */}
           </div>
         </div>
         <div className="flex justify-center items-center text-center">
             <div className="space-y-2">
-                <h2 className="text-[6vw] font-black leading-none opacity-50">MISSION</h2>
-                <p className="max-w-md mx-auto text-sm opacity-60 hidden md:block">
+                <h2 className="text-[6vw] font-black leading-none opacity-50 text-foreground">MISSION</h2>
+                <p className="max-w-md mx-auto text-sm opacity-60 hidden md:block text-muted-foreground">
                     Hover to reveal the core directive.
                 </p>
             </div>
         </div>
-        <div className="flex flex-col justify-end h-full py-20 border-l pl-10 text-right border-white/5">
-          <div className="flex justify-between border-b border-[#222] py-4 font-mono">
+        <div className="flex flex-col justify-end h-full py-20 border-l pl-10 text-right border-border/50">
+          <div className="flex justify-between border-b border-border py-4 font-mono">
             {/* Placeholder dimmed UI */}
           </div>
         </div>
@@ -102,16 +102,16 @@ export function LensSection() {
       />
 
       <div
-        className="lens-ui absolute inset-0 flex items-center justify-center pointer-events-none text-white p-12 transition-[mask-image] duration-300 ease-in-out"
+        className="lens-ui absolute inset-0 flex items-center justify-center pointer-events-none text-foreground p-12 transition-[mask-image] duration-300 ease-in-out"
         style={{
           ...maskStyle,
         }}
       >
-        <div className="max-w-4xl text-center space-y-8 bg-black/40 backdrop-blur-md p-12 rounded-2xl border border-white/10">
+        <div className="max-w-4xl text-center space-y-8 bg-background/40 backdrop-blur-md p-12 rounded-2xl border border-border">
             <h2 className="text-5xl font-bold tracking-tight font-mono text-[#06b6d4]">
                 Engineering empathy into every component
             </h2>
-            <div className="space-y-6 text-lg leading-relaxed text-neutral-200">
+            <div className="space-y-6 text-lg leading-relaxed text-foreground">
                 <p>
                     Here's the deal: I believe every line of code I write should make the web a little more welcoming. 
                     No fancy jargon, no "good enough" - just digital spaces that work how you need them to.
@@ -129,7 +129,7 @@ export function LensSection() {
         <div
             ref={hudRef}
             className={cn(
-                "absolute w-[250px] h-[250px] border border-white/50 rounded-full z-50 pointer-events-none animate-spin-slow transition-opacity duration-300",
+                "absolute w-[250px] h-[250px] border border-border rounded-full z-50 pointer-events-none animate-spin-slow transition-opacity duration-300",
                 isHovered ? "opacity-100" : "opacity-0"
             )}
             style={{

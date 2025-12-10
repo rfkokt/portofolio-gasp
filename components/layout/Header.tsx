@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { name: "01. MISSION", path: "/#lens" },
@@ -33,29 +34,30 @@ export function Header() {
     <>
       <header
         ref={headerRef}
-        className="fixed top-0 w-full z-50 px-6 md:px-8 py-6 flex justify-between items-center bg-black/50 backdrop-blur-md border-b border-white/5 transition-all duration-300"
+        className="fixed top-0 w-full z-50 px-6 md:px-8 py-6 flex justify-between items-center bg-background/50 backdrop-blur-md border-b border-border transition-all duration-300"
       >
-        <Link href="/" className="font-bold text-xl tracking-tighter text-white z-50">
+        <Link href="/" className="font-bold text-xl tracking-tighter text-foreground z-50">
           AETHER
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex gap-6 uppercase text-xs font-bold text-neutral-500">
+        <nav className="hidden md:flex gap-6 uppercase text-xs font-bold text-muted-foreground items-center">
           {navItems.map((item) => (
               <Link
                   key={item.name}
                   href={item.path}
                   onClick={(e) => handleScroll(e, item.path)}
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
               >
                   {item.name}
               </Link>
           ))}
+          <ThemeToggle />
         </nav>
 
         {/* Mobile Menu Toggle */}
         <button 
-            className="md:hidden text-xs font-bold border border-white/20 px-4 py-2 rounded hover:bg-white hover:text-black transition-colors text-white z-50 uppercase w-[80px]"
+            className="md:hidden text-xs font-bold border border-border px-4 py-2 rounded hover:bg-foreground hover:text-background transition-colors text-foreground z-50 uppercase w-[80px]"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? "CLOSE" : "MENU"}
@@ -64,7 +66,7 @@ export function Header() {
 
       {/* Mobile Menu Overlay */}
       <div className={cn(
-          "fixed inset-0 bg-black z-40 flex flex-col justify-center items-center gap-8 transition-transform duration-500 md:hidden",
+          "fixed inset-0 bg-background z-40 flex flex-col justify-center items-center gap-8 transition-transform duration-500 md:hidden",
           isMenuOpen ? "translate-x-0" : "translate-x-full"
       )}>
           {navItems.map((item) => (
@@ -72,11 +74,14 @@ export function Header() {
                 key={item.name}
                 href={item.path}
                 onClick={(e) => handleScroll(e, item.path)}
-                className="text-2xl font-bold text-white uppercase tracking-widest hover:text-neutral-400 transition-colors"
+                className="text-2xl font-bold text-foreground uppercase tracking-widest hover:text-muted-foreground transition-colors"
             >
                 {item.name}
             </Link>
           ))}
+          <div className="absolute bottom-12">
+            <ThemeToggle />
+          </div>
       </div>
     </>
   );

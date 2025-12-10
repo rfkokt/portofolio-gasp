@@ -87,7 +87,7 @@ function LiquidCard({ post, image, index }: { post: Post; image: string; index: 
             </svg>
 
             <div 
-                className="w-[300px] h-[400px] md:w-[400px] md:h-[500px] overflow-hidden border border-[#333] relative mb-8"
+                className="w-[300px] h-[400px] md:w-[400px] md:h-[500px] overflow-hidden border border-border relative mb-8"
             >
                     <div 
                     className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
@@ -96,23 +96,23 @@ function LiquidCard({ post, image, index }: { post: Post; image: string; index: 
                         filter: `url(#liquid-filter-${filterId})`
                     }}
                 />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                    <div className="absolute inset-0 bg-background/20 group-hover:bg-transparent transition-colors" />
                     
-                    <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 border border-white/10 rounded-full">
-                    <span className="text-xs font-mono text-white">
+                    <div className="absolute top-4 right-4 bg-background/50 backdrop-blur-md px-3 py-1 border border-border rounded-full">
+                    <span className="text-xs font-mono text-foreground">
                         {new Date(post.createdAt).toLocaleDateString()}
                     </span>
                     </div>
             </div>
             
             <div className="space-y-4 min-h-[160px]">
-                <h3 className="text-2xl md:text-3xl font-bold group-hover:text-neutral-400 transition-colors text-white line-clamp-2">
+                <h3 className="text-2xl md:text-3xl font-bold group-hover:text-muted-foreground transition-colors text-foreground line-clamp-2">
                     {post.title}
                 </h3>
-                    <div className="text-neutral-400 text-sm leading-relaxed line-clamp-3">
+                    <div className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
                     {post.excerpt}
                 </div>
-                <span className="text-xs font-mono uppercase text-white border-b border-white pb-1 inline-block">
+                <span className="text-xs font-mono uppercase text-foreground border-b border-foreground pb-1 inline-block">
                     Read Article
                 </span>
             </div>
@@ -179,24 +179,16 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
         });
     }
 
-    // Section Label Highlight (Existing)
-    const labels = sectionRef.current?.querySelectorAll(".section-label");
-    labels?.forEach(label => {
-        gsap.fromTo(label, 
-            { color: "#666", borderColor: "#222" },
-            { 
-                color: "#fff", 
-                borderColor: "rgba(255,255,255,0.5)",
-                duration: 0.5,
-                scrollTrigger: {
-                    trigger: sectionRef.current,
-                    start: "top center",
-                    end: "bottom center",
-                    toggleActions: "play reverse play reverse",
-                }
-            }
-        );
-    });
+      // Section Label Highlight (Class Toggle)
+      const label = sectionRef.current?.querySelector(".section-label");
+      if (label) {
+        ScrollTrigger.create({
+            trigger: sectionRef.current,
+            start: "top center",
+            end: "bottom center",
+            toggleClass: { targets: label, className: "active" }
+        });
+      }
   }, { scope: sectionRef, dependencies: [displayPosts] });
 
   // Liquid effect logic MOVED to LiquidCard to be independent
@@ -207,17 +199,17 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
     <section 
         id="liquid" 
         ref={sectionRef} 
-        className="liquid-section min-h-screen relative flex items-center border-t border-[#222] bg-black overflow-hidden"
+        className="liquid-section min-h-screen relative flex items-center border-t border-border bg-background overflow-hidden"
     >
-      <div className="section-label absolute top-32 left-8 z-20 mix-blend-difference">[ 03. ARTICLES ]</div>
+      <div className="section-label absolute top-32 left-8 z-20 text-muted-foreground">[ 03. ARTICLES ]</div>
       
       {/* Intro Text */}
       <div ref={titleRef} className="absolute left-6 md:left-20 z-10 max-w-xs md:max-w-sm pointer-events-none h-full flex flex-col justify-center top-0">
           <div>
-            <h2 className="text-5xl md:text-6xl font-black mb-6 tracking-tighter text-white mix-blend-difference">
+            <h2 className="text-5xl md:text-6xl font-black mb-6 tracking-tighter text-foreground">
                 THOUGHTS<br/>& PROCESS
             </h2>
-            <p className="text-neutral-400 text-sm leading-relaxed mix-blend-difference">
+            <p className="text-muted-foreground text-sm leading-relaxed">
                 Scroll to explore recent articles and technical breakdowns.
             </p>
           </div>
@@ -241,7 +233,7 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
         <div className="flex-shrink-0 flex items-center justify-center w-[200px] md:w-[300px] h-full">
             <Link 
                 href="/blog" 
-                className="w-32 h-32 md:w-40 md:h-40 rounded-full border border-white/20 bg-black flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 font-bold tracking-widest text-xs uppercase text-white"
+                className="w-32 h-32 md:w-40 md:h-40 rounded-full border border-border bg-background flex items-center justify-center hover:bg-foreground hover:text-background transition-all duration-300 font-bold tracking-widest text-xs uppercase text-foreground"
             >
                 View Archive
             </Link>

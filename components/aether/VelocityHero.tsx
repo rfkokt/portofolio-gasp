@@ -65,9 +65,11 @@ export function VelocityHero() {
       }
 
       const renderStars = () => {
-        // Clear with fade effect for trails (optional, using solid clear for sharpness here)
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, width, height);
+        const computedStyle = getComputedStyle(document.body);
+        const bgColor = computedStyle.getPropertyValue('--background');
+        const fgColor = computedStyle.getPropertyValue('--foreground');
+        
+        ctx.clearRect(0, 0, width, height); // Clear instead of fill
 
         stars.forEach((star) => {
             // Move star closer
@@ -90,7 +92,8 @@ export function VelocityHero() {
                 const size = (1 - star.z / fov) * 2.5; // Size based on depth
                 const alpha = (1 - star.z / fov); // Opacity based on depth
                 
-                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                // Use computed color if possible, or fallback
+                ctx.fillStyle = `rgba(128, 128, 128, ${alpha})`; 
                 ctx.beginPath();
                 ctx.arc(x2d, y2d, size, 0, Math.PI * 2);
                 ctx.fill();
@@ -106,38 +109,50 @@ export function VelocityHero() {
       };
       window.addEventListener("resize", handleResize);
 
+      // Section Label Highlight (Class Toggle)
+      const label = container.current?.querySelector(".section-label");
+      if (label) {
+        ScrollTrigger.create({
+            trigger: container.current,
+            start: "top center",
+            end: "bottom center",
+            toggleClass: { targets: label, className: "active" }
+        });
+      }
+
       return () => {
         gsap.ticker.remove(updateSkew);
         gsap.ticker.remove(renderStars);
         window.removeEventListener("resize", handleResize);
+        ScrollTrigger.getAll().forEach(t => t.kill());
       };
     },
     { scope: container }
   );
 
   return (
-    <section id="velocity" ref={container} className="h-screen flex flex-col justify-center items-center relative overflow-hidden bg-black">
+    <section id="velocity" ref={container} className="h-screen flex flex-col justify-center items-center relative overflow-hidden bg-background">
       {/* Starfield Canvas */}
       <canvas 
         ref={canvasRef} 
         className="absolute inset-0 w-full h-full pointer-events-none opacity-60"
       />
 
-      <div className="absolute top-32 text-center section-label z-10">
+      <div className="absolute top-32 text-center section-label z-10 text-muted-foreground mix-blend-difference">
         [ SCROLL TO DEFORM ]
       </div>
       
       <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
-        <div className="text-center space-y-4 mb-12 mix-blend-difference">
+        <div className="text-center space-y-4 mb-12">
             <h1 
                 ref={(el) => { textRefs.current[0] = el; }}
-                className="text-[15vw] font-black leading-[0.8] tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-600 will-change-transform whitespace-nowrap"
+                className="text-[15vw] font-black leading-[0.8] tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground to-muted-foreground will-change-transform whitespace-nowrap"
             >
                 RDEV •
             </h1>
             <h1 
                 ref={(el) => { textRefs.current[1] = el; }}
-                className="text-[15vw] font-black leading-[0.8] tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-neutral-600 to-neutral-900 will-change-transform whitespace-nowrap"
+                className="text-[15vw] font-black leading-[0.8] tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-muted-foreground to-foreground will-change-transform whitespace-nowrap"
             >
                 PORTFOLIO
             </h1>

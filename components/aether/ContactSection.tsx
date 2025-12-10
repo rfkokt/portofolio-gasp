@@ -1,81 +1,88 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { LucideIcon, Mail, Twitter, Linkedin, MessageSquare } from "lucide-react";
 
 export function ContactSection() {
   const container = useRef<HTMLElement>(null);
 
+  const [showScroll, setShowScroll] = useState(false);
+
   useGSAP(() => {
+    // ... existing GSAP code ...
     const label = container.current?.querySelector(".section-label");
     if (label) {
-        gsap.fromTo(label, 
-            { color: "#666", borderColor: "#222" },
-            { 
-                color: "#fff", 
-                borderColor: "rgba(255,255,255,0.5)",
-                duration: 0.5,
-                scrollTrigger: {
-                    trigger: container.current,
-                    start: "top center",
-                    end: "bottom center",
-                    toggleActions: "play reverse play reverse",
-                }
-            }
-        );
+        // Simple toggle class for active state
+        ScrollTrigger.create({
+            trigger: container.current,
+            start: "top center",
+            end: "bottom center",
+            toggleClass: { targets: label, className: "active" }
+        });
     }
   }, { scope: container });
 
+  useEffect(() => {
+    const checkScrollTop = () => {
+      if (!showScroll && window.scrollY > 400) {
+        setShowScroll(true);
+      } else if (showScroll && window.scrollY <= 400) {
+        setShowScroll(false);
+      }
+    };
+
+    window.addEventListener('scroll', checkScrollTop);
+    return () => window.removeEventListener('scroll', checkScrollTop);
+  }, [showScroll]);
+
   return (
-    <section id="contact" ref={container} className="min-h-[50vh] flex flex-col items-center justify-center relative border-t border-[#222] bg-black">
-      <div className="section-label transition-colors duration-500">[ 04. CONTACT ]</div>
-      
-      <div className="w-full max-w-2xl px-6 relative z-10">
-        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-12 text-center">
-            
-            <div className="mb-8 flex justify-center">
-                 <div className="inline-flex items-center gap-2 bg-white/5 text-zinc-400 px-4 py-2 rounded-full font-mono text-sm border border-white/10">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zinc-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-zinc-400"></span>
-                    </span>
-                    @rdev.cloud
-                 </div>
-            </div>
+    <section id="contact" ref={container} className="min-h-[50vh] flex flex-col items-center justify-center relative border-t border-border bg-background">
+      <div className="section-label absolute top-12 left-8 z-20 text-muted-foreground">[ 04. CONTACT ]</div>
 
-            <h3 className="text-2xl font-bold mb-2 text-white">Also follow me on other social media!</h3>
-            <p className="text-zinc-500 mb-8 text-sm">Open frequencies.</p>
+      <div className="items-center flex flex-col z-10 p-8 max-w-2xl text-center">
+            <h2 className="text-5xl md:text-7xl font-black mb-8 tracking-tighter text-foreground">
+                LET'S BUILD<br/>THE FUTURE
+            </h2>
+            <p className="text-muted-foreground mb-10 max-w-md leading-relaxed">
+                Open for collaborations, freelance projects, or just a chat about code and design.
+            </p>
 
-            <div className="flex flex-col gap-4">
-                 <div className="flex gap-4 justify-center">
-                     <SocialButton icon={Linkedin} label="LinkedIn" href="#" />
-                     <SocialButton icon={Twitter} label="X (Twitter)" href="#" />
-                 </div>
-                 
-                 <div className="grid grid-cols-2 gap-4">
-                     <iframe className="hidden" name="hidden_iframe" style={{display: 'none'}}></iframe>
-                      <a href="mailto:contact@rdev.cloud" className="bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-white py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold">
-                          <Mail size={16} /> Email me!
+            <div className="flex flex-col gap-6 w-full max-w-sm">
+                <div className="space-y-2">
+                    <h3 className="text-2xl font-bold mb-2 text-foreground">Also follow me on other social media!</h3>
+                <div className="grid grid-cols-2 gap-4">
+                      {/* Email */}
+                      <a href="mailto:contact@rdev.cloud" className="bg-foreground/5 hover:bg-foreground/10 border border-border transition-colors text-foreground py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold">
+                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/>
+                          EMAIL
                       </a>
-                      <a href="#" className="bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-white py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold">
-                          <MessageSquare size={16} /> WhatsApp
+                      
+                      {/* GitHub */}
+                      <a href="#" className="bg-foreground/5 hover:bg-foreground/10 border border-border transition-colors text-foreground py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold">
+                          GITHUB
                       </a>
-                 </div>
+                </div>
+                </div>
             </div>
-
-        </div>
       </div>
 
+      {/* Footer / Copyright */}
+      <footer className="absolute bottom-6 flex justify-between w-full px-8 text-[10px] uppercase font-mono text-muted-foreground tracking-widest opacity-80">
+          <span>© 2024 RDEV • PORTFOLIO</span>
+          <span>JAKARTA, ID</span>
+      </footer>
+      
+       {/* Scroll to Top - Floating Fixed */}
+       <button 
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className={`fixed bottom-8 right-6 z-50 bg-background/80 backdrop-blur-md border border-border text-foreground px-6 py-3 rounded-full flex items-center gap-2 text-xs font-bold hover:bg-foreground hover:text-background transition-all duration-300 shadow-lg hover:-translate-y-1 ${showScroll ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+       >
+            BACK TO TOP
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-up"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+       </button>
     </section>
   );
-}
-
-function SocialButton({ icon: Icon, label, href }: { icon: LucideIcon, label: string, href: string }) {
-    return (
-        <a href={href} className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg flex items-center gap-2 text-xs font-bold hover:bg-white/10 transition-colors">
-            <Icon size={14} /> {label}
-        </a>
-    );
 }

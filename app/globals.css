@@ -43,46 +43,55 @@
 }
 
 :root {
-  --radius: 0.75rem; /* Dark Theme Default (Lumina Style) */
-  --background: oklch(0.1 0.02 20); /* Deep Warm Black #0A0503 approx */
-  --foreground: oklch(0.98 0 0);
+  /* Light Mode Defaults */
+  --radius: 0.75rem;
+  
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.1 0 0);
 
-  --card: oklch(0.12 0.02 20);
-  --card-foreground: oklch(0.98 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.1 0 0);
 
-  --popover: oklch(0.1 0.02 20);
-  --popover-foreground: oklch(0.98 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.1 0 0);
 
-  --primary: oklch(0.65 0.22 35); /* Vibrant Orange #FF7D33 approx */
-  --primary-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.1 0 0);
+  --primary-foreground: oklch(0.985 0 0);
 
-  --secondary: oklch(0.2 0.02 20);
-  --secondary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.1 0 0);
 
-  --muted: oklch(0.2 0.02 20);
-  --muted-foreground: oklch(0.7 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.4 0 0);
 
-  --accent: oklch(0.2 0.02 20);
-  --accent-foreground: oklch(0.98 0 0);
+  --accent: oklch(0.96 0 0);
+  --accent-foreground: oklch(0.1 0 0);
 
-  --destructive: oklch(0.39 0.14 24); /* Red remains similar */
-  --destructive-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.5 0.15 20);
+  --destructive-foreground: oklch(0.985 0 0);
 
-  --border: oklch(0.2 0.02 20);
-  --input: oklch(0.2 0.02 20);
-  --ring: oklch(0.65 0.22 35); /* Orange ring */
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.9 0 0);
+  --ring: oklch(0.1 0 0);
 
   --chart-1: oklch(0.65 0.22 41);
   --chart-2: oklch(0.6 0.12 185);
   --chart-3: oklch(0.4 0.07 227);
   --chart-4: oklch(0.83 0.19 84);
   --chart-5: oklch(0.77 0.19 70);
+  
   --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.13 0.02 270);
-  --sidebar-primary: oklch(0.13 0.02 270);
+  --sidebar-foreground: oklch(0.1 0 0);
+  --sidebar-primary: oklch(0.1 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.96 0.01 270);
-  --background: oklch(0.05 0 0); /* Almost pure black (Neutral) */
+  --sidebar-accent: oklch(0.96 0 0);
+  --sidebar-border: oklch(0.9 0 0);
+  --sidebar-ring: oklch(0.1 0 0);
+}
+
+.dark {
+  /* Dark Mode Overrides */
+  --background: oklch(0.05 0 0);
   --foreground: oklch(0.985 0 0);
 
   --card: oklch(0.1 0 0);
@@ -95,18 +104,45 @@
   --primary-foreground: oklch(0.05 0 0);
 
   --secondary: oklch(0.15 0 0);
-  --bg: #050505;
-  --text: #ffffff;
+  --secondary-foreground: oklch(0.985 0 0);
+
+  --muted: oklch(0.15 0 0);
+  --muted-foreground: oklch(0.65 0 0);
+
+  --accent: oklch(0.15 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+
+  --destructive: oklch(0.39 0.14 24);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(0.2 0 0);
+  --input: oklch(0.2 0 0);
+  --ring: oklch(0.8 0 0);
+
+  --chart-1: oklch(0.65 0.22 41);
+  --chart-2: oklch(0.6 0.12 185);
+  --chart-3: oklch(0.4 0.07 227);
+  --chart-4: oklch(0.83 0.19 84);
+  --chart-5: oklch(0.77 0.19 70);
+
+  --sidebar: oklch(0.05 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.05 0 0);
+  --sidebar-accent: oklch(0.15 0 0);
+  --sidebar-border: oklch(0.2 0 0);
+  --sidebar-ring: oklch(0.8 0 0);
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
+  background-color: var(--background);
+  color: var(--foreground);
   font-family: var(--font-space-grotesk), sans-serif;
   margin: 0;
   overflow-x: hidden;
   width: 100%;
   cursor: crosshair; /* Aether cursor style */
+  font-feature-settings: "rlig" 1, "calt" 1;
 }
 
 @utility section-label {
@@ -117,11 +153,18 @@ body {
     font-family: var(--font-space-grotesk), monospace;
     font-size: 10px;
     letter-spacing: 0.1em;
-    color: #666;
-    border: 1px solid #222;
+    color: var(--muted-foreground);
+    border: 1px solid var(--border);
     padding: 4px 8px;
     border-radius: 4px;
     text-transform: uppercase;
-    background: rgba(0,0,0,0.5);
+    background: color-mix(in srgb, var(--background), transparent 50%);
     backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+
+    &.active {
+        background: var(--foreground);
+        color: var(--background);
+        border-color: var(--foreground);
+    }
 }
