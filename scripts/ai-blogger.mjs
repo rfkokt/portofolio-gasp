@@ -53,7 +53,7 @@ async function generatePost() {
 
     try {
         const completion = await openai.chat.completions.create({
-            model: "glm-4.6v", 
+            model: "glm-4-flash", 
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: `Write a blog post about: "${topic}"` }
