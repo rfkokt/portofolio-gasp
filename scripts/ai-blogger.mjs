@@ -83,7 +83,10 @@ async function main() {
         await pb.admins.authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASS);
         
         const post = await generatePost();
-        if (!post) return;
+        if (!post) {
+            console.error("❌ Failed to generate post. Exiting.");
+            process.exit(1);
+        }
 
         console.log(`📝 Saving post: "${post.title}"`);
 
