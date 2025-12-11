@@ -4,9 +4,9 @@ import 'dotenv/config';
 
 // Configuration
 const Z_AI_API_KEY = process.env.Z_AI_API_KEY;
-const PB_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090';
-const PB_ADMIN_EMAIL = 'admin@quis.com';
-const PB_ADMIN_PASS = 'admin123456';
+const PB_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://43.134.114.243:8090';
+const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL || 'rifkiokta105@gmail.com';
+const PB_ADMIN_PASS = process.env.PB_ADMIN_PASS || '99585767aA!';
 
 if (!Z_AI_API_KEY) {
     console.error("❌ Z_AI_API_KEY is missing in environment variables.");

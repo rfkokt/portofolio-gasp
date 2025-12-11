@@ -1,16 +1,21 @@
 
 import PocketBase from 'pocketbase';
 
-const pb = new PocketBase('http://127.0.0.1:8090');
+const pb = new PocketBase('https://pocketbase.rdev.cloud');
 
 async function main() {
     try {
         // Authenticate as Admin
-        await pb.admins.authWithPassword('admin@quis.com', 'admin123456');
+        await pb.admins.authWithPassword('rifkiokta105@gmail.com', '99585767aA!');
         console.log('✅ Authenticated as Admin');
 
         // Create 'posts' collection
         try {
+            try {
+                await pb.collections.delete('posts');
+                console.log('🗑️ Deleted existing "posts" collection');
+            } catch (e) { /* ignore if not exists */ }
+
             await pb.collections.create({
                 name: 'posts',
                 type: 'base',
@@ -29,11 +34,16 @@ async function main() {
             });
             console.log('✅ Collection "posts" created');
         } catch (e) {
-            console.log('ℹ️ Collection "posts" might already exist or failed:', e.originalError?.message || e.message);
+            console.log('ℹ️ Failed to create "posts":', e.originalError?.message || e.message);
         }
 
         // Create 'projects' collection
         try {
+            try {
+                await pb.collections.delete('projects');
+                console.log('🗑️ Deleted existing "projects" collection');
+            } catch (e) { /* ignore if not exists */ }
+
             await pb.collections.create({
                 name: 'projects',
                 type: 'base',
@@ -53,7 +63,7 @@ async function main() {
             });
             console.log('✅ Collection "projects" created');
         } catch (e) {
-            console.log('ℹ️ Collection "projects" might already exist or failed:', e.originalError?.message || e.message);
+            console.log('ℹ️ Failed to create "projects":', e.originalError?.message || e.message);
         }
 
     } catch (err) {
