@@ -126,8 +126,8 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   
-  // Display actual posts without duplication
-  const displayPosts = posts;
+  // Display actual posts without duplication, limit to 5 newest
+  const displayPosts = posts.slice(0, 5);
 
   useGSAP(() => {
     if (!sectionRef.current || !containerRef.current) return;

@@ -25,7 +25,7 @@ export function CodeBlock({ children, className, ...props }: CodeBlockProps) {
   };
 
   return (
-    <div className="relative my-6 rounded-lg border border-border bg-[#0d1117] overflow-hidden group">
+    <div className="relative my-6 rounded-lg border border-border bg-[#0d1117] overflow-hidden group not-prose">
       {/* Mac-like Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-[#161b22] border-b border-border">
         <div className="flex gap-2">

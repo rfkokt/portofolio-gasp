@@ -47,30 +47,88 @@ const TOPICS = [
 
 // Curated Unsplash images for each topic category (stable direct URLs)
 const TOPIC_IMAGES = {
-    "Web Security": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&h=800&fit=crop", // Cybersecurity
-    "AI Agents": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=800&fit=crop", // AI/Robot
-    "Zero Trust": "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1200&h=800&fit=crop", // Security lock
-    "Next.js": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&h=800&fit=crop", // Code
-    "React": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=800&fit=crop", // React logo style
-    "Supply Chain": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&h=800&fit=crop", // Matrix/hacker
-    "Browser Security": "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=1200&h=800&fit=crop", // Browser
-    "Large Language": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1200&h=800&fit=crop", // AI Brain
-    "Frontend Performance": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=800&fit=crop", // Speed/Dashboard
-    "CSS Features": "https://images.unsplash.com/photo-1507721999472-8ed4421c4af2?w=1200&h=800&fit=crop", // Design
-    "Deepfake": "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=1200&h=800&fit=crop", // AI Face
-    "State Management": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop", // Data flow
-    "OWASP": "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?w=1200&h=800&fit=crop" // Shield/Security
+    "Web Security": [
+        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&h=800&fit=crop", // Cybersecurity
+        "https://images.unsplash.com/photo-1563206767-5b1d972d93e7?w=1200&h=800&fit=crop", // Matrix code
+        "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?w=1200&h=800&fit=crop" // Shield
+    ],
+    "AI Agents": [
+        "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=800&fit=crop", // AI/Robot
+        "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1200&h=800&fit=crop", // Brain
+        "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=1200&h=800&fit=crop" // Face
+    ],
+    "Zero Trust": [
+        "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1200&h=800&fit=crop", // Lock
+        "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=1200&h=800&fit=crop", // Access
+        "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=1200&h=800&fit=crop", // Server
+    ],
+    "Next.js": [
+        "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&h=800&fit=crop", // Code
+        "https://images.unsplash.com/photo-1618477247222-ac59124c6282?w=1200&h=800&fit=crop", // Developer
+        "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=800&fit=crop" // Laptop
+    ],
+    "React": [
+        "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=800&fit=crop", // React logo
+        "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&h=800&fit=crop", // Technology
+        "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200&h=800&fit=crop" // Coding
+    ],
+    "Supply Chain": [
+        "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&h=800&fit=crop", // Matrix
+        "https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=1200&h=800&fit=crop", // Network
+        "https://images.unsplash.com/photo-1558494949-efc52728101c?w=1200&h=800&fit=crop" // Server
+    ],
+    "Browser Security": [
+        "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=1200&h=800&fit=crop", // Browser
+        "https://images.unsplash.com/photo-1481487484168-9b930d5b7d93?w=1200&h=800&fit=crop", // Internet
+        "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=1200&h=800&fit=crop" // Security
+    ],
+    "Large Language": [
+        "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1200&h=800&fit=crop", // Brain
+        "https://images.unsplash.com/photo-1655720828018-edd2daec9349?w=1200&h=800&fit=crop", // AI Abstract
+        "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?w=1200&h=800&fit=crop" // AI Head
+    ],
+    "Frontend Performance": [
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=800&fit=crop", // Dashboard
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop", // Analytics
+        "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=1200&h=800&fit=crop" // Network
+    ],
+    "CSS Features": [
+        "https://images.unsplash.com/photo-1507721999472-8ed4421c4af2?w=1200&h=800&fit=crop", // Design
+        "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=1200&h=800&fit=crop", // Colors
+        "https://images.unsplash.com/photo-1558655146-d09347e92766?w=1200&h=800&fit=crop" // Art
+    ],
+    "Deepfake": [
+        "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=1200&h=800&fit=crop", // AI Face
+        "https://images.unsplash.com/photo-1531297461136-82lwDe8j4e0?w=1200&h=800&fit=crop", // Robot
+        "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&h=800&fit=crop" // Cyborg
+    ],
+    "State Management": [
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop", // Data
+        "https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=1200&h=800&fit=crop", // Flow
+        "https://images.unsplash.com/photo-1556155092-490a1ba16284?w=1200&h=800&fit=crop" // Connection
+    ],
+    "OWASP": [
+        "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?w=1200&h=800&fit=crop", // Shield
+        "https://images.unsplash.com/photo-1614064548237-096f7aa5f5a9?w=1200&h=800&fit=crop", // Lock
+        "https://images.unsplash.com/photo-1603899122634-f086ca5f5ddd?w=1200&h=800&fit=crop" // Cyber
+    ]
 };
 
 function getTopicImage(topic) {
-    // Find matching image from curated set
-    for (const [key, url] of Object.entries(TOPIC_IMAGES)) {
+    // Find matching image set from curated set
+    for (const [key, urls] of Object.entries(TOPIC_IMAGES)) {
         if (topic.toLowerCase().includes(key.toLowerCase())) {
-            return url;
+            // Pick random image from the set
+            return urls[Math.floor(Math.random() * urls.length)];
         }
     }
     // Default fallback - tech abstract
-    return "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=800&fit=crop";
+    const FALLBACKS = [
+       "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=800&fit=crop",
+       "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=800&fit=crop",
+       "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&h=800&fit=crop"
+    ];
+    return FALLBACKS[Math.floor(Math.random() * FALLBACKS.length)];
 }
 
 async function generatePost(excludeTopics = new Set()) {

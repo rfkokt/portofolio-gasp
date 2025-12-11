@@ -26,7 +26,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       notFound();
   }
 
-  const relatedPosts = relatedPostsResult.items;
+  const relatedPosts = relatedPostsResult.items.slice(0, 2);
 
   return (
     <article className="min-h-screen bg-background pt-32 pb-20 transition-colors duration-300">
