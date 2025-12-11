@@ -6,6 +6,9 @@ export const revalidate = 60;
 export default async function ProjectsPage() {
   const projects = await prisma.project.findMany({
     orderBy: { createdAt: "desc" },
+  }).catch((e) => {
+    console.warn("Database not available at build time, returning empty project list.");
+    return [];
   });
 
   return (

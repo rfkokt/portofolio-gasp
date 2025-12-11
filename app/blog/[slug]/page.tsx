@@ -12,8 +12,13 @@ interface BlogPostPageProps {
 export const revalidate = 60;
 
 export async function generateStaticParams() {
-  const posts = await prisma.post.findMany({ select: { slug: true } });
-  return posts.map((post) => ({ slug: post.slug }));
+  try {
+    const posts = await prisma.post.findMany({ select: { slug: true } });
+    return posts.map((post) => ({ slug: post.slug }));
+  } catch (error) {
+    console.warn("Database not available at build time, skipping static generation for blog posts.");
+    return [];
+  }
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {

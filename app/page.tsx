@@ -18,7 +18,10 @@ export default async function Home() {
       where: { published: true },
       take: 3,
     }),
-  ]);
+  ]).catch((e) => {
+    console.warn("Database not available at build time, returning empty lists.");
+    return [[], []];
+  });
 
   return (
     <main className="min-h-screen bg-background text-foreground">
