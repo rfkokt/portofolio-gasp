@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import fpPromise from "@fingerprintjs/fingerprintjs";
 import { pb } from "@/lib/pocketbase";
 import { Share2, Heart, Hand, Zap, Copy, Check, Twitter, Linkedin, Facebook, MessageCircle, BarChart2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -53,25 +54,42 @@ export function FloatingActionBar({ postId, slug, title }: FloatingActionBarProp
   const [isInsightOpen, setIsInsightOpen] = useState(false);
 
   useEffect(() => {
-    let vid = localStorage.getItem("visitor_id");
-    if (!vid) {
-        vid = crypto.randomUUID();
-        localStorage.setItem("visitor_id", vid);
-    }
-    setVisitorId(vid);
-    fetchCounts();
+    const loadFp = async () => {
+        try {
+            const fp = await fpPromise.load();
+            const result = await fp.get();
+            const vid = result.visitorId;
+            
+            setVisitorId(vid);
+            localStorage.setItem("visitor_id", vid);
+            fetchCounts(vid);
+            
+            // Track View once we have the robust ID
+            const viewedKey = `viewed_${postId}_${vid}`; // Unique per user+post
+            if (!sessionStorage.getItem(viewedKey)) {
+                trackInteraction("view", vid);
+                sessionStorage.setItem(viewedKey, "true");
+            }
+        } catch (error) {
+            console.error("Failed to load fingerprint:", error);
+            // Fallback to random ID if FP fails (rare)
+            let vid = localStorage.getItem("visitor_id");
+            if (!vid) {
+                vid = crypto.randomUUID();
+                localStorage.setItem("visitor_id", vid);
+            }
+            setVisitorId(vid);
+            fetchCounts(vid);
+        }
+    };
+
+    loadFp();
     
-    // Load local click counts
+    // Load local click counts (visual only, server validation handles enforcement)
+    // We still keep this for instant feedback before server loads
     const storedClicks = localStorage.getItem(`clicks_${postId}`);
     if (storedClicks) {
         setUserClicks(JSON.parse(storedClicks));
-    }
-    
-    // Track View
-    const viewedKey = `viewed_${postId}`;
-    if (!sessionStorage.getItem(viewedKey)) {
-        trackInteraction("view", vid);
-        sessionStorage.setItem(viewedKey, "true");
     }
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -96,7 +114,7 @@ export function FloatingActionBar({ postId, slug, title }: FloatingActionBarProp
       }
   }
 
-  async function fetchCounts() {
+  async function fetchCounts(currentVisitorId: string = visitorId) {
     try {
         const records = await pb.collection("interactions").getFullList({
             filter: `post="${postId}"`,
@@ -104,18 +122,23 @@ export function FloatingActionBar({ postId, slug, title }: FloatingActionBarProp
         
         const newCounts = { clap: 0, love: 0, care: 0, view: 0, share: 0 };
         const userInteractions: Record<string, boolean> = {};
+        const myClicks: Record<string, number> = { clap: 0, love: 0, care: 0 };
 
         records.forEach((rec) => {
             if (rec.type in newCounts) {
                 newCounts[rec.type as keyof InteractionCounts]++;
             }
-            if (rec.visitor_id === visitorId) {
+            if (rec.visitor_id === currentVisitorId) {
                 userInteractions[rec.type] = true;
+                if (rec.type in myClicks) {
+                    myClicks[rec.type as keyof typeof myClicks]++;
+                }
             }
         });
 
         setCounts(newCounts);
         setHasInteracted(userInteractions);
+        setUserClicks(myClicks); // Enforce server-side count
     } catch (error) {
         console.error("Failed to fetch interactions:", error);
     }
@@ -408,12 +431,23 @@ function InteractionButton({ icon, count, active, disabled, color, bgColor, onCl
                     active ? color : "text-muted-foreground group-hover:text-foreground",
                     disabled ? "scale-110 saturate-[1.5]" : "scale-100"
                 )}>
-                    {/* If icon is string URL, render img */}
-                    {typeof icon === 'string' ? (
-                        <img src={icon} alt="icon" className="w-8 h-8 object-contain block" />
-                    ) : (
-                        icon
-                    )}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={typeof icon === 'string' ? icon : 'icon'}
+                            initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
+                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                            exit={{ opacity: 0, scale: 0.5, rotate: 45 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex items-center justify-center w-8 h-8"
+                        >
+                            {/* If icon is string URL, render img */}
+                            {typeof icon === 'string' ? (
+                                <img src={icon} alt="icon" className="w-full h-full object-contain block" />
+                            ) : (
+                                icon
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
                 </span>
 
                 {/* Floating Particles */}

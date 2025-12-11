@@ -1,8 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function NotFound() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
-    <main className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-6 relative overflow-hidden">
+    <main className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-6 relative overflow-hidden pt-32">
       {/* Giant 404 */}
       <h1 className="text-[40vw] md:text-[20vw] font-black leading-none tracking-tighter text-foreground opacity-10 select-none z-0">
         404
