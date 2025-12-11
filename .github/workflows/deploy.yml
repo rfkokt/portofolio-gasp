@@ -48,6 +48,9 @@ jobs:
     needs: build-and-push
     environment: production
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Copy docker-compose.yml to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -92,6 +95,9 @@ jobs:
     needs: build-and-push
     environment: development
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Copy docker-compose.yml to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
