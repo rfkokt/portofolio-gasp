@@ -1,4 +1,8 @@
 import { getPostBySlug, getPostSlugs } from "@/lib/pocketbase";
+import ReactMarkdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/atom-one-dark.css";
+
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ShareButton } from "@/components/aether/ShareButton";
@@ -61,9 +65,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         </header>
 
         <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-li:text-muted-foreground">
-            {/* Simple rendering for now, can be upgraded to Markdown component later */}
-            <div className="whitespace-pre-wrap font-sans text-foreground/90" dangerouslySetInnerHTML={{ __html: post.content }}>
-            </div>
+            <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                {post.content}
+            </ReactMarkdown>
         </div>
       </div>
     </article>

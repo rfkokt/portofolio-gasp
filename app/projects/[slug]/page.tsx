@@ -1,4 +1,8 @@
 import { getProjectBySlug, getProjectSlugs, getPbImage } from "@/lib/pocketbase";
+import ReactMarkdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/atom-one-dark.css";
+
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -88,7 +92,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         </div>
 
         <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-li:text-muted-foreground border-t border-border pt-12">
-            <div dangerouslySetInnerHTML={{ __html: project.content }}></div>
+            <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                {project.content}
+            </ReactMarkdown>
         </div>
       </div>
     </article>
