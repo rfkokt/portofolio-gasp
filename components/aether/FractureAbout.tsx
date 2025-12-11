@@ -125,11 +125,11 @@ export function FractureAbout() {
   );
 
   return (
-    <section id="about" ref={container} className="h-screen w-full bg-background overflow-hidden flex flex-col items-center justify-center relative border-t border-border md:cursor-none">
+    <section id="about" ref={container} className="h-screen w-full bg-background overflow-hidden flex flex-col items-center justify-start pt-24 md:pt-0 md:justify-center relative border-t border-border md:cursor-none">
       <div className="section-label transition-colors duration-500">[ 02. ABOUT ]</div>
       
       {/* Container for the stacked folders */}
-      <div className="fracture-container flex w-[90%] md:w-[80%] h-[60vh] md:h-[70vh] relative z-10 items-center justify-center px-4">
+      <div className="fracture-container flex w-[90%] md:w-[80%] h-[55vh] md:h-[70vh] relative z-10 items-center justify-center px-4">
         {projects.map((project, i) => (
           <Link 
             key={project.id} 
@@ -173,10 +173,10 @@ export function FractureAbout() {
         ))}
       </div>
 
-       <div className="absolute bottom-10 left-6 md:left-20 max-w-2xl z-20 md:cursor-none">
-         <div className="bg-background/60 backdrop-blur-md p-8 border border-border rounded-xl ">
-            <h2 className="text-4xl font-bold mb-6 font-mono text-foreground">About RDev</h2>
-            <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+       <div className="absolute top-[55%] left-4 right-4 md:top-auto md:bottom-10 md:left-20 md:right-auto max-w-2xl z-20 md:cursor-none">
+         <div className="bg-background/90 md:bg-background/60 backdrop-blur-md p-4 md:p-8 border border-border rounded-xl">
+            <h2 className="text-xl md:text-4xl font-bold mb-2 md:mb-6 font-mono text-foreground">About RDev</h2>
+            <div className="space-y-2 md:space-y-4 text-xs md:text-sm text-muted-foreground leading-relaxed">
                 <p>
                     I'm a Frontend Developer with a passion for React, Next.js, and TypeScript. 
                     But what really drives me is building interfaces that don't just look good—they work for everyone.
@@ -186,8 +186,8 @@ export function FractureAbout() {
                 </p>
             </div>
             
-            <div className="mt-8">
-                <Link href="/projects" className="inline-block border border-border hover:bg-foreground hover:text-background text-foreground px-6 py-3 rounded-lg font-mono text-sm tracking-widest uppercase transition-colors md:cursor-none">
+            <div className="mt-4 md:mt-8">
+                <Link href="/projects" className="inline-block border border-border hover:bg-foreground hover:text-background text-foreground px-4 md:px-6 py-2 md:py-3 rounded-lg font-mono text-xs md:text-sm tracking-widest uppercase transition-colors md:cursor-none">
                     View All Projects
                 </Link>
             </div>

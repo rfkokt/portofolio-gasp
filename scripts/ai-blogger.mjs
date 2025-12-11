@@ -2,6 +2,7 @@
 import PocketBase from 'pocketbase';
 import 'dotenv/config';
 import { fetch, Agent } from 'undici';
+import JSON5 from 'json5';
 
 // Configuration
 const Z_AI_API_KEY = process.env.Z_AI_API_KEY;
@@ -104,24 +105,24 @@ async function generatePost() {
 
         if (!content) throw new Error("No content generated");
 
-        // Cleanup potential markdown fences
-        content = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        // Robust JSON extraction: Find the first '{' and the last '}'
+        const firstOpen = content.indexOf('{');
+        const lastClose = content.lastIndexOf('}');
         
+        if (firstOpen === -1 || lastClose === -1 || lastClose < firstOpen) {
+             throw new Error("No valid JSON object found in response");
+        }
+        
+        const jsonString = content.substring(firstOpen, lastClose + 1);
+
         let postData;
         try {
-            // First attempt: Parse as is
-            postData = JSON.parse(content);
+            console.log("🧹 Parsing JSON with JSON5...");
+            postData = JSON5.parse(jsonString);
         } catch (e) {
-            console.warn("⚠️ JSON parse failed, attempting strict newline escape fix...", e.message);
-            // Fallback: If AI returned unescaped newlines in strings, escape them.
-            // This works best if the AI obeyed the "Minified" instruction, so newlines are only in content.
-            try {
-                 const escaped = content.replace(/\n/g, "\\n").replace(/\r/g, "");
-                 postData = JSON.parse(escaped);
-            } catch (e2) {
-                console.error("❌ Failed to parse JSON even after sanitation.");
-                throw e2;
-            }
+            console.error("❌ JSON5 Parse Failed:", e.message);
+            console.error("Partial Content:", jsonString.substring(0, 200) + "...");
+            throw e;
         }
         
         // Add meta
