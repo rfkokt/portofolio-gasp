@@ -106,6 +106,7 @@ function LiquidCard({ post, image, index }: { post: PostRecord; image: string; i
                     src={image}
                     alt={post.title}
                     fill
+                    priority={index === 0}
                     className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
                     sizes="(max-width: 768px) 80vw, 400px"
                     style={{
@@ -116,8 +117,12 @@ function LiquidCard({ post, image, index }: { post: PostRecord; image: string; i
                     <div className="absolute inset-0 bg-background/20 group-hover:bg-transparent transition-colors" />
                     
                     <div className="absolute top-4 right-4 bg-background/50 backdrop-blur-md px-3 py-1 border border-border rounded-full">
-                    <span className="text-xs font-mono text-foreground">
-                        {new Date(post.published_at || post.created).toLocaleDateString()}
+                    <span className="text-xs font-mono text-foreground uppercase tracking-widest">
+                        {new Date(post.published_at || post.created).toLocaleDateString('en-US', {
+                           year: 'numeric',
+                           month: 'long',
+                           day: 'numeric'
+                       })}
                     </span>
                     </div>
             </div>

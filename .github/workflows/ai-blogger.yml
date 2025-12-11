@@ -26,4 +26,6 @@ jobs:
         env:
           Z_AI_API_KEY: ${{ secrets.Z_AI_API_KEY }}
           NEXT_PUBLIC_POCKETBASE_URL: ${{ secrets.NEXT_PUBLIC_POCKETBASE_URL }}
+          PB_ADMIN_EMAIL: ${{ secrets.PB_ADMIN_EMAIL }}
+          PB_ADMIN_PASS: ${{ secrets.PB_ADMIN_PASS }}
         run: node scripts/ai-blogger.mjs

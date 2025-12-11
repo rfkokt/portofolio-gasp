@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate-blog": "node scripts/ai-blogger.mjs"
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^5.0.1",

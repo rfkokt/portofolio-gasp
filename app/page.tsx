@@ -8,20 +8,24 @@ import { ContactSection } from "@/components/aether/ContactSection";
 export const revalidate = 60; // ISR
 
 export default async function Home() {
-  const [postsResult] = await Promise.all([
-    getPosts(),
-  ]).catch((e) => {
-    console.warn("PocketBase not available at build time, returning empty lists.", e);
-    return [{ items: [] }];
+  const postsResult = await getPosts().catch((e) => {
+      console.error("Error fetching posts:", e);
+      return { items: [] };
+  });
+
+  const projectsResult = await getProjectList().catch((e) => {
+      console.error("Error fetching projects:", e);
+      return { items: [] };
   });
 
   const posts = postsResult?.items || [];
+  const projects = projectsResult?.items || [];
 
   return (
     <main className="min-h-screen bg-background text-foreground">
       <VelocityHero />
       <LensSection />
-      <FractureAbout />
+      <FractureAbout projects={projects} />
       <LiquidSection posts={posts} />
       <ContactSection />
     </main>

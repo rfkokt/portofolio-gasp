@@ -22,7 +22,7 @@ export async function getPosts() {
 
 export async function getProjectList() {
     return await pb.collection('projects').getList<ProjectRecord>(1, 50, {
-        sort: '-created',
+        // sort: '-created', // Removed as it causes 400 on remote DB
     });
 }
 

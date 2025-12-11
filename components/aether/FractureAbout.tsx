@@ -7,52 +7,20 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import Link from "next/link";
 import Image from "next/image";
+import { ProjectRecord } from "@/lib/pb_schema";
+import { getPbImage } from "@/lib/pocketbase";
 
-const projects = [
-  {
-    id: 1,
-    title: "Project Alpha",
-    slug: "project-alpha",
-    image: "https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=2600",
-    dir: 1.2
-  },
-  {
-    id: 2,
-    title: "Project Beta",
-    slug: "project-beta",
-    image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2600",
-    dir: -1.1
-  },
-  {
-    id: 3,
-    title: "Project Gamma", 
-    slug: "project-gamma",
-    image: "https://images.unsplash.com/photo-1519638399535-1b036603ac77?q=80&w=2600",
-    dir: 1.5
-  },
-  {
-    id: 4,
-    title: "Project Delta",
-    slug: "project-delta",
-    image: "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=2600",
-    dir: -1.3
-  },
-  {
-    id: 5,
-    title: "Project Epsilon",
-    slug: "project-epsilon",
-    image: "https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?q=80&w=2600",
-    dir: 1.0
-  }
-];
+interface FractureAboutProps {
+    projects: ProjectRecord[];
+}
 
-export function FractureAbout() {
+export function FractureAbout({ projects }: FractureAboutProps) {
   const container = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
       const slices = container.current?.querySelectorAll(".folder-slice");
-      if (!slices) return;
+      if (!slices || slices.length === 0) return;
       
       // Use matchMedia for responsive brightness
       const mm = gsap.matchMedia();
@@ -131,48 +99,59 @@ export function FractureAbout() {
       
       {/* Container for the stacked folders */}
       <div className="fracture-container flex w-[90%] md:w-[80%] h-[55vh] md:h-[70vh] relative z-10 items-center justify-center px-4">
-        {projects.map((project, i) => (
-          <Link 
-            key={project.id} 
-            href={`/projects/${project.slug}`}
-            className="folder-slice relative h-full bg-muted border-r border-border transition-all duration-500 ease-out overflow-hidden group first:rounded-l-xl last:rounded-r-xl last:border-r-0 hover:z-20 md:cursor-none will-change-transform"
-            style={{
-                flex: "1 1 0%", // Start equal
-                minWidth: "60px", // Prevent crushing
-                marginRight: "-20px", // Overlap effect
-                zIndex: i,
-                maskImage: "linear-gradient(to right, black 95%, transparent 100%)" // Soft edge for overlap
-            }}
-          >
-            <Image 
-                src={project.image}
-                alt={project.title}
-                fill
-                className="object-cover object-center grayscale-0 md:grayscale md:group-hover:grayscale-0 transition-all duration-700 ease-out opacity-100 md:opacity-60 md:group-hover:opacity-100"
-                sizes="(max-width: 768px) 25vw, 20vw"
-            />
-            
-            {/* Folder Tab/Label */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
-                <div className="relative w-full h-full flex items-center justify-center">
-                    {/* ID Background - Visible on mobile now, increased contrast */}
-                    <span className="absolute top-2 left-2 text-xl md:top-4 md:left-4 md:text-4xl font-black text-foreground/50 md:text-foreground/20 group-hover:text-foreground/60 transition-colors">
-                        0{project.id}
-                    </span>
+        {projects.length === 0 ? (
+             <div className="flex flex-col items-center justify-center text-center space-y-4 border border-dashed border-border/30 p-12 rounded-xl bg-background/20 backdrop-blur-sm">
+                <div className="text-4xl md:text-6xl font-black text-muted-foreground/20 tracking-tighter">
+                    NO SIGNAL
+                </div>
+                <p className="text-sm font-mono text-muted-foreground tracking-widest uppercase">
+                    [ Projects Database Empty ]
+                </p>
+             </div>
+        ) : (
+            projects.map((project, i) => (
+            <Link 
+                key={project.id} 
+                href={`/projects/${project.slug}`}
+                className="folder-slice relative h-full bg-muted border-r border-border transition-all duration-500 ease-out overflow-hidden group first:rounded-l-xl last:rounded-r-xl last:border-r-0 hover:z-20 md:cursor-none will-change-transform"
+                style={{
+                    flex: "1 1 0%", // Start equal
+                    minWidth: "60px", // Prevent crushing
+                    marginRight: "-20px", // Overlap effect
+                    zIndex: i,
+                    maskImage: "linear-gradient(to right, black 95%, transparent 100%)" // Soft edge for overlap
+                }}
+            >
+                <Image 
+                    src={getPbImage(project.collectionId, project.id, project.image)}
+                    alt={project.title}
+                    fill
+                    className="object-cover object-center grayscale-0 md:grayscale md:group-hover:grayscale-0 transition-all duration-700 ease-out opacity-100 md:opacity-60 md:group-hover:opacity-100"
+                    sizes="(max-width: 768px) 25vw, 20vw"
+                />
+                
+                {/* Folder Tab/Label */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
+                    <div className="relative w-full h-full flex items-center justify-center">
+                        {/* ID Background - Visible on mobile now, increased contrast */}
+                        <span className="absolute top-2 left-2 text-xl md:top-4 md:left-4 md:text-4xl font-black text-foreground/50 md:text-foreground/20 group-hover:text-foreground/60 transition-colors">
+                            0{i + 1}
+                        </span>
 
-                    {/* Vertical Title Group */}
-                    <div className="flex flex-col items-center gap-4 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                         {/* Rotated Title */}
-                        <div className="rotate-[-90deg] whitespace-nowrap origin-center transform">
-                            <span className="text-foreground font-mono text-sm md:text-lg tracking-widest uppercase border border-border px-3 py-1 bg-background/50 backdrop-blur-sm">
-                                {project.title}
-                            </span>
+                        {/* Vertical Title Group */}
+                        <div className="flex flex-col items-center gap-4 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            {/* Rotated Title */}
+                            <div className="rotate-[-90deg] whitespace-nowrap origin-center transform">
+                                <span className="text-foreground font-mono text-sm md:text-lg tracking-widest uppercase border border-border px-3 py-1 bg-background/50 backdrop-blur-sm">
+                                    {project.title}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+            ))
+        )}
       </div>
 
        <div className="absolute top-[55%] left-4 right-4 md:top-auto md:bottom-10 md:left-20 md:right-auto max-w-2xl z-20 md:cursor-none">
