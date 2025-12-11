@@ -71,16 +71,18 @@ jobs:
             mkdir -p ~/app-prod
             cd ~/app-prod
             
-            # Set Prod Env Vars
-            export IMAGE_TAG=main
-            export ENV_NAME=prod
-            export APP_PORT=${{ vars.APP_PORT }} 
-            export PB_PORT=${{ vars.PB_PORT }}
-            export NEXT_PUBLIC_POCKETBASE_URL=${{ vars.NEXT_PUBLIC_POCKETBASE_URL }}
-            export GITHUB_REPOSITORY=${{ github.repository }}
+            # Create .env file for docker compose
+            cat > .env << EOF
+            IMAGE_TAG=main
+            ENV_NAME=prod
+            APP_PORT=${{ vars.APP_PORT }}
+            PB_PORT=${{ vars.PB_PORT }}
+            NEXT_PUBLIC_POCKETBASE_URL=${{ vars.NEXT_PUBLIC_POCKETBASE_URL }}
+            GITHUB_REPOSITORY=${{ github.repository }}
+            EOF
             
             # Pull new image
-            docker pull ghcr.io/${{ github.repository }}:$IMAGE_TAG
+            docker pull ghcr.io/${{ github.repository }}:main
             
             # Restart containers
             docker compose down
@@ -118,16 +120,18 @@ jobs:
             mkdir -p ~/app-dev
             cd ~/app-dev
             
-            # Set Dev Env Vars
-            export IMAGE_TAG=dev
-            export ENV_NAME=dev
-            export APP_PORT=${{ vars.APP_PORT }} 
-            export PB_PORT=${{ vars.PB_PORT }}
-            export NEXT_PUBLIC_POCKETBASE_URL=${{ vars.NEXT_PUBLIC_POCKETBASE_URL }}
-            export GITHUB_REPOSITORY=${{ github.repository }}
+            # Create .env file for docker compose
+            cat > .env << EOF
+            IMAGE_TAG=dev
+            ENV_NAME=dev
+            APP_PORT=${{ vars.APP_PORT }}
+            PB_PORT=${{ vars.PB_PORT }}
+            NEXT_PUBLIC_POCKETBASE_URL=${{ vars.NEXT_PUBLIC_POCKETBASE_URL }}
+            GITHUB_REPOSITORY=${{ github.repository }}
+            EOF
             
             # Pull new image (dev tag)
-            docker pull ghcr.io/${{ github.repository }}:$IMAGE_TAG
+            docker pull ghcr.io/${{ github.repository }}:dev
             
             # Restart containers
             docker compose down
