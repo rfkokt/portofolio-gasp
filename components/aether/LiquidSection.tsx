@@ -126,8 +126,8 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   
-  // Create multiple dummy posts if we don't have enough to demonstrate scrolling
-  const displayPosts = posts.length > 0 ? [...posts, ...posts, ...posts].slice(0, 5) : [];
+  // Display actual posts without duplication
+  const displayPosts = posts;
 
   useGSAP(() => {
     if (!sectionRef.current || !containerRef.current) return;

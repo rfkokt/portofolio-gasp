@@ -48,7 +48,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <header className="mb-20 pb-12 border-b border-border">
             <div className="flex justify-between items-start mb-6">
                  <div className="flex gap-4 text-xs font-mono text-muted-foreground uppercase tracking-widest">
-                    <span>{new Date(post.created).toLocaleDateString()}</span>
+                    <span>
+                        {new Date(post.published_at || post.created).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        })}
+                    </span>
                     <span>//</span>
                     {/* View count removed as it requires custom implementation in PB */}
                     <span>Article</span>

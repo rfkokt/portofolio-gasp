@@ -37,17 +37,31 @@ async function generatePost() {
     console.log(`🤖 Generating post about: "${topic}"...`);
 
     const systemPrompt = `
-    You are an expert technical writer. Write a technical blog post about the given topic.
-    The output MUST be valid JSON only. NO markdown formatting. NO \`\`\`json fences.
+    You are an expert technical writer. Write a comprehensive, high-quality technical blog post about the given topic.
+    
+    CRITICAL INSTRUCTIONS:
+    1. **Accuracy**: Ensure all information is factual and up-to-date. Do not hallucinate APIs or features.
+    2. **Structure**: 
+       - Start with a clear **Introduction** (problem statement & solution).
+       - Use **Headings (## and ###)** to organize sections logically.
+       - Include **Code Examples** (use \`\`\`language fences) with comments explaining complex parts.
+       - Use **Bold text** for key concepts or emphasis.
+       - Use **Lists** (bullet/numbered) to break up dense text.
+       - End with a **Conclusion** summarizing key takeaways.
+       - **MANDATORY**: detailed '## References' section at the end with valid URLs to official docs (e.g., Next.js, React, Tailwind, MDN).
+    3. **Tone**: Professional, educational, yet accessible. Avoid fluff.
+    4. **Formatting**: Use double newlines between paragraphs for excellent readability.
+
+    The output MUST be valid JSON only. NO markdown formatting around the JSON itself.
     Just the raw JSON object.
     
     The JSON structure must be:
     {
-        "title": "Catchy Title",
+        "title": "Engaging & SEO-Friendly Title",
         "slug": "kebab-case-slug-unique",
-        "excerpt": "Short engaging summary (max 2 sentences)",
-        "content": "Markdown formatted content (use #, ##, -, *, \`\`\` for code blocks). Make it detailed and educational.",
-        "tags": ["tag1", "tag2"]
+        "excerpt": "Compelling summary (2-3 sentences) optimized for card previews.",
+        "content": "The full Markdown content string adhering to the instructions above.",
+        "tags": ["relevant", "tech", "tags"]
     }
     `;
 
