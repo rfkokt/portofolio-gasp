@@ -4,10 +4,10 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Link from "next/link";
-import { Project } from "@prisma/client";
+import { ProjectRecord } from "@/lib/pb_schema";
 
 interface ProjectListProps {
-  projects: Project[];
+  projects: ProjectRecord[];
 }
 
 export function ProjectList({ projects }: ProjectListProps) {
@@ -39,7 +39,7 @@ export function ProjectList({ projects }: ProjectListProps) {
         >
           <div className="mb-4">
             <span className="text-xs font-mono text-purple-400 uppercase tracking-wider">
-              {project.category}
+              {project.tech_stack?.[0] || 'Project'}
             </span>
             <h3 className="text-2xl font-bold mt-2 group-hover:text-purple-200 transition-colors">
               {project.title}
@@ -51,18 +51,18 @@ export function ProjectList({ projects }: ProjectListProps) {
           </p>
 
           <div className="flex flex-wrap gap-2 mt-auto">
-            {project.tech.split(",").map((t) => (
+            {(project.tech_stack || []).map((t) => (
               <span
                 key={t}
                 className="text-xs px-2 py-1 rounded-full bg-white/5 text-zinc-300 border border-white/5"
               >
-                {t.trim()}
+                {t}
               </span>
             ))}
           </div>
 
           <Link
-            href={project.link || "#"}
+            href={project.demo_url || "#"}
             className="absolute inset-0 z-10"
             aria-label={`View ${project.title}`}
           />

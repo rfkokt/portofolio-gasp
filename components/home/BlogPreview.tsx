@@ -4,13 +4,13 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Link from "next/link";
-import { Post } from "@prisma/client";
+import { PostRecord } from "@/lib/pb_schema";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
 interface BlogPreviewProps {
-  posts: Post[];
+  posts: PostRecord[];
 }
 
 export function BlogPreview({ posts }: BlogPreviewProps) {
@@ -54,7 +54,7 @@ export function BlogPreview({ posts }: BlogPreviewProps) {
             <article className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-2 max-w-2xl">
                     <div className="flex items-center gap-3 text-xs font-mono text-zinc-500 uppercase tracking-wider">
-                        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                        <span>{new Date(post.published_at || post.created).toLocaleDateString()}</span>
                         <span className="w-1 h-1 rounded-full bg-zinc-700" />
                         <span>Development</span>
                     </div>

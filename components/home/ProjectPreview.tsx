@@ -4,13 +4,13 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Link from "next/link";
-import { Project } from "@prisma/client";
+import { ProjectRecord } from "@/lib/pb_schema";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
 interface ProjectPreviewProps {
-  projects: Project[];
+  projects: ProjectRecord[];
 }
 
 export function ProjectPreview({ projects }: ProjectPreviewProps) {
@@ -53,7 +53,7 @@ export function ProjectPreview({ projects }: ProjectPreviewProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {projects.map((project) => (
-          <Link href={project.link || `/projects/${project.title.toLowerCase().replace(/\s+/g, '-')}`} key={project.id} className="project-card-home group">
+          <Link href={project.demo_url || `/projects/${project.slug}`} key={project.id} className="project-card-home group">
             <div className="aspect-[4/3] rounded-2xl bg-zinc-900 border border-white/10 overflow-hidden relative mb-6">
                 <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                  {/* Placeholder for project image */}
@@ -64,8 +64,8 @@ export function ProjectPreview({ projects }: ProjectPreviewProps) {
             
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono text-primary uppercase tracking-wider">{project.category}</span>
-                    <span className="text-xs text-zinc-600">{new Date(project.createdAt).getFullYear()}</span>
+                    <span className="text-xs font-mono text-primary uppercase tracking-wider">{project.tech_stack?.[0] || 'Project'}</span>
+                    <span className="text-xs text-zinc-600">{new Date(project.created).getFullYear()}</span>
                 </div>
                 <h3 className="text-2xl font-bold group-hover:text-primary transition-colors">{project.title}</h3>
                 <p className="text-sm text-zinc-500 line-clamp-2">{project.description}</p>

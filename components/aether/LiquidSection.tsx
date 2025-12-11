@@ -5,12 +5,12 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import Link from "next/link";
-import { Post } from "@prisma/client";
+import { PostRecord } from "@/lib/pb_schema";
 
 gsap.registerPlugin(ScrollTrigger);
 
 interface LiquidSectionProps {
-  posts: Post[];
+  posts: PostRecord[];
 }
 
 const ARTICLE_IMAGES = [
@@ -22,7 +22,7 @@ const ARTICLE_IMAGES = [
 ];
 
 // Inner component for isolated liquid effect
-function LiquidCard({ post, image, index }: { post: Post; image: string; index: number }) {
+function LiquidCard({ post, image, index }: { post: PostRecord; image: string; index: number }) {
   const turbulenceRef = useRef<SVGFETurbulenceElement>(null);
   const filterId = useId().replace(/:/g, ""); // React 18 useId for unique ID
   
@@ -100,7 +100,7 @@ function LiquidCard({ post, image, index }: { post: Post; image: string; index: 
                     
                     <div className="absolute top-4 right-4 bg-background/50 backdrop-blur-md px-3 py-1 border border-border rounded-full">
                     <span className="text-xs font-mono text-foreground">
-                        {new Date(post.createdAt).toLocaleDateString()}
+                        {new Date(post.published_at || post.created).toLocaleDateString()}
                     </span>
                     </div>
             </div>
