@@ -1,6 +1,7 @@
 // import OpenAI from 'openai'; // Removed, using fetch
 import PocketBase from 'pocketbase';
 import 'dotenv/config';
+import { fetch, Agent } from 'undici';
 
 // Configuration
 const Z_AI_API_KEY = process.env.Z_AI_API_KEY;
@@ -12,6 +13,12 @@ if (!Z_AI_API_KEY) {
     console.error("❌ Z_AI_API_KEY is missing in environment variables.");
     process.exit(1);
 }
+
+// Configure custom agent with 20 minute timeout
+const dispatcher = new Agent({
+    bodyTimeout: 1200000,
+    headersTimeout: 1200000
+});
 
 // Note: We use native fetch for the Anthropic-compatible endpoint
 const ANTHROPIC_ENDPOINT = 'https://api.z.ai/api/anthropic/v1/messages';
@@ -68,6 +75,7 @@ async function generatePost() {
 
     try {
         const response = await fetch(ANTHROPIC_ENDPOINT, {
+            dispatcher,
             method: 'POST',
             headers: {
                 'x-api-key': Z_AI_API_KEY,
@@ -75,7 +83,7 @@ async function generatePost() {
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
-                model: "glm-4.6",
+                model: "glm-4.6v",
                 max_tokens: 3000,
                 messages: [
                     { 
