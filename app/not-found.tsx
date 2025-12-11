@@ -2,14 +2,14 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-6">
+    <main className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-6 relative overflow-hidden">
       {/* Giant 404 */}
-      <h1 className="text-[20vw] font-black leading-none tracking-tighter text-foreground opacity-10 select-none">
+      <h1 className="text-[40vw] md:text-[20vw] font-black leading-none tracking-tighter text-foreground opacity-10 select-none z-0">
         404
       </h1>
       
       {/* Overlay Content */}
-      <div className="absolute flex flex-col items-center gap-6">
+      <div className="absolute z-10 flex flex-col items-center gap-6 w-full px-4">
         <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
           // PAGE NOT FOUND
         </p>

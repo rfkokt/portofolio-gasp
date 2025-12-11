@@ -6,6 +6,7 @@ import rehypeSlug from "rehype-slug";
 import { TableOfContents } from "@/components/blog/TableOfContents";
 import { FloatingActionBar } from "@/components/blog/FloatingActionBar";
 import { ShareButton } from "@/components/aether/ShareButton";
+import { CodeBlock } from "@/components/blog/CodeBlock";
 import { getPostBySlug, getRelatedPosts } from "@/lib/pocketbase";
 
 interface BlogPostPageProps {
@@ -76,6 +77,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                                 >
                                     {children}
                                 </a>
+                            ),
+                            pre: ({ children, ...props }) => (
+                                <CodeBlock {...props}>
+                                    {children}
+                                </CodeBlock>
                             )
                         }}
                     >
