@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import Link from "next/link";
+import Image from "next/image";
 
 const projects = [
   {
@@ -143,11 +144,12 @@ export function FractureAbout() {
                 maskImage: "linear-gradient(to right, black 95%, transparent 100%)" // Soft edge for overlap
             }}
           >
-            <div 
-                className="absolute inset-0 bg-cover bg-center grayscale-0 md:grayscale md:group-hover:grayscale-0 transition-all duration-700 ease-out opacity-100 md:opacity-60 md:group-hover:opacity-100"
-                style={{
-                    backgroundImage: `url('${project.image}')`,
-                }}
+            <Image 
+                src={project.image}
+                alt={project.title}
+                fill
+                className="object-cover object-center grayscale-0 md:grayscale md:group-hover:grayscale-0 transition-all duration-700 ease-out opacity-100 md:opacity-60 md:group-hover:opacity-100"
+                sizes="(max-width: 768px) 25vw, 20vw"
             />
             
             {/* Folder Tab/Label */}

@@ -82,9 +82,7 @@ export function Header() {
                 {item.name}
             </Link>
           ))}
-          <div className="absolute bottom-12">
-            <ThemeToggle />
-          </div>
+
       </div>
     </>
   );

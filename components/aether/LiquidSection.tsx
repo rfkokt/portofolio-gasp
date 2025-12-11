@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import Link from "next/link";
+import Image from "next/image";
 import { PostRecord } from "@/lib/pb_schema";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -95,15 +96,14 @@ function LiquidCard({ post, image, index }: { post: PostRecord; image: string; i
             <div 
                 className="w-[300px] h-[400px] md:w-[400px] md:h-[500px] overflow-hidden border border-border relative mb-8"
             >
-                    <div 
-                    className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                    <Image 
+                    src={image}
+                    alt={post.title}
+                    fill
+                    className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                    sizes="(max-width: 768px) 80vw, 400px"
                     style={{
-                        backgroundImage: `url('${image}')`,
-                        // Only apply filter if NOT mobile (this is a CSS-only check if we wanted, but inline styles are tricky with media queries)
-                        // Better to rely on the fact that if the loop above doesn't run, baseFreq stays 0.
-                        // However, to be safe and save GPU, let's conditionally apply it via class or just keep it as is since baseFreq 0 is cheap?
-                        // Actually, even with baseFreq 0, the filter pipeline takes resources.
-                        // Let's use a simple CSS class approach or just inline style it.
+                        // Only apply filter if NOT mobile
                         filter: typeof window !== 'undefined' && window.innerWidth > 768 ? `url(#liquid-filter-${filterId})` : 'none'
                     }}
                 />
