@@ -193,8 +193,6 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
 
   // Liquid effect logic MOVED to LiquidCard to be independent
 
-  if (displayPosts.length === 0) return null;
-
   return (
     <section 
         id="liquid" 
@@ -220,14 +218,25 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
         ref={containerRef}
         className="flex gap-12 md:gap-20 items-center pl-[80vw] md:pl-[40vw] pr-[10vw] h-full relative z-30"
       >
-        {displayPosts.map((post, i) => (
-            <LiquidCard 
-                key={i} 
-                post={post} 
-                image={ARTICLE_IMAGES[i % ARTICLE_IMAGES.length]} 
-                index={i} 
-            />
-        ))}
+        {displayPosts.length > 0 ? (
+            displayPosts.map((post, i) => (
+                <LiquidCard 
+                    key={i} 
+                    post={post} 
+                    image={ARTICLE_IMAGES[i % ARTICLE_IMAGES.length]} 
+                    index={i} 
+                />
+            ))
+        ) : (
+             <div className="flex-shrink-0 flex items-center justify-center h-full max-w-md">
+                 <div className="p-8 border border-border bg-background/50 backdrop-blur-md">
+                    <h3 className="text-2xl font-bold mb-4">Coming Soon</h3>
+                    <p className="text-muted-foreground">
+                        Articles are currently being curated. Check back later for technical breakdowns and insights.
+                    </p>
+                 </div>
+             </div>
+        )}
 
         {/* View All Button */}
         <div className="flex-shrink-0 flex items-center justify-center w-[200px] md:w-[300px] h-full">
