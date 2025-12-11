@@ -37,31 +37,31 @@ async function generatePost() {
     console.log(`🤖 Generating post about: "${topic}"...`);
 
     const systemPrompt = `
-    You are an expert technical writer. Write a comprehensive, high-quality technical blog post about the given topic.
+    You are an expert technical writer. Write a highly structured, engaging, and visually clean technical blog post about the given topic.
     
-    CRITICAL INSTRUCTIONS:
-    1. **Accuracy**: Ensure all information is factual and up-to-date. Do not hallucinate APIs or features.
-    2. **Structure**: 
-       - Start with a clear **Introduction** (problem statement & solution).
-       - Use **Headings (## and ###)** to organize sections logically.
-       - Include **Code Examples** (use \`\`\`language fences) with comments explaining complex parts.
-       - Use **Bold text** for key concepts or emphasis.
-       - Use **Lists** (bullet/numbered) to break up dense text.
-       - End with a **Conclusion** summarizing key takeaways.
-       - **MANDATORY**: detailed '## References' section at the end with valid URLs to official docs (e.g., Next.js, React, Tailwind, MDN).
-    3. **Tone**: Professional, educational, yet accessible. Avoid fluff.
-    4. **Formatting**: Use double newlines between paragraphs for excellent readability.
+    CRITICAL STRUCTURE INSTRUCTIONS:
+    1. **Title & Excerpt**: Engaging, SEO-friendly title and a 2-sentence summary.
+    2. **Content Body**:
+       - **Introduction**: Briefly state the problem and what the reader will learn.
+       - **Main Sections**: Use clear **H2 (##)** and **H3 (###)** headings to break up the text. NEVER write a "wall of text".
+       - **Paragraphs**: Keep paragraphs SHORT (max 3-4 lines). Use double newlines between them.
+       - **formatting**: Use **Bold** for emphasis. Use **Bullet Points** or **Numbered Lists** frequently for readability.
+       - **Code**: Use \`\`\`language blocks with comments.
+    3. **References Section**:
+       - MUST explicitly include a '## References' section at the very end.
+       - Format references as a Markdown list of links: "- [Title of Source](URL)".
+       - Use ONLY valid, real URLs to official documentation (MDN, React Docs, Vercel, etc).
 
     The output MUST be valid JSON only. NO markdown formatting around the JSON itself.
-    Just the raw JSON object.
+    IMPORTANT: Escape all newlines in the content string with \\n.
     
     The JSON structure must be:
     {
-        "title": "Engaging & SEO-Friendly Title",
-        "slug": "kebab-case-slug-unique",
-        "excerpt": "Compelling summary (2-3 sentences) optimized for card previews.",
-        "content": "The full Markdown content string adhering to the instructions above.",
-        "tags": ["relevant", "tech", "tags"]
+        "title": "Title String",
+        "slug": "kebab-case-slug",
+        "excerpt": "Short summary string",
+        "content": "Markdown content string (Intro -> H2 Sections -> H3 Subsections -> Conclusion -> ## References)",
+        "tags": ["tag1", "tag2", "tag3"]
     }
     `;
 
@@ -95,8 +95,12 @@ async function generatePost() {
 
         if (!content) throw new Error("No content generated");
 
-        // Cleanup potential markdown fences if the model ignores instruction
+        // Cleanup potential markdown fences
         content = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        
+        // Attempt to clean invalid control characters (breakpoints in JSON strings)
+        // This is a naive fix but often works for LLM output
+        content = content.replace(/\n/g, "\\n").replace(/\r/g, "");
 
         const postData = JSON.parse(content);
         

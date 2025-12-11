@@ -1,4 +1,4 @@
-import { getPostBySlug, getPostSlugs } from "@/lib/pocketbase";
+import { getPostBySlug, getPostSlugs, getRelatedPosts } from "@/lib/pocketbase";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/atom-one-dark.css";
@@ -28,12 +28,17 @@ export async function generateStaticParams() {
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
   
-  let post;
-  try {
-      post = await getPostBySlug(slug);
-  } catch (e) {
+  // Parallel data fetching
+  const [post, relatedPostsResult] = await Promise.all([
+      getPostBySlug(slug).catch(() => null),
+      getRelatedPosts(slug).catch(() => ({ items: [] }))
+  ]);
+
+  if (!post) {
       notFound();
   }
+
+  const relatedPosts = relatedPostsResult.items;
 
   return (
     <article className="min-h-screen bg-background pt-32 pb-20 transition-colors duration-300">
@@ -62,7 +67,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 <ShareButton title={post.title} text={post.excerpt} />
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-black text-foreground tracking-tighter mb-8 leading-none">
+            <h1 className="text-4xl md:text-6xl font-black text-foreground tracking-tighter leading-tight mb-8">
                 {post.title}
             </h1>
             <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
@@ -70,11 +75,41 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </p>
         </header>
 
-        <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-li:text-muted-foreground">
+        <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-li:text-muted-foreground prose-a:text-foreground prose-a:no-underline hover:prose-a:underline prose-code:text-foreground prose-pre:bg-muted/50">
             <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
                 {post.content}
             </ReactMarkdown>
         </div>
+
+        {/* Separator */}
+        <div className="my-20 border-t border-border" />
+
+        {/* RELATED ARTICLES */}
+        {relatedPosts.length > 0 && (
+            <footer className="pt-10">
+                <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-10">
+                    Read Next
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {relatedPosts.map((related) => (
+                        <Link key={related.id} href={`/blog/${related.slug}`} className="group block">
+                            <article className="h-full border border-border p-6 rounded-lg hover:bg-foreground/5 transition-colors">
+                                <h4 className="text-xl font-bold mb-3 group-hover:text-foreground transition-colors">
+                                    {related.title}
+                                </h4>
+                                <p className="text-muted-foreground text-sm line-clamp-3 leading-relaxed mb-4">
+                                    {related.excerpt}
+                                </p>
+                                <span className="text-xs font-mono text-muted-foreground">
+                                    Read Article →
+                                </span>
+                            </article>
+                        </Link>
+                    ))}
+                </div>
+            </footer>
+        )}
+
       </div>
     </article>
   );

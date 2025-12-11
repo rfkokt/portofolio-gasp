@@ -45,19 +45,23 @@ export function BlogList({ posts }: BlogListProps) {
                 </div>
                 
                 <div className="flex-1">
-                  <Link href={`/blog/${post.slug}`} className="block">
+                  <Link href={`/blog/${post.slug}`} className="block group/link">
                     <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 group-hover:translate-x-4 transition-transform duration-500 ease-out">
                       {post.title}
                     </h2>
+                    <p className="text-muted-foreground max-w-2xl leading-relaxed group-hover/link:text-foreground transition-colors">
+                        {post.excerpt}
+                    </p>
                   </Link>
-                  <p className="text-muted-foreground max-w-2xl leading-relaxed">
-                      {post.excerpt}
-                  </p>
                 </div>
 
                 <div className="text-right md:w-32 flex flex-col items-end gap-4">
                   <span className="text-xs font-mono text-muted-foreground border border-border px-2 py-1 rounded inline-block">
-                       {new Date(post.created).toLocaleDateString()}
+                       {new Date(post.published_at || post.created).toLocaleDateString('en-US', {
+                           year: 'numeric',
+                           month: 'long',
+                           day: 'numeric'
+                       })}
                   </span>
                   <div className="transition-opacity duration-300">
                     <ShareButton 

@@ -27,9 +27,7 @@ export async function getProjectList() {
 }
 
 export async function getPostBySlug(slug: string) {
-    return await pb.collection('posts').getFirstListItem<PostRecord>(`slug="${slug}"`, {
-        filter: 'published = true',
-    });
+    return await pb.collection('posts').getFirstListItem<PostRecord>(`slug="${slug}" && published = true`);
 }
 
 export async function getProjectBySlug(slug: string) {
@@ -46,5 +44,14 @@ export async function getPostSlugs() {
 export async function getProjectSlugs() {
     return await pb.collection('projects').getFullList({
         fields: 'slug',
+    });
+}
+
+export async function getRelatedPosts(currentSlug: string) {
+    // Fetch recent posts excluding the current one
+    // In a real app we might match tags, but for now simple exclusion + recent is enough
+    return await pb.collection('posts').getList<PostRecord>(1, 3, {
+        filter: `slug != "${currentSlug}" && published = true`,
+        sort: '-published_at',
     });
 }
