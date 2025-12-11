@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/${GITHUB_REPOSITORY}:${IMAGE_TAG:-latest}
+    container_name: nextjs-app-${ENV_NAME:-prod}
+    restart: always
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      - NEXT_PUBLIC_POCKETBASE_URL=${NEXT_PUBLIC_POCKETBASE_URL}
+    networks:
+      - app_network
+
+  pocketbase:
+    # Since we have a specific setup, let's use a simple alpine image and download PB or use a community image.
+    # For now, let's use 'alpine:latest' and mount the binary we can upload, or better: use `ghcr.io/muchobien/pocketbase:latest` (community) or just build one.
+    # To keep it simple for the user who has the binary in the repo (checked in logic? no binaries shouldn't be checked in).
+    # Best practice: Use a Dockerfile for PB or a trusted community image.
+    # We will use a popular community image for simplicity: `tozny/pocketbase` or `ghcr.io/muchobien/pocketbase`.
+    # Let's use `alpine:latest` and a volume mapping if we want total control, but a community image is easier.
+    image: ghcr.io/muchobien/pocketbase:latest
+    container_name: pocketbase-${ENV_NAME:-prod}
+    restart: always
+    ports:
+      - "${PB_PORT:-8090}:8090"
+    volumes:
+      - ./pocketbase/pb_data:/pb_data
+    command:
+      - --publicDir=/pb_public
+      - --http=0.0.0.0:8090
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

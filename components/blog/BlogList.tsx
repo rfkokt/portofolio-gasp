@@ -5,10 +5,10 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Link from "next/link";
 import { ShareButton } from "@/components/aether/ShareButton";
-import { Post } from "@prisma/client";
+import { PostRecord } from "@/lib/pb_schema";
 
 interface BlogListProps {
-  posts: Post[];
+  posts: PostRecord[];
 }
 
 export function BlogList({ posts }: BlogListProps) {
@@ -57,7 +57,7 @@ export function BlogList({ posts }: BlogListProps) {
 
                 <div className="text-right md:w-32 flex flex-col items-end gap-4">
                   <span className="text-xs font-mono text-muted-foreground border border-border px-2 py-1 rounded inline-block">
-                       {new Date(post.createdAt).toLocaleDateString()}
+                       {new Date(post.created).toLocaleDateString()}
                   </span>
                   <div className="transition-opacity duration-300">
                     <ShareButton 

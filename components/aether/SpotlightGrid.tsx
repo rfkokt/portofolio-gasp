@@ -2,10 +2,10 @@
 
 import { useRef, MouseEvent } from "react";
 import Link from "next/link";
-import { Project } from "@prisma/client";
+import { ProjectRecord } from "@/lib/pb_schema";
 
 interface SpotlightGridProps {
-  projects: Project[];
+  projects: ProjectRecord[];
 }
 
 export function SpotlightGrid({ projects }: SpotlightGridProps) {
@@ -36,7 +36,7 @@ export function SpotlightGrid({ projects }: SpotlightGridProps) {
         {projects.map((project) => (
           <Link
             key={project.id}
-            href={project.link || `/projects/${project.title.toLowerCase().replace(/\s+/g, '-')}`}
+            href={`/projects/${project.slug}`}
             onMouseMove={onMouseMove}
             className="spotlight-card group relative h-[400px] overflow-hidden rounded-2xl bg-background/5 border border-border/50"
             style={{
@@ -71,7 +71,10 @@ export function SpotlightGrid({ projects }: SpotlightGridProps) {
             <div className="card-content relative z-30 h-full flex flex-col justify-end p-8">
               <div className="mb-auto opacity-50 group-hover:opacity-100 transition-opacity">
                  <span className="text-xs font-mono uppercase tracking-widest border border-border px-2 py-1 rounded">
-                    {project.category}
+                    {/* Display first tech stack item as category */}
+                    {Array.isArray(project.tech_stack) && project.tech_stack.length > 0 
+                        ? project.tech_stack[0] 
+                        : "PROJECT"}
                  </span>
               </div>
               

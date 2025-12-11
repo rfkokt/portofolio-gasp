@@ -1,16 +1,15 @@
-import { prisma } from "@/lib/prisma";
+import { getPosts } from "@/lib/pocketbase";
 import { BlogList } from "@/components/blog/BlogList";
 
 export const revalidate = 60; // ISR
 
 export default async function BlogPage() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    orderBy: { createdAt: "desc" },
-  }).catch((e) => {
-    console.warn("Database not available at build time, returning empty post list.");
-    return [];
+  const result = await getPosts().catch((e) => {
+    console.warn("PocketBase not available at build time, returning empty post list.");
+    return { items: [] };
   });
+  
+  const posts = result.items;
 
   return (
     <div className="min-h-screen bg-background text-foreground pt-32 pb-20 transition-colors duration-300">

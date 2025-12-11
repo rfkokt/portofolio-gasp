@@ -1,15 +1,15 @@
-import { prisma } from "@/lib/prisma";
+import { getProjectList } from "@/lib/pocketbase";
 import { SpotlightGrid } from "@/components/aether/SpotlightGrid";
 
 export const revalidate = 60;
 
 export default async function ProjectsPage() {
-  const projects = await prisma.project.findMany({
-    orderBy: { createdAt: "desc" },
-  }).catch((e) => {
-    console.warn("Database not available at build time, returning empty project list.");
-    return [];
+  const result = await getProjectList().catch((e) => {
+    console.warn("PocketBase not available at build time, returning empty project list.");
+    return { items: [] };
   });
+
+  const projects = result.items;
 
   return (
     <div className="min-h-screen bg-background text-foreground pt-32 pb-20 transition-colors duration-300">
