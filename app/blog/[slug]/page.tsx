@@ -75,8 +75,22 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </p>
         </header>
 
-        <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-li:text-muted-foreground prose-a:text-foreground prose-a:no-underline hover:prose-a:underline prose-code:text-foreground prose-pre:bg-muted/50">
-            <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+        <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-li:text-muted-foreground prose-code:text-foreground prose-pre:bg-muted/50">
+            <ReactMarkdown 
+                rehypePlugins={[rehypeHighlight]}
+                components={{
+                    a: ({ href, children }) => (
+                        <a 
+                            href={href} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-foreground border-b border-muted-foreground/30 transition-all hover:bg-foreground hover:text-background hover:border-transparent"
+                        >
+                            {children}
+                        </a>
+                    )
+                }}
+            >
                 {post.content}
             </ReactMarkdown>
         </div>

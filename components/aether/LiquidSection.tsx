@@ -223,7 +223,7 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
                 <LiquidCard 
                     key={i} 
                     post={post} 
-                    image={ARTICLE_IMAGES[i % ARTICLE_IMAGES.length]} 
+                    image={post.cover_image || ARTICLE_IMAGES[i % ARTICLE_IMAGES.length]} 
                     index={i} 
                 />
             ))
