@@ -53,8 +53,9 @@ async function generatePost() {
        - Use ONLY valid, real URLs to official documentation (MDN, React Docs, Vercel, etc).
 
     The output MUST be valid JSON only. NO markdown formatting around the JSON itself.
-    IMPORTANT: Escape all newlines in the content string with \\n.
-    
+    IMPORTANT: Provide the JSON as a SINGLE LINE (Minified), with no newlines for indentation.
+    Escape all newlines within the "content" string with double backslashes (\\n).
+    Just the raw JSON object.
     The JSON structure must be:
     {
         "title": "Title String",
@@ -98,11 +99,22 @@ async function generatePost() {
         // Cleanup potential markdown fences
         content = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
         
-        // Attempt to clean invalid control characters (breakpoints in JSON strings)
-        // This is a naive fix but often works for LLM output
-        content = content.replace(/\n/g, "\\n").replace(/\r/g, "");
-
-        const postData = JSON.parse(content);
+        let postData;
+        try {
+            // First attempt: Parse as is
+            postData = JSON.parse(content);
+        } catch (e) {
+            console.warn("⚠️ JSON parse failed, attempting strict newline escape fix...", e.message);
+            // Fallback: If AI returned unescaped newlines in strings, escape them.
+            // This works best if the AI obeyed the "Minified" instruction, so newlines are only in content.
+            try {
+                 const escaped = content.replace(/\n/g, "\\n").replace(/\r/g, "");
+                 postData = JSON.parse(escaped);
+            } catch (e2) {
+                console.error("❌ Failed to parse JSON even after sanitation.");
+                throw e2;
+            }
+        }
         
         // Add meta
         postData.published = true;
