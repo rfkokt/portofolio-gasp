@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { getPosts, getProjectList } from "@/lib/pocketbase";
 import { VelocityHero } from "@/components/aether/VelocityHero";
 import { FractureAbout } from "@/components/aether/FractureAbout";
 import { LiquidSection } from "@/components/aether/LiquidSection";
@@ -8,20 +8,14 @@ import { ContactSection } from "@/components/aether/ContactSection";
 export const revalidate = 60; // ISR
 
 export default async function Home() {
-  const [projects, posts] = await Promise.all([
-    prisma.project.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 3,
-    }),
-    prisma.post.findMany({
-      orderBy: { createdAt: "desc" },
-      where: { published: true },
-      take: 3,
-    }),
+  const [postsResult] = await Promise.all([
+    getPosts(),
   ]).catch((e) => {
-    console.warn("Database not available at build time, returning empty lists.");
-    return [[], []];
+    console.warn("PocketBase not available at build time, returning empty lists.", e);
+    return [{ items: [] }];
   });
+
+  const posts = postsResult?.items || [];
 
   return (
     <main className="min-h-screen bg-background text-foreground">
