@@ -134,7 +134,7 @@ export function FractureAbout() {
           <Link 
             key={project.id} 
             href={`/projects/${project.slug}`}
-            className="folder-slice relative h-full bg-muted border-r border-border transition-all duration-500 ease-out overflow-hidden group first:rounded-l-xl last:rounded-r-xl last:border-r-0 hover:z-20 md:cursor-none"
+            className="folder-slice relative h-full bg-muted border-r border-border transition-all duration-500 ease-out overflow-hidden group first:rounded-l-xl last:rounded-r-xl last:border-r-0 hover:z-20 md:cursor-none will-change-transform"
             style={{
                 flex: "1 1 0%", // Start equal
                 minWidth: "60px", // Prevent crushing

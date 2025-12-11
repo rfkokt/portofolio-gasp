@@ -49,7 +49,8 @@ export function VelocityHero() {
       let height = canvas.height = window.innerHeight;
 
       const stars: { x: number; y: number; z: number; o: number }[] = [];
-      const numStars = 800; // Density
+      const isMobile = window.innerWidth < 768;
+      const numStars = isMobile ? 300 : 800; // Density - reduced on mobile
       const centerX = width / 2;
       const centerY = height / 2;
       const fov = 300; // Field of view (depth)

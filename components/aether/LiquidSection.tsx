@@ -28,6 +28,12 @@ function LiquidCard({ post, image, index }: { post: PostRecord; image: string; i
   
   // Independent loop for this card
   useEffect(() => {
+    // Media query to check for mobile/tablet
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    
+    // Skip animation loop entirely on mobile
+    if (isMobile) return;
+
     let val = 0.00;
     let target = 0.00;
     let animationFrameId: number;
@@ -92,8 +98,13 @@ function LiquidCard({ post, image, index }: { post: PostRecord; image: string; i
                     <div 
                     className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                     style={{
-                        backgroundImage: `url('${image}')`, 
-                        filter: `url(#liquid-filter-${filterId})`
+                        backgroundImage: `url('${image}')`,
+                        // Only apply filter if NOT mobile (this is a CSS-only check if we wanted, but inline styles are tricky with media queries)
+                        // Better to rely on the fact that if the loop above doesn't run, baseFreq stays 0.
+                        // However, to be safe and save GPU, let's conditionally apply it via class or just keep it as is since baseFreq 0 is cheap?
+                        // Actually, even with baseFreq 0, the filter pipeline takes resources.
+                        // Let's use a simple CSS class approach or just inline style it.
+                        filter: typeof window !== 'undefined' && window.innerWidth > 768 ? `url(#liquid-filter-${filterId})` : 'none'
                     }}
                 />
                     <div className="absolute inset-0 bg-background/20 group-hover:bg-transparent transition-colors" />
@@ -216,7 +227,7 @@ export function LiquidSection({ posts }: LiquidSectionProps) {
       {/* Scroll Container */}
       <div 
         ref={containerRef}
-        className="flex gap-12 md:gap-20 items-center pl-[80vw] md:pl-[40vw] pr-[10vw] h-full relative z-30"
+        className="flex gap-12 md:gap-20 items-center pl-[80vw] md:pl-[40vw] pr-[10vw] h-full relative z-30 will-change-transform"
       >
         {displayPosts.length > 0 ? (
             displayPosts.map((post, i) => (
