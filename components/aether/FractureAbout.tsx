@@ -173,8 +173,8 @@ export function FractureAbout() {
         ))}
       </div>
 
-       <div className="absolute bottom-10 left-6 md:left-20 max-w-2xl z-20 pointer-events-none">
-         <div className="bg-background/60 backdrop-blur-md p-8 border border-border rounded-xl pointer-events-none">
+       <div className="absolute bottom-10 left-6 md:left-20 max-w-2xl z-20 md:cursor-none">
+         <div className="bg-background/60 backdrop-blur-md p-8 border border-border rounded-xl ">
             <h2 className="text-4xl font-bold mb-6 font-mono text-foreground">About RDev</h2>
             <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
                 <p>
@@ -187,7 +187,7 @@ export function FractureAbout() {
             </div>
             
             <div className="mt-8">
-                <Link href="/projects" className="inline-block border border-border hover:bg-foreground hover:text-background text-foreground px-6 py-3 rounded-lg font-mono text-sm tracking-widest uppercase transition-colors">
+                <Link href="/projects" className="inline-block border border-border hover:bg-foreground hover:text-background text-foreground px-6 py-3 rounded-lg font-mono text-sm tracking-widest uppercase transition-colors md:cursor-none">
                     View All Projects
                 </Link>
             </div>

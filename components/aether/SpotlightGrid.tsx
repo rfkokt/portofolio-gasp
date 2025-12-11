@@ -29,9 +29,7 @@ export function SpotlightGrid({ projects }: SpotlightGridProps) {
             SELECTED <br /> WORK
           </h2>
         </div>
-        <Link href="/projects" className="text-xs font-bold bg-foreground text-background px-3 py-1 rounded hover:scale-105 transition-transform uppercase">
-            View All
-        </Link>
+
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

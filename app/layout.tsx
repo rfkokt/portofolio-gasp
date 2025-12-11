@@ -14,7 +14,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "AETHER | Kinetic Library",
+  title: "RDEV | Kinetic Library",
   description: "A digital portfolio exploring kinetic typography and motion.",
 };
 

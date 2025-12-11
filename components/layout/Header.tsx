@@ -37,7 +37,7 @@ export function Header() {
         className="fixed top-0 w-full z-50 px-6 md:px-8 py-6 flex justify-between items-center bg-background/50 backdrop-blur-md border-b border-border transition-all duration-300"
       >
         <Link href="/" className="font-bold text-xl tracking-tighter text-foreground z-50">
-          AETHER
+          RDEV
         </Link>
 
         {/* Desktop Nav */}
