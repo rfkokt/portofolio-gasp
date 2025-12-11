@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+// import OpenAI from 'openai'; // Removed, using fetch
 import PocketBase from 'pocketbase';
 import 'dotenv/config';
 
@@ -13,10 +13,8 @@ if (!Z_AI_API_KEY) {
     process.exit(1);
 }
 
-const openai = new OpenAI({
-    apiKey: Z_AI_API_KEY,
-    baseURL: 'https://api.z.ai/api/paas/v4'
-});
+// Note: We use native fetch for the Anthropic-compatible endpoint
+const ANTHROPIC_ENDPOINT = 'https://api.z.ai/api/anthropic/v1/messages';
 
 const pb = new PocketBase(PB_URL);
 
@@ -40,29 +38,51 @@ async function generatePost() {
 
     const systemPrompt = `
     You are an expert technical writer. Write a technical blog post about the given topic.
-    The output MUST be valid JSON only (no markdown, no backticks).
+    The output MUST be valid JSON only. NO markdown formatting. NO \`\`\`json fences.
+    Just the raw JSON object.
+    
     The JSON structure must be:
     {
         "title": "Catchy Title",
         "slug": "kebab-case-slug-unique",
         "excerpt": "Short engaging summary (max 2 sentences)",
-        "content": "HTML formatted content (use <h2>, <p>, <ul>, <li>, <pre><code> for code blocks). Make it detailed and educational.",
+        "content": "Markdown formatted content (use #, ##, -, *, \`\`\` for code blocks). Make it detailed and educational.",
         "tags": ["tag1", "tag2"]
     }
     `;
 
     try {
-        const completion = await openai.chat.completions.create({
-            model: "glm-4-flash", 
-            messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: `Write a blog post about: "${topic}"` }
-            ],
-            response_format: { type: "json_object" }
+        const response = await fetch(ANTHROPIC_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'x-api-key': Z_AI_API_KEY,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: "glm-4.6",
+                max_tokens: 3000,
+                messages: [
+                    { 
+                        role: "user", 
+                        content: `${systemPrompt}\n\nTopic: "${topic}"` 
+                    }
+                ]
+            })
         });
 
-        const content = completion.choices[0].message.content;
+        if (!response.ok) {
+            const err = await response.text();
+            throw new Error(`API Error ${response.status}: ${err}`);
+        }
+
+        const data = await response.json();
+        let content = data.content?.[0]?.text;
+
         if (!content) throw new Error("No content generated");
+
+        // Cleanup potential markdown fences if the model ignores instruction
+        content = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
 
         const postData = JSON.parse(content);
         
