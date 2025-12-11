@@ -5,7 +5,6 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
 import { TableOfContents } from "@/components/blog/TableOfContents";
 import { FloatingActionBar } from "@/components/blog/FloatingActionBar";
-import { ShareButton } from "@/components/aether/ShareButton";
 import { CodeBlock } from "@/components/blog/CodeBlock";
 import { getPostBySlug, getRelatedPosts } from "@/lib/pocketbase";
 
@@ -51,7 +50,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     <span>//</span>
                     <span>Article</span>
                 </div>
-                <ShareButton title={post.title} text={post.excerpt} />
             </div>
             
             <h1 className="text-4xl md:text-6xl font-black text-foreground tracking-tighter leading-tight mb-8">

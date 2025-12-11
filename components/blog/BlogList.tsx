@@ -4,7 +4,6 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Link from "next/link";
-import { ShareButton } from "@/components/aether/ShareButton";
 import { PostRecord } from "@/lib/pb_schema";
 
 interface BlogListProps {
@@ -63,15 +62,6 @@ export function BlogList({ posts }: BlogListProps) {
                            day: 'numeric'
                        })}
                   </span>
-                  <div className="transition-opacity duration-300">
-                    <ShareButton 
-                        title={post.title} 
-                        text={post.excerpt} 
-                        url={`${typeof window !== 'undefined' ? window.location.origin : ''}/blog/${post.slug}`}
-                        className="text-foreground border-border hover:bg-foreground/10"
-                        align="responsive"
-                    />
-                  </div>
                 </div>
               </div>
             </article>
