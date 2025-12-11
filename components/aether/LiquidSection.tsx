@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useId } from "react";
+import { useRef, useEffect, useId, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -28,15 +28,21 @@ function LiquidCard({ post, image, index }: { post: PostRecord; image: string; i
   const filterId = useId().replace(/:/g, ""); // React 18 useId for unique ID
   
   // Independent loop for this card
+  const [isMounted, setIsMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(true); // Default to true (safe) or false? 'none' is better for SSR.
+
   useEffect(() => {
+    setIsMounted(true);
     // Media query to check for mobile/tablet
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const media = window.matchMedia("(max-width: 768px)");
+    setIsMobile(media.matches);
     
     // Skip animation loop entirely on mobile
-    if (isMobile) return;
+    if (media.matches) return;
 
     let val = 0.00;
     let target = 0.00;
+    // ...
     let animationFrameId: number;
 
     const loopLiquid = () => {
@@ -96,15 +102,15 @@ function LiquidCard({ post, image, index }: { post: PostRecord; image: string; i
             <div 
                 className="w-[300px] h-[400px] md:w-[400px] md:h-[500px] overflow-hidden border border-border relative mb-8"
             >
-                    <Image 
+                <Image 
                     src={image}
                     alt={post.title}
                     fill
                     className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
                     sizes="(max-width: 768px) 80vw, 400px"
                     style={{
-                        // Only apply filter if NOT mobile
-                        filter: typeof window !== 'undefined' && window.innerWidth > 768 ? `url(#liquid-filter-${filterId})` : 'none'
+                        // Only apply filter after hydration to avoid mismatch
+                        filter: isMounted && !isMobile ? `url(#liquid-filter-${filterId})` : 'none'
                     }}
                 />
                     <div className="absolute inset-0 bg-background/20 group-hover:bg-transparent transition-colors" />

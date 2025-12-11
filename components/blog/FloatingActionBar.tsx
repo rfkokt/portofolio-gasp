@@ -6,6 +6,7 @@ import { pb } from "@/lib/pocketbase";
 import { Share2, Heart, Hand, Zap, Copy, Check, Twitter, Linkedin, Facebook, MessageCircle, BarChart2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { submitInteraction } from "@/actions/interactions";
 
 interface InteractionCounts {
   clap: number;
@@ -104,11 +105,15 @@ export function FloatingActionBar({ postId, slug, title }: FloatingActionBarProp
   async function trackInteraction(type: string, vid: string = visitorId) {
       if (!vid) return;
       try {
-        await pb.collection("interactions").create({
+        const result = await submitInteraction({
             post: postId,
             type: type,
             visitor_id: vid,
         });
+
+        if (result.error) {
+            console.error(`Failed to track ${type}:`, result.error);
+        }
       } catch (err) {
           console.error(`Failed to track ${type}:`, err);
       }

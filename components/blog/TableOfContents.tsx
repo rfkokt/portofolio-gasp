@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import GithubSlugger from "github-slugger";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 
 interface TOCItem {
   id: string;
@@ -11,10 +12,7 @@ interface TOCItem {
 }
 
 export function TableOfContents({ content }: { content: string }) {
-  const [headings, setHeadings] = useState<TOCItem[]>([]);
-  const [activeId, setActiveId] = useState<string>("");
-
-  useEffect(() => {
+  const headings = useMemo<TOCItem[]>(() => {
     const slugger = new GithubSlugger();
     const regex = /^(#{1,6})\s+(.+)$/gm;
     const extractedHeadings: TOCItem[] = [];
@@ -31,8 +29,11 @@ export function TableOfContents({ content }: { content: string }) {
       }
     }
     
-    setHeadings(extractedHeadings);
+    return extractedHeadings;
   }, [content]);
+  
+
+  const [activeId, setActiveId] = useState<string>("");
 
   useEffect(() => {
       const observer = new IntersectionObserver(
@@ -81,7 +82,15 @@ export function TableOfContents({ content }: { content: string }) {
                   });
               }}
             >
-              {heading.text}
+              <ReactMarkdown 
+                allowedElements={["strong", "em", "code", "span"]} 
+                unwrapDisallowed
+                components={{ 
+                  p: ({ children }) => <>{children}</> 
+                }}
+              >
+                {heading.text}
+              </ReactMarkdown>
             </Link>
           </li>
         ))}

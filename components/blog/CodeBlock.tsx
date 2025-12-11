@@ -10,15 +10,12 @@ interface CodeBlockProps extends React.HTMLAttributes<HTMLPreElement> {
 
 export function CodeBlock({ children, className, ...props }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
-
-  // Extract the raw text from the code element (assumes children is the <code> element)
-  const codeContent = React.isValidElement(children) && typeof children.props === 'object' && children.props !== null && 'children' in children.props
-    ? String((children.props as { children: React.ReactNode }).children)
-    : String(children);
+  const preRef = React.useRef<HTMLPreElement>(null);
 
   const handleCopy = async () => {
-    if (codeContent) {
-      await navigator.clipboard.writeText(codeContent);
+    if (preRef.current) {
+      const text = preRef.current.innerText; // or textContent
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -56,7 +53,7 @@ export function CodeBlock({ children, className, ...props }: CodeBlockProps) {
 
       {/* Code Content */}
       <div className="p-4 overflow-x-auto">
-        <pre className={cn("text-sm font-mono leading-relaxed", className)} {...props}>
+        <pre ref={preRef} className={cn("text-sm font-mono leading-relaxed", className)} {...props}>
           {children}
         </pre>
       </div>
