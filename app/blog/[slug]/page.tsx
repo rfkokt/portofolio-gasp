@@ -1,28 +1,15 @@
-import { getPostBySlug, getPostSlugs, getRelatedPosts } from "@/lib/pocketbase";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
-import "highlight.js/styles/atom-one-dark.css";
-
-import { notFound } from "next/navigation";
-import Link from "next/link";
+import rehypeSlug from "rehype-slug";
+import { TableOfContents } from "@/components/blog/TableOfContents";
+import { FloatingActionBar } from "@/components/blog/FloatingActionBar";
 import { ShareButton } from "@/components/aether/ShareButton";
+import { getPostBySlug, getRelatedPosts } from "@/lib/pocketbase";
 
 interface BlogPostPageProps {
-  params: Promise<{
-    slug: string;
-  }>;
-}
-
-export const revalidate = 60;
-
-export async function generateStaticParams() {
-  try {
-    const posts = await getPostSlugs();
-    return posts.map((post) => ({ slug: post.slug }));
-  } catch (error) {
-    console.warn("PocketBase not available at build time, skipping static generation for blog posts.");
-    return [];
-  }
+    params: Promise<{ slug: string }>;
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
@@ -42,7 +29,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <article className="min-h-screen bg-background pt-32 pb-20 transition-colors duration-300">
-      <div className="max-w-4xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-6">
         <Link 
             href="/blog" 
             className="inline-flex items-center gap-2 text-xs font-mono text-muted-foreground mb-12 hover:text-foreground transition-colors"
@@ -61,7 +48,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         })}
                     </span>
                     <span>//</span>
-                    {/* View count removed as it requires custom implementation in PB */}
                     <span>Article</span>
                 </div>
                 <ShareButton title={post.title} text={post.excerpt} />
@@ -75,32 +61,42 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </p>
         </header>
 
-        <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-li:text-muted-foreground prose-code:text-foreground prose-pre:bg-muted/50">
-            <ReactMarkdown 
-                rehypePlugins={[rehypeHighlight]}
-                components={{
-                    a: ({ href, children }) => (
-                        <a 
-                            href={href} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-foreground border-b border-muted-foreground/30 transition-all hover:bg-foreground hover:text-background hover:border-transparent"
-                        >
-                            {children}
-                        </a>
-                    )
-                }}
-            >
-                {post.content}
-            </ReactMarkdown>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-12 max-w-6xl mx-auto">
+            <main className="min-w-0">
+                <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-headings:scroll-mt-24 prose-p:text-muted-foreground prose-li:text-muted-foreground prose-code:text-foreground prose-pre:bg-muted/50">
+                    <ReactMarkdown 
+                        rehypePlugins={[rehypeHighlight, rehypeSlug]}
+                        components={{
+                            a: ({ href, children }) => (
+                                <a 
+                                    href={href} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-foreground border-b border-muted-foreground/30 transition-all hover:bg-foreground hover:text-background hover:border-transparent"
+                                >
+                                    {children}
+                                </a>
+                            )
+                        }}
+                    >
+                        {post.content}
+                    </ReactMarkdown>
+                </div>
+            </main>
+            
+            <aside className="hidden lg:block">
+                <div className="sticky top-32">
+                    <TableOfContents content={post.content} />
+                </div>
+            </aside>
         </div>
 
         {/* Separator */}
-        <div className="my-20 border-t border-border" />
+        <div className="my-20 border-t border-border max-w-4xl mx-auto" />
 
         {/* RELATED ARTICLES */}
         {relatedPosts.length > 0 && (
-            <footer className="pt-10">
+            <footer className="pt-10 max-w-4xl mx-auto">
                 <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-10">
                     Read Next
                 </h3>
@@ -123,6 +119,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 </div>
             </footer>
         )}
+
+        <FloatingActionBar 
+            postId={post.id} 
+            slug={post.slug} 
+            title={post.title} 
+        />
 
       </div>
     </article>
