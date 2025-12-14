@@ -10,14 +10,15 @@ import { Loader2, Search } from "lucide-react";
 
 interface BlogListProps {
   posts: PostRecord[];
+  totalPosts: number;
 }
 
-export function BlogList({ posts: initialPosts }: BlogListProps) {
+export function BlogList({ posts: initialPosts, totalPosts }: BlogListProps) {
   const container = useRef<HTMLDivElement>(null);
   const [posts, setPosts] = useState<PostRecord[]>(initialPosts);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(initialPosts.length >= 10);
+  const [hasMore, setHasMore] = useState(initialPosts.length < totalPosts);
   const [searchQuery, setSearchQuery] = useState("");
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const prevPostsCount = useRef(0);
@@ -61,10 +62,7 @@ export function BlogList({ posts: initialPosts }: BlogListProps) {
         if (res.success && res.items) {
             setPosts(res.items);
             setPage(1);
-            setHasMore(res.items.length >= 10); // Logic: if < 10 returned, no more pages likely (simple check)
-            // Or better: res.page >= res.totalPages logic if available.
-            // Using length check is robust enough for simple pagination.
-            if (res.items.length < 10) setHasMore(false);
+            setHasMore(res.page < res.totalPages);
         } else {
             setPosts([]);
             setHasMore(false);
@@ -101,9 +99,7 @@ export function BlogList({ posts: initialPosts }: BlogListProps) {
             setPage(nextPage);
         }
         
-        if (res.page >= res.totalPages || res.items.length < 10) {
-            setHasMore(false);
-        }
+        setHasMore(res.page < res.totalPages);
       } else {
         setHasMore(false);
       }

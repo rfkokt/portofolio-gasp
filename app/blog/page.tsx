@@ -6,7 +6,7 @@ export const revalidate = 60; // ISR
 export default async function BlogPage() {
   const result = await getPosts().catch((e) => {
     console.warn("PocketBase not available at build time, returning empty post list.");
-    return { items: [] };
+    return { items: [], totalItems: 0 };
   });
   
   const posts = result.items;
@@ -20,7 +20,7 @@ export default async function BlogPage() {
         </h1>
       </div>
       
-      <BlogList posts={posts} />
+      <BlogList posts={posts} totalPosts={result.items ? result.totalItems : 0} />
     </div>
   );
 }

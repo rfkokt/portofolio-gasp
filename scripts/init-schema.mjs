@@ -6,7 +6,15 @@ const pb = new PocketBase('https://pocketbase.rdev.cloud');
 async function main() {
     try {
         // Authenticate as Admin
-        await pb.admins.authWithPassword('rifkiokta105@gmail.com', '99585767aA!');
+        const email = process.env.PB_ADMIN_EMAIL;
+        const pass = process.env.PB_ADMIN_PASS;
+
+        if (!email || !pass) {
+            console.error('❌ Error: PB_ADMIN_EMAIL and PB_ADMIN_PASS environment variables are required.');
+            process.exit(1);
+        }
+
+        await pb.admins.authWithPassword(email, pass);
         console.log('✅ Authenticated as Admin');
 
         // Create 'posts' collection

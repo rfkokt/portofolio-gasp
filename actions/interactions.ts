@@ -20,8 +20,13 @@ export async function submitInteraction(data: { post: string; type: string; visi
     pb.autoCancellation(false); // Disable auto-cancellation
 
     // Authenticate as Admin
-    const email = process.env.PB_ADMIN_EMAIL || 'rifkiokta105@gmail.com';
-    const pass = process.env.PB_ADMIN_PASS || '99585767aA!';
+    const email = process.env.PB_ADMIN_EMAIL!;
+    const pass = process.env.PB_ADMIN_PASS!;
+    
+    if (!email || !pass) {
+        console.error("Missing PB_ADMIN_EMAIL or PB_ADMIN_PASS env vars");
+        return { error: "Server Configuration Error" };
+    }
     
     await pb.admins.authWithPassword(email, pass);
 

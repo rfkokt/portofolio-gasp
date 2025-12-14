@@ -7,8 +7,13 @@ import Parser from 'rss-parser';
 // Configuration
 const Z_AI_API_KEY = process.env.Z_AI_API_KEY;
 const PB_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://43.134.114.243:8090';
-const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL || 'rifkiokta105@gmail.com';
-const PB_ADMIN_PASS = process.env.PB_ADMIN_PASS || '99585767aA!';
+const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL;
+const PB_ADMIN_PASS = process.env.PB_ADMIN_PASS;
+
+if (!PB_ADMIN_EMAIL || !PB_ADMIN_PASS) {
+    console.error('❌ Error: PB_ADMIN_EMAIL and PB_ADMIN_PASS environment variables are required.');
+    process.exit(1);
+}
 
 if (!Z_AI_API_KEY) {
     console.error("❌ Z_AI_API_KEY is missing in environment variables.");
@@ -30,7 +35,12 @@ const parser = new Parser();
 const FEEDS = [
     { name: 'Node.js Security', url: 'https://nodejs.org/en/feed/vulnerability.xml', type: 'security' },
     { name: 'React Blog', url: 'https://react.dev/feed.xml', type: 'frontend' },
-    { name: 'Vercel Blog', url: 'https://vercel.com/atom', type: 'infrastructure' }
+    { name: 'Vercel Blog', url: 'https://vercel.com/atom', type: 'infrastructure' },
+    { name: 'OpenAI Blog', url: 'https://openai.com/news/rss.xml', type: 'ai' },
+    { name: 'GitHub Blog', url: 'https://github.blog/feed/', type: 'tech' },
+    { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', type: 'tech' },
+    { name: 'Web.dev', url: 'https://web.dev/feed.xml', type: 'frontend-security' },
+    { name: 'Chrome Developers', url: 'https://developer.chrome.com/feeds/all.xml', type: 'frontend-security' }
 ];
 
 // Helper to wrap text for the image
@@ -55,11 +65,11 @@ function generateCoverImageURL(title) {
     return `https://placehold.co/398x498/1a1a1a/FFF.png?text=${encodedText}&font=montserrat&font_size=28`;
 }
 
-async function fetchNews() {
-    console.log("📡 Fetching RSS feeds...");
-    let allNews = [];
+async function fetchNews(targetFeeds = FEEDS) {
+    console.log(`📡 Fetching RSS feeds from ${targetFeeds.length} sources...`);
+    let sourceGroups = {};
 
-    for (const feed of FEEDS) {
+    for (const feed of targetFeeds) {
         try {
             const feedData = await parser.parseURL(feed.url);
             console.log(`✅ Fetched ${feedData.items.length} items from ${feed.name}`);
@@ -74,30 +84,42 @@ async function fetchNews() {
                 guid: item.guid || item.link
             }));
             
-            allNews = [...allNews, ...items];
+            // Sort each source by date desc immediately
+            items.sort((a, b) => b.pubDate - a.pubDate);
+            sourceGroups[feed.name] = items;
+
         } catch (e) {
             console.error(`❌ Failed to fetch ${feed.name}:`, e.message);
         }
     }
 
-    // Sort by date, newest first
-    return allNews.sort((a, b) => b.pubDate - a.pubDate);
+    // Interleave (Round Robin) to ensure diversity
+    const balancedNews = [];
+    const feedNames = Object.keys(sourceGroups);
+    if (feedNames.length === 0) return [];
+
+    const maxItems = Math.max(...feedNames.map(name => sourceGroups[name].length));
+
+    for (let i = 0; i < maxItems; i++) {
+        for (const name of feedNames) {
+            if (sourceGroups[name][i]) {
+                balancedNews.push(sourceGroups[name][i]);
+            }
+        }
+    }
+
+    return balancedNews;
 }
 
 async function isPostExists(link, title) {
     try {
-        // Check if there is a post with this specific source link in the description or similar title
-        // Since we don't store the source link in a dedicated column, we'll check title.
-        // Or better, we can check if a slug related to this title exists.
-        
-        // Strategy: Slugify the title and check. 
-        // Note: The previous logic added timestamp to slug if duplicate, so slug check might not be enough if we renamed it.
-        // Better: Fetch recent posts and check fuzzy match on title?
-        // Simple 1: Check exact title match.
-        const exactTitle = await pb.collection('posts').getList(1, 1, {
-            filter: `title="${title}"`
+        // Check if there is a post with this specific source link in the content or similar title
+        // We compare RSS title (English) with DB Title (Indonesian) which often fails,
+        // so checking 'content' for the original link is much more robust.
+        const result = await pb.collection('posts').getList(1, 1, {
+            filter: `(title="${title}" || content ~ "${link}")`
         });
-        if (exactTitle.totalItems > 0) return true;
+        if (result.totalItems > 0) return true;
 
         return false;
     } catch (e) {
@@ -127,9 +149,10 @@ async function generatePost(newsItem) {
     2.  **Introduction**: What happened? Briefly explain the vulnerability or update.
     3.  **Impact / The Problem**: (H2) Why does this matter? What is the risk? (Exploit potential, performance hit, etc.)
     4.  **Solution / Mitigation / How to Use**: (H2) THIS IS THE MOST IMPORTANT PART.
-        - Provide concrete code examples on how to fix/patch it.
-        - If it's a new feature, show how to use it.
-        - Use code blocks frequently.
+        - **CRITICAL: NEVER HALLUCINATE code or solutions.**
+        - Provide concrete code examples ONLY if they exist in the source text or are standard, verifiable patterns.
+        - If no specific code is provided in the source, describe the general mitigation strategy clearly and refer to official documentation.
+        - Include inline citations (e.g., "Menurut dokumentasi resmi...") to ground your validation.
     5.  **Conclusion**: Brief wrap up.
     6.  **References**:
         - MUST include the original source link: ${newsItem.link}
@@ -297,17 +320,90 @@ async function generatePost(newsItem) {
     }
 }
 
+async function checkUrgency(newsItem) {
+    console.log(`🔍 Checking urgency for: "${newsItem.title}"...`);
+    
+    const prompt = `
+    Analyze this news item for URGENCY.
+    
+    CRITERIA FOR URGENT:
+    - Critical Security Vulnerability (CVE High/Critical).
+    - Zero-day exploit.
+    - Major breaking change in a widely used framework (React, Next.js, Node.js).
+    - Immediate action required by developers to prevent data loss or hacks.
+    
+    CRITERIA FOR NOT URGENT:
+    - Minor patch / bug fix.
+    - Feature release (unless revolutionary).
+    - General advice / tutorials.
+    - Beta / Alpha releases.
+    
+    NEWS ITEM:
+    Title: "${newsItem.title}"
+    Snippet: "${newsItem.content.substring(0, 500)}..."
+    
+    OUTPUT JSON ONLY:
+    {
+        "urgent": boolean,
+        "reason": "Short explanation"
+    }
+    `;
+
+    try {
+        const response = await fetch(ANTHROPIC_ENDPOINT, {
+            dispatcher,
+            method: 'POST',
+            headers: {
+                'x-api-key': Z_AI_API_KEY,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: "glm-4.6v",
+                max_tokens: 300,
+                messages: [{ role: "user", content: prompt }]
+            })
+        });
+
+        if (!response.ok) throw new Error("API Error");
+        const data = await response.json();
+        const content = data.content?.[0]?.text;
+        
+        // Simple JSON extraction
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) return { urgent: false, reason: "Parse Error" };
+        
+        return JSON5.parse(jsonMatch[0]);
+    } catch (e) {
+        console.error("⚠️ Urgency check failed, assuming NOT urgent:", e.message);
+        return { urgent: false, reason: "Error" };
+    }
+}
+
 async function main() {
     const args = process.argv.slice(2);
     const countArg = args.find(arg => arg.startsWith('--count='));
     const maxCount = countArg ? parseInt(countArg.split('=')[1]) : 1;
+    
+    const typeArg = args.find(arg => arg.startsWith('--type='));
+    const filterType = typeArg ? typeArg.split('=')[1] : null;
+
+    const urgentOnly = args.includes('--urgent-only');
 
     try {
         console.log(`🔌 Connecting to PocketBase...`);
         await pb.admins.authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASS);
 
+        // Determine feeds
+        const targetFeeds = filterType 
+            ? FEEDS.filter(f => f.type === filterType)
+            : FEEDS;
+
+        if (filterType) console.log(`🎯 Filtering by type: ${filterType}`);
+        if (urgentOnly) console.log(`🚨 URGENCE MODE: Only posting critical updates.`);
+
         // 1. Fetch News
-        const newsItems = await fetchNews();
+        const newsItems = await fetchNews(targetFeeds);
         console.log(`📰 Found ${newsItems.length} total news items.`);
 
         let processedCount = 0;
@@ -320,6 +416,16 @@ async function main() {
             if (exists) {
                 console.log(`⏭️ Skipping "${item.title}" (Already exists)`);
                 continue;
+            }
+
+            // 2.5 Urgency Check
+            if (urgentOnly) {
+                const analysis = await checkUrgency(item);
+                if (!analysis.urgent) {
+                    console.log(`✋ Skipping (Not Urgent): ${analysis.reason}`);
+                    continue;
+                }
+                console.log(`🚨 URGENT ITEM DETECTED: ${analysis.reason}`);
             }
 
             // 3. Generate
