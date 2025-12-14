@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPost, updatePost, PostData } from "@/actions/cms-posts";
 import { generateBlogPost } from "@/actions/ai-generate";
-import { Loader2, Sparkles, Save, Send, ArrowLeft } from "lucide-react";
+import { Loader2, Sparkles, Save, Send, ArrowLeft, Eye } from "lucide-react";
 import Link from "next/link";
 
 interface PostFormProps {
@@ -78,6 +78,20 @@ export function PostForm({ initialData, mode }: PostFormProps) {
     }
   };
 
+  const handlePreview = () => {
+    const previewData = {
+      title,
+      slug: slug || generateSlug(title),
+      excerpt,
+      content,
+      cover_image: coverImage,
+      tags,
+      published_at: new Date().toISOString(),
+    };
+    localStorage.setItem("blog_preview", JSON.stringify(previewData));
+    window.open("/preview/posts", "_blank");
+  };
+
   const handleSubmit = async (publish: boolean) => {
     setLoading(true);
     setError("");
@@ -137,7 +151,16 @@ export function PostForm({ initialData, mode }: PostFormProps) {
 
       <div className="space-y-6">
         {/* AI Generate Button */}
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={!title || !content}
+            className="px-4 py-2 border border-border text-muted-foreground font-medium text-sm uppercase tracking-wider hover:text-foreground hover:border-foreground disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+          >
+            <Eye className="w-4 h-4" />
+            Preview
+          </button>
           <button
             type="button"
             onClick={handleGenerate}

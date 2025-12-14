@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProject, updateProject, ProjectData } from "@/actions/cms-projects";
 import { generateProject } from "@/actions/ai-generate";
-import { Loader2, Sparkles, Save, ArrowLeft, Star } from "lucide-react";
+import { Loader2, Sparkles, Save, ArrowLeft, Star, Eye } from "lucide-react";
 import Link from "next/link";
 
 interface ProjectFormProps {
@@ -82,6 +82,20 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
     }
   };
 
+  const handlePreview = () => {
+    const previewData = {
+      title,
+      slug: slug || generateSlug(title),
+      description,
+      content,
+      tech_stack: techStack,
+      demo_url: demoUrl,
+      repo_url: repoUrl,
+    };
+    localStorage.setItem("project_preview", JSON.stringify(previewData));
+    window.open("/preview/projects", "_blank");
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     setError("");
@@ -142,7 +156,16 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
 
       <div className="space-y-6">
         {/* AI Generate Button */}
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={!title || !description}
+            className="px-4 py-2 border border-border text-muted-foreground font-medium text-sm uppercase tracking-wider hover:text-foreground hover:border-foreground disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+          >
+            <Eye className="w-4 h-4" />
+            Preview
+          </button>
           <button
             type="button"
             onClick={handleGenerate}
