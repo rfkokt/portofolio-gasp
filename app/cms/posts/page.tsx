@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { getPostsForCMS, deletePost } from "@/actions/cms-posts";
-import { Plus, Edit } from "lucide-react";
+import { getPostsForCMS, deletePost, togglePostStatus } from "@/actions/cms-posts";
+import { Plus } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { DeleteButton } from "@/components/admin/DeleteButton";
+import { PostActions } from "@/components/admin/PostActions";
 
 export default async function PostsListPage({
   searchParams,
@@ -20,6 +20,15 @@ export default async function PostsListPage({
     await deletePost(id);
     revalidatePath("/cms/posts");
     redirect("/cms/posts");
+  }
+
+  async function handleToggleStatus(id: string, published: boolean) {
+    "use server";
+    const result = await togglePostStatus(id, published);
+    if (result.success) {
+      revalidatePath("/cms/posts");
+    }
+    return result;
   }
 
   return (
@@ -137,15 +146,11 @@ export default async function PostsListPage({
                       : "-"}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/cms/posts/${post.id}/edit`}
-                        className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Link>
-                      <DeleteButton id={post.id} onDelete={handleDelete} itemName={post.title} />
-                    </div>
+                    <PostActions 
+                      post={post} 
+                      onDelete={handleDelete} 
+                      onToggleStatus={handleToggleStatus}
+                    />
                   </td>
                 </tr>
               ))}

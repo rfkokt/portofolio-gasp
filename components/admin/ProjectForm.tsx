@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createProject, updateProject, ProjectData } from "@/actions/cms-projects";
 import { generateProject } from "@/actions/ai-generate";
-import { Loader2, Sparkles, Save, ArrowLeft, Star, Eye } from "lucide-react";
-import Link from "next/link";
+import { Loader2, Sparkles, Save, ArrowLeft, Star, Eye, X } from "lucide-react";
+import { useConfirm } from "./ConfirmModal";
 
 interface ProjectFormProps {
   initialData?: any;
@@ -14,9 +14,16 @@ interface ProjectFormProps {
 
 export function ProjectForm({ initialData, mode }: ProjectFormProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // AI Generation Modal State
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiTopic, setAiTopic] = useState("");
+  const [aiMode, setAiMode] = useState<"auto" | "custom">("auto");
 
   const [title, setTitle] = useState(initialData?.title || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
@@ -27,6 +34,24 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
   const [featured, setFeatured] = useState(initialData?.featured || false);
   const [techStack, setTechStack] = useState<string[]>(initialData?.tech_stack || []);
   const [techInput, setTechInput] = useState("");
+
+  // Use ref for beforeunload to allow immediate disable
+  const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+  hasUnsavedChangesRef.current = hasUnsavedChanges;
+
+  // Warn user before leaving if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChangesRef.current) {
+        e.preventDefault();
+        e.returnValue = "Kamu memiliki perubahan yang belum disimpan. Yakin ingin keluar?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   const generateSlug = (text: string) => {
     return text
@@ -58,12 +83,13 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
     setTechStack(techStack.filter((t) => t !== techToRemove));
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (topic?: string) => {
+    setShowAIModal(false);
     setGenerating(true);
     setError("");
 
     try {
-      const result = await generateProject();
+      const result = await generateProject(topic);
       if (result.success && result.data) {
         setTitle(result.data.title);
         setSlug(result.data.slug || generateSlug(result.data.title));
@@ -72,6 +98,7 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
         setTechStack(result.data.tech_stack || []);
         setDemoUrl(result.data.demo_url || "");
         setRepoUrl(result.data.repo_url || "");
+        setHasUnsavedChanges(true); // Mark as unsaved
       } else {
         setError(result.error || "Failed to generate content");
       }
@@ -79,6 +106,22 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
       setError("An error occurred during generation");
     } finally {
       setGenerating(false);
+      setAiTopic("");
+      setAiMode("auto");
+    }
+  };
+
+  const handleOpenAIModal = () => {
+    setAiTopic("");
+    setAiMode("auto");
+    setShowAIModal(true);
+  };
+
+  const handleConfirmGenerate = () => {
+    if (aiMode === "auto") {
+      handleGenerate();
+    } else {
+      handleGenerate(aiTopic || undefined);
     }
   };
 
@@ -120,8 +163,8 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
       }
 
       if (result.success) {
-        router.push("/cms/projects");
-        router.refresh();
+        setHasUnsavedChanges(false); // Clear unsaved flag
+        window.location.href = "/cms/projects";
       } else {
         setError(result.error || "Failed to save project");
       }
@@ -133,14 +176,62 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
   };
 
   return (
-    <div className="w-full">
+    <>
+      {/* Full Page Loading Overlay during AI Generation */}
+      {generating && (
+        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center gap-8">
+            {/* Animated Icon */}
+            <div className="relative">
+              <div className="w-16 h-16 border-2 border-border rounded-full" />
+              <div className="absolute inset-0 w-16 h-16 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
+              <Sparkles className="w-6 h-6 text-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            </div>
+            
+            {/* Text */}
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-foreground mb-3 tracking-tight">
+                AI sedang membuat project...
+              </h3>
+              <p className="text-muted-foreground text-sm max-w-sm leading-relaxed">
+                Mohon tunggu sebentar, AI sedang membuat konten berkualitas untuk project kamu.
+              </p>
+            </div>
+            
+            {/* Progress dots */}
+            <div className="flex gap-2">
+              <span className="w-2 h-2 bg-foreground rounded-full animate-pulse" style={{ animationDelay: '0s' }} />
+              <span className="w-2 h-2 bg-foreground rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+              <span className="w-2 h-2 bg-foreground rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="w-full">
       <div className="flex items-center gap-4 mb-8">
-        <Link
-          href="/cms/projects"
+        <button
+          type="button"
+          onClick={async () => {
+            if (hasUnsavedChanges) {
+              const confirmed = await confirm({
+                title: "Perubahan Belum Disimpan",
+                message: "Kamu memiliki konten yang belum disimpan. Yakin ingin keluar? Perubahan akan hilang.",
+                confirmText: "Keluar",
+                cancelText: "Tetap di Sini",
+                type: "warning",
+              });
+              if (confirmed) {
+                router.push("/cms/projects");
+              }
+            } else {
+              router.push("/cms/projects");
+            }
+          }}
           className="p-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-        </Link>
+        </button>
         <div>
           <h1 className="text-3xl font-bold text-foreground tracking-tight">
             {mode === "create" ? "New Project" : "Edit Project"}
@@ -168,7 +259,7 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
           </button>
           <button
             type="button"
-            onClick={handleGenerate}
+            onClick={handleOpenAIModal}
             disabled={generating}
             className="px-4 py-2 border border-purple-500 text-purple-500 font-medium text-sm uppercase tracking-wider hover:bg-purple-500 hover:text-white disabled:opacity-50 transition-colors inline-flex items-center gap-2"
           >
@@ -340,5 +431,73 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
         </div>
       </div>
     </div>
+
+    {/* AI Generate Modal */}
+    {showAIModal && (
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-background border border-border w-full max-w-md">
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <h3 className="text-lg font-bold text-foreground">Generate with AI</h3>
+            <button
+              onClick={() => setShowAIModal(false)}
+              className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="p-4 space-y-4">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAiMode("auto")}
+                className={`flex-1 px-4 py-3 text-sm font-medium uppercase tracking-wider transition-colors ${
+                  aiMode === "auto"
+                    ? "bg-purple-500 text-white"
+                    : "border border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Auto Generate
+              </button>
+              <button
+                type="button"
+                onClick={() => setAiMode("custom")}
+                className={`flex-1 px-4 py-3 text-sm font-medium uppercase tracking-wider transition-colors ${
+                  aiMode === "custom"
+                    ? "bg-purple-500 text-white"
+                    : "border border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Custom Topic / URL
+              </button>
+            </div>
+            
+            {aiMode === "custom" && (
+              <textarea
+                value={aiTopic}
+                onChange={(e) => setAiTopic(e.target.value)}
+                rows={3}
+                className="w-full bg-transparent border border-border px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all resize-none"
+                placeholder="Masukkan topik project atau URL referensi...
+
+Contoh:
+- E-commerce platform untuk UMKM
+- https://github.com/user/project-name"
+              />
+            )}
+            
+            <button
+              type="button"
+              onClick={handleConfirmGenerate}
+              className="w-full px-4 py-3 bg-purple-500 text-white font-bold text-sm uppercase tracking-wider hover:bg-purple-600 transition-colors inline-flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              Generate
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

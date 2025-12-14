@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createPost, updatePost, PostData } from "@/actions/cms-posts";
 import { generateBlogPost } from "@/actions/ai-generate";
 import { Loader2, Sparkles, Save, Send, ArrowLeft, Eye, X } from "lucide-react";
 import Link from "next/link";
+import { useConfirm } from "./ConfirmModal";
 
 interface PostFormProps {
   initialData?: any;
@@ -14,9 +15,11 @@ interface PostFormProps {
 
 export function PostForm({ initialData, mode }: PostFormProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   // AI Generation Modal State
   const [showAIModal, setShowAIModal] = useState(false);
@@ -30,6 +33,24 @@ export function PostForm({ initialData, mode }: PostFormProps) {
   const [coverImage, setCoverImage] = useState(initialData?.cover_image || "");
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [tagInput, setTagInput] = useState("");
+
+  // Use ref for beforeunload to allow immediate disable
+  const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+  hasUnsavedChangesRef.current = hasUnsavedChanges;
+
+  // Warn user before leaving if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChangesRef.current) {
+        e.preventDefault();
+        e.returnValue = "Kamu memiliki perubahan yang belum disimpan. Yakin ingin keluar?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   const generateSlug = (text: string) => {
     return text
@@ -75,6 +96,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
         setContent(result.data.content);
         setTags(result.data.tags || []);
         setCoverImage(result.data.cover_image || "");
+        setHasUnsavedChanges(true); // Mark as unsaved
       } else {
         setError(result.error || "Failed to generate content");
       }
@@ -138,8 +160,8 @@ export function PostForm({ initialData, mode }: PostFormProps) {
       }
 
       if (result.success) {
-        router.push("/cms/posts");
-        router.refresh();
+        setHasUnsavedChanges(false); // Clear unsaved flag
+        window.location.href = "/cms/posts";
       } else {
         setError(result.error || "Failed to save post");
       }
@@ -185,12 +207,28 @@ export function PostForm({ initialData, mode }: PostFormProps) {
 
       <div className="w-full">
       <div className="flex items-center gap-4 mb-8">
-        <Link
-          href="/cms/posts"
+        <button
+          type="button"
+          onClick={async () => {
+            if (hasUnsavedChanges) {
+              const confirmed = await confirm({
+                title: "Perubahan Belum Disimpan",
+                message: "Kamu memiliki konten yang belum disimpan. Yakin ingin keluar? Perubahan akan hilang.",
+                confirmText: "Keluar",
+                cancelText: "Tetap di Sini",
+                type: "warning",
+              });
+              if (confirmed) {
+                router.push("/cms/posts");
+              }
+            } else {
+              router.push("/cms/posts");
+            }
+          }}
           className="p-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-        </Link>
+        </button>
         <div>
           <h1 className="text-3xl font-bold text-foreground tracking-tight">
             {mode === "create" ? "New Post" : "Edit Post"}

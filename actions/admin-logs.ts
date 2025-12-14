@@ -4,6 +4,7 @@ import PocketBase from 'pocketbase';
 import { getAdminSession } from '@/lib/admin-auth';
 
 const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://pocketbase.rdev.cloud');
+pb.autoCancellation(false);
 
 async function authenticatePocketBase() {
   const email = process.env.PB_ADMIN_EMAIL;

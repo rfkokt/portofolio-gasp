@@ -5,6 +5,7 @@ import { logAdminAction } from "./admin-logs";
 import { getAdminSession } from "@/lib/admin-auth";
 
 const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || "https://pocketbase.rdev.cloud");
+pb.autoCancellation(false); // Disable auto-cancellation to prevent request conflicts
 
 async function authenticateAdmin() {
   const email = process.env.PB_ADMIN_EMAIL;
@@ -158,7 +159,7 @@ export async function deletePost(id: string) {
       }
     }
 
-    await pb.collection("posts").delete(id);
+  await pb.collection("posts").delete(id);
     await logAdminAction("Delete Post", `Deleted post ID: ${id}`);
     return { success: true };
   } catch (error: any) {
@@ -167,3 +168,46 @@ export async function deletePost(id: string) {
   }
 }
 
+export async function togglePostStatus(id: string, published: boolean) {
+  try {
+    await authenticateAdmin();
+    const session = await getAdminSession();
+    
+    if (!session) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // Get the post to check ownership
+    const post = await pb.collection("posts").getOne(id);
+    
+    // Role-based validation
+    if (session.role !== 'admin') {
+      if (post.created_by === 'AI') {
+        return { success: false, error: 'Only admins can modify AI-generated content' };
+      }
+      if (post.created_by !== session.username) {
+        return { success: false, error: 'You can only modify your own posts' };
+      }
+    }
+
+    const updateData: any = {
+      published,
+      updated_by: session.username,
+    };
+
+    // Set published_at when publishing for first time
+    if (published && !post.published_at) {
+      updateData.published_at = new Date().toISOString();
+    }
+
+    await pb.collection("posts").update(id, updateData);
+    await logAdminAction(
+      published ? "Publish Post" : "Unpublish Post",
+      `${published ? "Published" : "Unpublished"} post ID: ${id}`
+    );
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error toggling post status:", error);
+    return { success: false, error: error.message };
+  }
+}

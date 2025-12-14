@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
-import { AlertTriangle, X } from "lucide-react";
+import rehypeSlug from "rehype-slug";
+import { AlertTriangle, X, MoveLeft } from "lucide-react";
 import "highlight.js/styles/atom-one-dark.css";
+import { TableOfContents } from "@/components/blog/TableOfContents";
 
 interface PreviewProject {
   title: string;
@@ -17,6 +18,7 @@ interface PreviewProject {
   tech_stack?: string[];
   demo_url?: string;
   repo_url?: string;
+  featured?: boolean;
 }
 
 export default function ProjectPreviewPage() {
@@ -24,7 +26,6 @@ export default function ProjectPreviewPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Read preview data from localStorage
     const previewData = localStorage.getItem("project_preview");
     if (previewData) {
       try {
@@ -63,8 +64,10 @@ export default function ProjectPreviewPage() {
     );
   }
 
+  const defaultImage = "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2600";
+
   return (
-    <article className="min-h-screen bg-background pt-32 pb-20 transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {/* Preview Banner */}
       <div className="fixed top-20 left-0 right-0 bg-yellow-500 text-black py-2 px-4 z-40 flex items-center justify-center gap-4">
         <AlertTriangle className="w-4 h-4" />
@@ -79,66 +82,101 @@ export default function ProjectPreviewPage() {
         </button>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-10">
-        <Link 
-            href="/cms/projects" 
-            className="inline-flex items-center gap-2 text-xs font-mono text-muted-foreground mb-12 hover:text-foreground transition-colors"
-        >
-            ← BACK TO EDITOR
-        </Link>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-20">
-            <div>
-                <h1 className="text-5xl md:text-7xl font-black text-foreground tracking-tighter mb-8 leading-none">
-                    {project.title}
-                </h1>
-                <p className="text-xl text-muted-foreground leading-relaxed mb-8">
-                    {project.description}
-                </p>
-
-                <div className="flex flex-wrap gap-4 mb-8">
-                    {project.tech_stack?.map((tech: string) => (
-                        <span key={tech} className="px-3 py-1 border border-border rounded-full text-xs font-mono uppercase">
-                            {tech}
-                        </span>
-                    ))}
-                </div>
-
-                <div className="flex gap-4">
-                    {project.demo_url && (
-                        <a href={project.demo_url} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-foreground text-background font-bold rounded hover:opacity-90 transition-opacity">
-                            View Demo
-                        </a>
-                    )}
-                    {project.repo_url && (
-                        <a href={project.repo_url} target="_blank" rel="noopener noreferrer" className="px-6 py-3 border border-border text-foreground font-bold rounded hover:bg-foreground/5 transition-colors">
-                            View Code
-                        </a>
-                    )}
-                </div>
+      {/* Hero Header with Background Image */}
+      <div className="relative h-[60vh] w-full overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url('${project.image || defaultImage}')` }}
+        />
+        <div className="absolute inset-0 bg-background/80 dark:bg-black/60 backdrop-blur-sm" />
+        <div className="absolute inset-0 flex items-end">
+          <div className="container mx-auto px-6 pb-20 max-w-7xl">
+            <Link 
+              href="/cms/projects" 
+              className="inline-flex items-center gap-2 text-sm font-mono text-muted-foreground mb-8 hover:text-foreground transition-colors"
+            >
+              <MoveLeft size={16} /> BACK TO EDITOR
+            </Link>
+            <div className="space-y-4">
+              {project.featured && (
+                <span className="inline-block px-3 py-1 border border-yellow-500/50 text-xs font-mono tracking-widest uppercase rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+                  Featured
+                </span>
+              )}
+              <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-foreground">
+                {project.title}
+              </h1>
             </div>
-
-            <div className="relative aspect-video lg:aspect-square bg-foreground/5 rounded-2xl overflow-hidden border border-border flex items-center justify-center">
-                {project.image ? (
-                    <Image
-                        src={project.image}
-                        alt={project.title}
-                        fill
-                        className="object-cover"
-                        priority
-                    />
-                ) : (
-                    <span className="text-muted-foreground text-sm">No image</span>
-                )}
-            </div>
-        </div>
-
-        <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-li:text-muted-foreground border-t border-border pt-12">
-            <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-                {project.content}
-            </ReactMarkdown>
+          </div>
         </div>
       </div>
-    </article>
+
+      {/* Content */}
+      <div className="max-w-5xl mx-auto px-6 py-20">
+        {/* Description & Actions */}
+        <div className="max-w-4xl">
+          <p className="text-xl text-muted-foreground leading-relaxed mb-12">
+            {project.description}
+          </p>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-4 mb-12">
+            {project.demo_url && (
+              <a 
+                href={project.demo_url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="px-6 py-3 bg-foreground text-background font-bold rounded hover:opacity-90 transition-opacity"
+              >
+                View Demo
+              </a>
+            )}
+            {project.repo_url && (
+              <a 
+                href={project.repo_url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="px-6 py-3 border border-border text-foreground font-bold rounded hover:bg-foreground/5 transition-colors"
+              >
+                View Code
+              </a>
+            )}
+          </div>
+          
+          {/* Tech Stack */}
+          {project.tech_stack && project.tech_stack.length > 0 && (
+            <div className="my-16 p-8 border border-border rounded-2xl bg-muted/50">
+              <h3 className="text-lg font-bold mb-4 font-mono text-muted-foreground uppercase tracking-widest">Tech Stack</h3>
+              <div className="flex flex-wrap gap-3">
+                {project.tech_stack.map((tech: string) => (
+                  <span key={tech} className="px-4 py-2 bg-background border border-border rounded-lg text-sm font-medium">
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Markdown Content with TOC */}
+        {project.content && (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-12">
+            <main className="min-w-0">
+              <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-headings:scroll-mt-24">
+                <ReactMarkdown rehypePlugins={[rehypeHighlight, rehypeSlug]}>
+                  {project.content}
+                </ReactMarkdown>
+              </div>
+            </main>
+            
+            <aside className="hidden lg:block">
+              <div className="sticky top-32">
+                <TableOfContents content={project.content} />
+              </div>
+            </aside>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

@@ -330,28 +330,144 @@ export async function generateProject(topic?: string) {
     return { success: false, error: "AI API key not configured" };
   }
 
-  const prompt = `
-  You are a professional portfolio writer.
-  
-  ${topic ? `Generate a project description for: "${topic}"` : "Generate a creative web development project description."}
-  
-  The project should be:
-  - A realistic web/mobile app project
-  - Include modern tech stack
-  - Have a compelling description
-  - Written in Bahasa Indonesia
-  
-  OUTPUT JSON FORMAT (Strict, no markdown fencing):
-  {
-    "title": "Project Name",
-    "slug": "kebab-case-slug",
-    "description": "Brief 2-sentence description",
-    "content": "Detailed project description in markdown with features, challenges, and solutions. Use \\n for newlines.",
-    "tech_stack": ["React", "Node.js", "PostgreSQL"],
-    "demo_url": "",
-    "repo_url": ""
+  const today = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Check if topic contains a URL - if so, fetch it first
+  const urlRegex = /(https?:\/\/[^\s]+)/gi;
+  const urlMatches = topic ? topic.match(urlRegex) : null;
+  let referenceContent = "";
+  let sourceUrl = "";
+
+  if (urlMatches && urlMatches.length > 0) {
+    sourceUrl = urlMatches[0];
+    console.log(`🔗 Fetching reference URL for project: ${sourceUrl}`);
+    
+    try {
+      const urlResponse = await fetch(sourceUrl, {
+        dispatcher,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; ProjectBot/1.0)'
+        }
+      });
+      
+      if (urlResponse.ok) {
+        const html = await urlResponse.text();
+        referenceContent = html
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+          .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .substring(0, 5000);
+        console.log(`✅ Fetched ${referenceContent.length} chars from reference`);
+      }
+    } catch (e: any) {
+      console.warn(`⚠️ Could not fetch URL: ${e.message}`);
+    }
   }
-  `;
+
+  // Build prompt based on whether we have a reference URL or just a topic
+  let prompt: string;
+
+  if (referenceContent && sourceUrl) {
+    // URL-based: Generate project based on reference
+    prompt = `
+    You are a senior Indonesian developer who creates AMAZING project portfolios. Your job is to create a project showcase based on the reference, in YOUR OWN VOICE.
+    
+    LANGUAGE: **Bahasa Indonesia** (Indonesian) - NATURAL, not translated.
+    DATE: Today is ${today}.
+
+    SOURCE URL: ${sourceUrl}
+    SOURCE CONTENT:
+    """
+    ${referenceContent.substring(0, 4000)}
+    """
+
+    🎨 WRITING STYLE (WAJIB):
+    - Tulis seperti developer Indonesia menjelaskan project keren
+    - Boleh pakai ekspresi: "Nah,", "Jadi gini,", "Yang menarik,", "Honestly,"
+    - Boleh pakai bahasa tech: "deploy", "production", "scale", "performance"
+    - Deskripsi harus catchy dan profesional
+    - Hindari bahasa formal berlebihan
+
+    📝 STRUKTUR MARKDOWN CONTENT (WAJIB PAKAI HEADING ##):
+    
+    ## Overview
+    [Brief intro tentang project]
+    
+    ## Fitur Utama
+    - Fitur 1
+    - Fitur 2
+    
+    ## Tech Stack & Arsitektur
+    [Penjelasan tech choices]
+    
+    ## Tantangan & Solusi
+    [Problem yang dihadapi dan bagaimana mengatasinya]
+    
+    ## Hasil & Impact
+    [Metrics atau hasil yang dicapai]
+
+    OUTPUT JSON (Strict Minified JSON, no markdown fencing):
+    {
+      "title": "Nama Project Keren",
+      "slug": "kebab-case-slug",
+      "description": "2 kalimat deskripsi yang catchy dan profesional.",
+      "content": "Markdown dengan H2 headings (## Heading). Use \\n for newlines.",
+      "tech_stack": ["React", "Node.js", "PostgreSQL"],
+      "demo_url": "${sourceUrl}",
+      "repo_url": ""
+    }
+    `;
+  } else {
+    // Topic-based or auto-generate
+    prompt = `
+    You are a senior Indonesian developer who creates AMAZING project portfolios.
+    
+    ${topic ? `Generate a project description for: "${topic}"` : "Generate a creative, realistic web development project that shows off your skills."}
+    
+    LANGUAGE: **Bahasa Indonesia** (Indonesian) - NATURAL.
+    DATE: Today is ${today}.
+
+    🎨 WRITING STYLE:
+    - Tulis seperti developer Indonesia menjelaskan project keren
+    - Boleh pakai ekspresi: "Nah,", "Jadi gini,", "Yang menarik,"
+    - Deskripsi harus catchy dan profesional
+    
+    📝 PROJECT REQUIREMENTS:
+    - Realistic web/mobile app project
+    - Modern tech stack yang make sense
+    - Compelling description yang bikin orang tertarik
+    
+    📝 STRUKTUR MARKDOWN CONTENT (WAJIB PAKAI HEADING ##):
+    
+    ## Overview
+    [Brief intro tentang project]
+    
+    ## Fitur Utama
+    - Fitur 1
+    - Fitur 2
+    
+    ## Tech Stack & Arsitektur
+    [Penjelasan tech choices]
+    
+    ## Tantangan & Solusi
+    [Problem yang dihadapi dan bagaimana mengatasinya]
+
+    OUTPUT JSON (Strict Minified JSON, no markdown fencing):
+    {
+      "title": "Nama Project Keren",
+      "slug": "kebab-case-slug",
+      "description": "2 kalimat deskripsi yang catchy dan profesional.",
+      "content": "Markdown dengan H2 headings (## Heading). Use \\n for newlines.",
+      "tech_stack": ["React", "Node.js", "PostgreSQL"],
+      "demo_url": "",
+      "repo_url": ""
+    }
+    
+    ⚠️ TECH STACK HARUS SPESIFIK! Contoh: "Next.js 14", "TypeScript", "Prisma", "TailwindCSS"
+    `;
+  }
 
   try {
     const response = await fetch(ANTHROPIC_ENDPOINT, {
@@ -364,7 +480,7 @@ export async function generateProject(topic?: string) {
       },
       body: JSON.stringify({
         model: "glm-4.6v",
-        max_tokens: 2500,
+        max_tokens: 3000,
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -380,7 +496,7 @@ export async function generateProject(topic?: string) {
       throw new Error("No content generated");
     }
 
-    // Extract JSON
+    // Extract JSON with robust parsing
     const firstOpen = content.indexOf('{');
     const lastClose = content.lastIndexOf('}');
     
@@ -389,7 +505,54 @@ export async function generateProject(topic?: string) {
     }
 
     const jsonString = content.substring(firstOpen, lastClose + 1);
-    const projectData = JSON5.parse(jsonString);
+    
+    let projectData;
+    try {
+      projectData = JSON5.parse(jsonString);
+    } catch {
+      console.warn("⚠️ JSON5 parse failed. Attempting state-machine repair...");
+      // State-machine repair for unescaped newlines
+      let result = "";
+      let inString = false;
+      for (let i = 0; i < jsonString.length; i++) {
+        const char = jsonString[i];
+        const prevChar = i > 0 ? jsonString[i - 1] : "";
+        
+        if (char === '"' && prevChar !== "\\") {
+          inString = !inString;
+          result += char;
+        } else if (inString) {
+          if (char === "\n") result += "\\n";
+          else if (char === "\r") result += "";
+          else if (char === "\t") result += "\\t";
+          else result += char;
+        } else {
+          if (/\s/.test(char)) continue;
+          else result += char;
+        }
+      }
+      
+      try {
+        projectData = JSON5.parse(result);
+      } catch {
+        // Emergency regex extraction
+        const titleMatch = jsonString.match(/"title"\s*:\s*"(.*?)"/);
+        const slugMatch = jsonString.match(/"slug"\s*:\s*"(.*?)"/);
+        const descMatch = jsonString.match(/"description"\s*:\s*"(.*?)"/);
+        const contentMatch = jsonString.match(/"content"\s*:\s*"([\s\S]*?)"(?=\s*,\s*"|)/);
+        
+        projectData = {
+          title: titleMatch ? titleMatch[1] : "Untitled Project",
+          slug: slugMatch ? slugMatch[1] : `project-${Date.now()}`,
+          description: descMatch ? descMatch[1] : "",
+          content: contentMatch ? contentMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : "",
+          tech_stack: [],
+          demo_url: "",
+          repo_url: ""
+        };
+        console.log("✅ Emergency Extraction Successful!");
+      }
+    }
 
     return { success: true, data: projectData };
   } catch (error: any) {
