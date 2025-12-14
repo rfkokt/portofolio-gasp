@@ -83,10 +83,29 @@ export async function updateProject(id: string, data: Partial<ProjectData>) {
   try {
     await authenticateAdmin();
     const session = await getAdminSession();
+    
+    if (!session) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // Get the project to check ownership
+    const project = await pb.collection("projects").getOne(id);
+    
+    // Role-based validation
+    if (session.role !== 'admin') {
+      // Users cannot edit AI-created content
+      if (project.created_by === 'AI') {
+        return { success: false, error: 'Only admins can edit AI-generated content' };
+      }
+      // Users can only edit their own projects
+      if (project.created_by !== session.username) {
+        return { success: false, error: 'You can only edit your own projects' };
+      }
+    }
 
     await pb.collection("projects").update(id, {
       ...data,
-      updated_by: session?.username || 'Unknown',
+      updated_by: session.username,
     });
     await logAdminAction("Update Project", `Updated project ID: ${id}`);
     return { success: true };
@@ -99,6 +118,27 @@ export async function updateProject(id: string, data: Partial<ProjectData>) {
 export async function deleteProject(id: string) {
   try {
     await authenticateAdmin();
+    const session = await getAdminSession();
+    
+    if (!session) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // Get the project to check ownership
+    const project = await pb.collection("projects").getOne(id);
+    
+    // Role-based validation
+    if (session.role !== 'admin') {
+      // Users cannot delete AI-created content
+      if (project.created_by === 'AI') {
+        return { success: false, error: 'Only admins can delete AI-generated content' };
+      }
+      // Users can only delete their own projects
+      if (project.created_by !== session.username) {
+        return { success: false, error: 'You can only delete your own projects' };
+      }
+    }
+
     await pb.collection("projects").delete(id);
     await logAdminAction("Delete Project", `Deleted project ID: ${id}`);
     return { success: true };
@@ -107,3 +147,4 @@ export async function deleteProject(id: string) {
     return { success: false, error: error.message };
   }
 }
+

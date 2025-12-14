@@ -48,9 +48,14 @@ export async function changePassword(currentPassword: string, newPassword: strin
   }
 }
 
-// Admin CRUD
+// Admin CRUD - Only admins can manage other admins
 export async function getAdmins() {
   try {
+    const session = await getAdminSession();
+    if (!session || session.role !== 'admin') {
+      return { success: false, error: 'Admin access required', admins: [] };
+    }
+
     await authenticatePocketBase();
     const result = await pb.collection('cms_admins').getList(1, 100);
     return { 
@@ -66,8 +71,8 @@ export async function getAdmins() {
 export async function createAdmin(username: string, password: string, role: 'admin' | 'user' = 'user') {
   try {
     const session = await getAdminSession();
-    if (!session) {
-      return { success: false, error: 'Not authenticated' };
+    if (!session || session.role !== 'admin') {
+      return { success: false, error: 'Admin access required' };
     }
 
     await authenticatePocketBase();
@@ -96,8 +101,8 @@ export async function createAdmin(username: string, password: string, role: 'adm
 export async function deleteAdmin(id: string) {
   try {
     const session = await getAdminSession();
-    if (!session) {
-      return { success: false, error: 'Not authenticated' };
+    if (!session || session.role !== 'admin') {
+      return { success: false, error: 'Admin access required' };
     }
 
     await authenticatePocketBase();
@@ -160,6 +165,14 @@ export async function updateAdminPassword(id: string, newPassword: string) {
     }
 
     await authenticatePocketBase();
+    
+    // Get the target admin
+    const targetAdmin = await pb.collection('cms_admins').getOne(id);
+
+    // Role-based validation: users can only change their own password
+    if (session.role !== 'admin' && targetAdmin.username !== session.username) {
+      return { success: false, error: 'You can only change your own password' };
+    }
 
     // Hash new password
     const saltRounds = 10;
@@ -182,6 +195,14 @@ export async function updateAdminUsername(id: string, newUsername: string) {
     }
 
     await authenticatePocketBase();
+    
+    // Get the target admin
+    const targetAdmin = await pb.collection('cms_admins').getOne(id);
+
+    // Role-based validation: users can only change their own username
+    if (session.role !== 'admin' && targetAdmin.username !== session.username) {
+      return { success: false, error: 'You can only change your own username' };
+    }
 
     // Check if username exists
     try {
@@ -201,4 +222,5 @@ export async function updateAdminUsername(id: string, newUsername: string) {
     return { success: false, error: 'Failed to update username' };
   }
 }
+
 

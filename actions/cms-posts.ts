@@ -97,6 +97,25 @@ export async function updatePost(id: string, data: Partial<PostData>) {
   try {
     await authenticateAdmin();
     const session = await getAdminSession();
+    
+    if (!session) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // Get the post to check ownership
+    const post = await pb.collection("posts").getOne(id);
+    
+    // Role-based validation
+    if (session.role !== 'admin') {
+      // Users cannot edit AI-created content
+      if (post.created_by === 'AI') {
+        return { success: false, error: 'Only admins can edit AI-generated content' };
+      }
+      // Users can only edit their own posts
+      if (post.created_by !== session.username) {
+        return { success: false, error: 'You can only edit your own posts' };
+      }
+    }
 
     // If publishing for first time, set published_at
     if (data.published && !data.published_at) {
@@ -105,7 +124,7 @@ export async function updatePost(id: string, data: Partial<PostData>) {
 
     await pb.collection("posts").update(id, {
       ...data,
-      updated_by: session?.username || 'Unknown',
+      updated_by: session.username,
     });
     await logAdminAction("Update Post", `Updated post ID: ${id}`);
     return { success: true };
@@ -118,6 +137,27 @@ export async function updatePost(id: string, data: Partial<PostData>) {
 export async function deletePost(id: string) {
   try {
     await authenticateAdmin();
+    const session = await getAdminSession();
+    
+    if (!session) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // Get the post to check ownership
+    const post = await pb.collection("posts").getOne(id);
+    
+    // Role-based validation
+    if (session.role !== 'admin') {
+      // Users cannot delete AI-created content
+      if (post.created_by === 'AI') {
+        return { success: false, error: 'Only admins can delete AI-generated content' };
+      }
+      // Users can only delete their own posts
+      if (post.created_by !== session.username) {
+        return { success: false, error: 'You can only delete your own posts' };
+      }
+    }
+
     await pb.collection("posts").delete(id);
     await logAdminAction("Delete Post", `Deleted post ID: ${id}`);
     return { success: true };
@@ -126,3 +166,4 @@ export async function deletePost(id: string) {
     return { success: false, error: error.message };
   }
 }
+
