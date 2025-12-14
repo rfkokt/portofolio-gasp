@@ -18,6 +18,7 @@ async function addDateFields(collectionName) {
     const needsUpdatedAt = !collection.fields?.some(f => f.name === 'updated_at');
     const needsCreatedBy = !collection.fields?.some(f => f.name === 'created_by');
     const needsUpdatedBy = !collection.fields?.some(f => f.name === 'updated_by');
+    const needsRole = collectionName === 'cms_admins' && !collection.fields?.some(f => f.name === 'role');
     
     let updatedFields = [...collection.fields];
     let changed = false;
@@ -36,6 +37,10 @@ async function addDateFields(collectionName) {
     }
     if (needsUpdatedBy) {
         updatedFields.push({ name: 'updated_by', type: 'text', required: false });
+        changed = true;
+    }
+    if (needsRole) {
+        updatedFields.push({ name: 'role', type: 'text', required: false });
         changed = true;
     }
 

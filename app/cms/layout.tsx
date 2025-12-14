@@ -21,7 +21,7 @@ export default async function CMSLayout({
       <div className="min-h-screen bg-background flex flex-col md:flex-row pt-20">
         {/* Sidebar - hidden on mobile */}
         <div className="hidden md:flex w-64 bg-background border-r border-border flex-col shrink-0">
-          <CMSSidebar username={session.username} />
+          <CMSSidebar username={session.username} role={session.role} />
           
           <div className="p-4 border-t border-border mt-auto">
             <form action={logoutAdmin}>

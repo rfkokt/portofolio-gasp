@@ -55,7 +55,7 @@ export async function getAdmins() {
     const result = await pb.collection('cms_admins').getList(1, 100);
     return { 
       success: true, 
-      admins: result.items.map((a: any) => ({ id: a.id, username: a.username })) 
+      admins: result.items.map((a: any) => ({ id: a.id, username: a.username, role: a.role || 'user' })) 
     };
   } catch (error: any) {
     console.error('Get admins error:', error.message);
@@ -63,7 +63,7 @@ export async function getAdmins() {
   }
 }
 
-export async function createAdmin(username: string, password: string) {
+export async function createAdmin(username: string, password: string, role: 'admin' | 'user' = 'user') {
   try {
     const session = await getAdminSession();
     if (!session) {
@@ -84,8 +84,8 @@ export async function createAdmin(username: string, password: string) {
     const saltRounds = 10;
     const password_hash = await bcrypt.hash(password, saltRounds);
 
-    await pb.collection('cms_admins').create({ username, password_hash });
-    await logAdminAction('Create Admin', `Created admin: ${username}`);
+    await pb.collection('cms_admins').create({ username, password_hash, role });
+    await logAdminAction('Create Admin', `Created admin: ${username} with role: ${role}`);
     return { success: true };
   } catch (error: any) {
     console.error('Create admin error:', error.message);
@@ -123,11 +123,32 @@ export async function getAdminById(id: string) {
     const admin = await pb.collection('cms_admins').getOne(id);
     return { 
       success: true, 
-      admin: { id: admin.id, username: admin.username, created: admin.created_at, updated: admin.updated_at } 
+      admin: { id: admin.id, username: admin.username, role: admin.role || 'user', created: admin.created_at, updated: admin.updated_at } 
     };
   } catch (error: any) {
     console.error('Get admin error:', error.message);
     return { success: false, error: error.message };
+  }
+}
+
+export async function updateAdminRole(id: string, role: 'admin' | 'user') {
+  try {
+    const session = await getAdminSession();
+    if (!session || session.role !== 'admin') {
+      return { success: false, error: 'Admin access required' };
+    }
+
+    await authenticatePocketBase();
+    
+    // Get admin to update
+    const targetAdmin = await pb.collection('cms_admins').getOne(id);
+    
+    await pb.collection('cms_admins').update(id, { role });
+    await logAdminAction('Update Admin Role', `Changed ${targetAdmin.username} role to: ${role}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Update admin role error:', error.message);
+    return { success: false, error: 'Failed to update role' };
   }
 }
 

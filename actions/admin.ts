@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { signAdminToken, getAdminCookieName, getAdminSession } from '@/lib/admin-auth';
+import { signAdminToken, getAdminCookieName, getAdminSession, AdminRole } from '@/lib/admin-auth';
 import PocketBase from 'pocketbase';
 import bcrypt from 'bcryptjs';
 import { logAdminAction } from './admin-logs';
@@ -35,8 +35,11 @@ export async function loginAdmin(username: string, password: string) {
       return { success: false, error: 'Invalid credentials' };
     }
 
-    // Create JWT token
-    const token = await signAdminToken(username);
+    // Get role from database (default to 'user' if not set)
+    const role: AdminRole = admin.role === 'admin' ? 'admin' : 'user';
+
+    // Create JWT token with role
+    const token = await signAdminToken(username, role);
     const cookieStore = await cookies();
     
     cookieStore.set(getAdminCookieName(), token, {

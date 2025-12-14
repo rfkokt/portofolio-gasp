@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getAdmins, createAdmin, deleteAdmin, getAdminById, updateAdminPassword, updateAdminUsername } from "@/actions/cms-settings";
+import { getAdmins, createAdmin, deleteAdmin, getAdminById, updateAdminPassword, updateAdminUsername, updateAdminRole } from "@/actions/cms-settings";
 import { getAdminLogs } from "@/actions/admin-logs";
 import { useConfirm } from "@/components/admin/ConfirmModal";
-import { Loader2, Check, AlertCircle, UserPlus, Trash2, Edit, Eye, X, Clock } from "lucide-react";
+import { Loader2, Check, AlertCircle, UserPlus, Trash2, Edit, Eye, X, Clock, Shield, User } from "lucide-react";
 
 interface Admin {
   id: string;
   username: string;
+  role?: 'admin' | 'user';
   created?: string;
   updated?: string;
 }
@@ -45,6 +46,7 @@ export default function AdminsPage() {
   const [adminsLoading, setAdminsLoading] = useState(true);
   const [newUsername, setNewUsername] = useState("");
   const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [newRole, setNewRole] = useState<'admin' | 'user'>('user');
   const [createLoading, setCreateLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -59,6 +61,7 @@ export default function AdminsPage() {
   const [editAdmin, setEditAdmin] = useState<Admin | null>(null);
   const [editUsername, setEditUsername] = useState("");
   const [editPassword, setEditPassword] = useState("");
+  const [editRole, setEditRole] = useState<'admin' | 'user'>('user');
   const [editLoading, setEditLoading] = useState(false);
 
   useEffect(() => {
@@ -87,11 +90,12 @@ export default function AdminsPage() {
     setCreateLoading(true);
 
     try {
-      const result = await createAdmin(newUsername, newAdminPassword);
+      const result = await createAdmin(newUsername, newAdminPassword, newRole);
       if (result.success) {
-        setSuccess(`Admin "${newUsername}" created successfully`);
+        setSuccess(`Admin "${newUsername}" created successfully as ${newRole}`);
         setNewUsername("");
         setNewAdminPassword("");
+        setNewRole('user');
         loadAdmins();
       } else {
         setError(result.error || "Failed to create admin");
@@ -149,6 +153,7 @@ export default function AdminsPage() {
     setEditAdmin(admin);
     setEditUsername(admin.username);
     setEditPassword("");
+    setEditRole(admin.role || 'user');
   };
 
   const handleSaveEdit = async () => {
@@ -177,6 +182,16 @@ export default function AdminsPage() {
         const result = await updateAdminPassword(editAdmin.id, editPassword);
         if (!result.success) {
           setError(result.error || "Failed to update password");
+          setEditLoading(false);
+          return;
+        }
+      }
+
+      // Update role if changed
+      if (editRole !== (editAdmin.role || 'user')) {
+        const result = await updateAdminRole(editAdmin.id, editRole);
+        if (!result.success) {
+          setError(result.error || "Failed to update role");
           setEditLoading(false);
           return;
         }
@@ -249,6 +264,14 @@ export default function AdminsPage() {
             placeholder="Password (min 6 characters)"
             required
           />
+          <select
+            value={newRole}
+            onChange={(e) => setNewRole(e.target.value as 'admin' | 'user')}
+            className="bg-transparent border border-border px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-all"
+          >
+            <option value="user" className="bg-background">User</option>
+            <option value="admin" className="bg-background">Admin</option>
+          </select>
           <button
             type="submit"
             disabled={createLoading}
@@ -277,6 +300,9 @@ export default function AdminsPage() {
                 <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                   Username
                 </th>
+                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Role
+                </th>
                 <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">
                   Actions
                 </th>
@@ -290,6 +316,29 @@ export default function AdminsPage() {
                 >
                   <td className="px-6 py-4">
                     <span className="font-medium text-foreground">{admin.username}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={async () => {
+                        const newRole = admin.role === 'admin' ? 'user' : 'admin';
+                        const result = await updateAdminRole(admin.id, newRole);
+                        if (result.success) {
+                          loadAdmins();
+                          setSuccess(`Changed ${admin.username} role to ${newRole}`);
+                        } else {
+                          setError(result.error || 'Failed to update role');
+                        }
+                      }}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold uppercase tracking-wider transition-colors ${
+                        admin.role === 'admin'
+                          ? 'bg-purple-500/20 text-purple-500 hover:bg-purple-500/30'
+                          : 'bg-foreground/10 text-muted-foreground hover:bg-foreground/20'
+                      }`}
+                      title={`Click to change to ${admin.role === 'admin' ? 'user' : 'admin'}`}
+                    >
+                      {admin.role === 'admin' ? <Shield className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                      {admin.role || 'user'}
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -413,6 +462,17 @@ export default function AdminsPage() {
                   className="w-full bg-transparent border border-border px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-all"
                   placeholder="Enter new password"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Role</label>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value as 'admin' | 'user')}
+                  className="w-full bg-transparent border border-border px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-all"
+                >
+                  <option value="user" className="bg-background">User</option>
+                  <option value="admin" className="bg-background">Admin</option>
+                </select>
               </div>
               <div className="flex gap-3 pt-4">
                 <button

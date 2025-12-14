@@ -31,8 +31,15 @@ export interface ProjectData {
 export async function getProjectsForCMS() {
   try {
     await authenticateAdmin();
+    const session = await getAdminSession();
 
-    const result = await pb.collection("projects").getList(1, 100);
+    // Role-based filter: users can only see their own projects
+    let filter = undefined;
+    if (session && session.role !== 'admin') {
+      filter = `created_by = "${session.username}"`;
+    }
+
+    const result = await pb.collection("projects").getList(1, 100, { filter });
 
     return { success: true, projects: result.items };
   } catch (error: any) {

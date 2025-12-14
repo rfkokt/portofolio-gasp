@@ -4,15 +4,27 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, FileText, FolderOpen, Settings, Users } from "lucide-react";
 
-const navItems = [
+interface NavItem {
+  name: string;
+  path: string;
+  icon: React.ComponentType<{ className?: string }>;
+  adminOnly?: boolean;
+}
+
+const navItems: NavItem[] = [
   { name: "Dashboard", path: "/cms", icon: LayoutDashboard },
   { name: "Blog Posts", path: "/cms/posts", icon: FileText },
   { name: "Projects", path: "/cms/projects", icon: FolderOpen },
-  { name: "Admins", path: "/cms/admins", icon: Users },
+  { name: "Admins", path: "/cms/admins", icon: Users, adminOnly: true },
   { name: "Settings", path: "/cms/settings", icon: Settings },
 ];
 
-export function CMSSidebar({ username }: { username: string }) {
+interface CMSSidebarProps {
+  username: string;
+  role: 'admin' | 'user';
+}
+
+export function CMSSidebar({ username, role }: CMSSidebarProps) {
   const pathname = usePathname();
 
   const isActive = (path: string) => {
@@ -22,6 +34,13 @@ export function CMSSidebar({ username }: { username: string }) {
     return pathname.startsWith(path);
   };
 
+  const filteredNavItems = navItems.filter(item => {
+    if (item.adminOnly && role !== 'admin') {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <aside className="w-64 bg-background border-r border-border flex flex-col">
       <div className="p-6 border-b border-border">
@@ -30,12 +49,15 @@ export function CMSSidebar({ username }: { username: string }) {
         </Link>
         <p className="text-xs text-muted-foreground mt-1">
           Welcome, {username}
+          <span className={`ml-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${role === 'admin' ? 'bg-purple-500/20 text-purple-500' : 'bg-foreground/10'}`}>
+            {role}
+          </span>
         </p>
       </div>
 
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const active = isActive(item.path);
             return (
               <li key={item.name}>
@@ -58,3 +80,4 @@ export function CMSSidebar({ username }: { username: string }) {
     </aside>
   );
 }
+

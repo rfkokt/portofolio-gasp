@@ -31,13 +31,23 @@ export interface PostData {
 export async function getPostsForCMS(filter?: "drafts" | "published" | "all") {
   try {
     await authenticateAdmin();
+    const session = await getAdminSession();
 
-    let filterQuery = "";
+    let filterParts: string[] = [];
+    
+    // Status filter
     if (filter === "drafts") {
-      filterQuery = "published = false";
+      filterParts.push("published = false");
     } else if (filter === "published") {
-      filterQuery = "published = true";
+      filterParts.push("published = true");
     }
+
+    // Role-based filter: users can only see their own posts
+    if (session && session.role !== 'admin') {
+      filterParts.push(`created_by = "${session.username}"`);
+    }
+
+    const filterQuery = filterParts.join(" && ");
 
     const result = await pb.collection("posts").getList(1, 100, {
       filter: filterQuery || undefined,

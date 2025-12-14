@@ -1,19 +1,36 @@
 import PocketBase from "pocketbase";
 import { FileText, FolderOpen, Eye, Clock } from "lucide-react";
 import Link from "next/link";
+import { getAdminSession } from "@/lib/admin-auth";
 
 const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || "https://pocketbase.rdev.cloud");
 
-async function getStats() {
+async function authenticatePB() {
+  const email = process.env.PB_ADMIN_EMAIL;
+  const pass = process.env.PB_ADMIN_PASS;
+  if (email && pass) {
+    await pb.admins.authWithPassword(email, pass);
+  }
+}
+
+async function getStats(username: string, isAdmin: boolean) {
   try {
+    await authenticatePB();
+    
+    // Role-based filter
+    const userFilter = isAdmin ? '' : `created_by = "${username}"`;
+
     const [posts, projects] = await Promise.all([
-      pb.collection("posts").getList(1, 1, { fields: "id,published" }),
-      pb.collection("projects").getList(1, 1, { fields: "id" }),
+      pb.collection("posts").getList(1, 1, { filter: userFilter || undefined, fields: "id,published" }),
+      pb.collection("projects").getList(1, 1, { filter: userFilter || undefined, fields: "id" }),
     ]);
 
     // Get draft count
+    const draftsFilter = userFilter 
+      ? `published = false && ${userFilter}`
+      : "published = false";
     const drafts = await pb.collection("posts").getList(1, 1, {
-      filter: "published = false",
+      filter: draftsFilter,
       fields: "id",
     });
 
@@ -32,7 +49,9 @@ async function getStats() {
 }
 
 export default async function CMSDashboard() {
-  const stats = await getStats();
+  const session = await getAdminSession();
+  const isAdmin = session?.role === 'admin';
+  const stats = await getStats(session?.username || '', isAdmin);
 
   const statCards = [
     {
