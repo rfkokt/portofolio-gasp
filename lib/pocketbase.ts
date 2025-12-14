@@ -4,11 +4,11 @@ import { PostRecord, ProjectRecord } from './pb_schema';
 // Helper to construct the full image URL
 export const getPbImage = (collectionId: string, recordId: string, fileName: string) => {
     if (!fileName) return '';
-    return `${process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'}/api/files/${collectionId}/${recordId}/${fileName}`;
+    return `${process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://pocketbase.rdev.cloud'}/api/files/${collectionId}/${recordId}/${fileName}`;
 };
 
 // Singleton instance
-export const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090');
+export const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://pocketbase.rdev.cloud');
 
 // Disable auto-cancellations to avoid request aborts in React Strict Mode
 pb.autoCancellation(false);

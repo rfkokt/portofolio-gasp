@@ -144,7 +144,7 @@ export default async function PostsListPage({
                       >
                         <Edit className="w-4 h-4" />
                       </Link>
-                      <DeleteButton id={post.id} onDelete={handleDelete} />
+                      <DeleteButton id={post.id} onDelete={handleDelete} itemName={post.title} />
                     </div>
                   </td>
                 </tr>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPost, updatePost, PostData } from "@/actions/cms-posts";
 import { generateBlogPost } from "@/actions/ai-generate";
-import { Loader2, Sparkles, Save, Send, ArrowLeft, Eye } from "lucide-react";
+import { Loader2, Sparkles, Save, Send, ArrowLeft, Eye, X } from "lucide-react";
 import Link from "next/link";
 
 interface PostFormProps {
@@ -17,6 +17,11 @@ export function PostForm({ initialData, mode }: PostFormProps) {
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  
+  // AI Generation Modal State
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiTopic, setAiTopic] = useState("");
+  const [aiMode, setAiMode] = useState<"auto" | "custom">("auto");
 
   const [title, setTitle] = useState(initialData?.title || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
@@ -56,18 +61,20 @@ export function PostForm({ initialData, mode }: PostFormProps) {
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (topic?: string) => {
+    setShowAIModal(false);
     setGenerating(true);
     setError("");
 
     try {
-      const result = await generateBlogPost();
+      const result = await generateBlogPost(topic);
       if (result.success && result.data) {
         setTitle(result.data.title);
         setSlug(result.data.slug || generateSlug(result.data.title));
         setExcerpt(result.data.excerpt);
         setContent(result.data.content);
         setTags(result.data.tags || []);
+        setCoverImage(result.data.cover_image || "");
       } else {
         setError(result.error || "Failed to generate content");
       }
@@ -75,6 +82,22 @@ export function PostForm({ initialData, mode }: PostFormProps) {
       setError("An error occurred during generation");
     } finally {
       setGenerating(false);
+      setAiTopic("");
+      setAiMode("auto");
+    }
+  };
+
+  const handleOpenAIModal = () => {
+    setAiTopic("");
+    setAiMode("auto");
+    setShowAIModal(true);
+  };
+
+  const handleConfirmGenerate = () => {
+    if (aiMode === "custom" && aiTopic.trim()) {
+      handleGenerate(aiTopic.trim());
+    } else {
+      handleGenerate();
     }
   };
 
@@ -128,7 +151,39 @@ export function PostForm({ initialData, mode }: PostFormProps) {
   };
 
   return (
-    <div className="w-full">
+    <>
+      {/* Full Page Loading Overlay during AI Generation */}
+      {generating && (
+        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center gap-8">
+            {/* Animated Icon */}
+            <div className="relative">
+              <div className="w-16 h-16 border-2 border-border rounded-full" />
+              <div className="absolute inset-0 w-16 h-16 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
+              <Sparkles className="w-6 h-6 text-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            </div>
+            
+            {/* Text */}
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-foreground mb-3 tracking-tight">
+                AI sedang menulis...
+              </h3>
+              <p className="text-muted-foreground text-sm max-w-sm leading-relaxed">
+                Mohon tunggu sebentar, AI sedang membuat konten berkualitas untuk blog kamu.
+              </p>
+            </div>
+            
+            {/* Progress dots */}
+            <div className="flex gap-2">
+              <span className="w-2 h-2 bg-foreground rounded-full animate-pulse" style={{ animationDelay: '0s' }} />
+              <span className="w-2 h-2 bg-foreground rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+              <span className="w-2 h-2 bg-foreground rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="w-full">
       <div className="flex items-center gap-4 mb-8">
         <Link
           href="/cms/posts"
@@ -163,7 +218,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
           </button>
           <button
             type="button"
-            onClick={handleGenerate}
+            onClick={handleOpenAIModal}
             disabled={generating}
             className="px-4 py-2 border border-purple-500 text-purple-500 font-medium text-sm uppercase tracking-wider hover:bg-purple-500 hover:text-white disabled:opacity-50 transition-colors inline-flex items-center gap-2"
           >
@@ -315,6 +370,112 @@ export function PostForm({ initialData, mode }: PostFormProps) {
           </button>
         </div>
       </div>
+
+      {/* AI Generate Modal */}
+      {showAIModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-background border border-border w-full max-w-lg">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-5 h-5 text-purple-500" />
+                <h2 className="text-lg font-bold text-foreground">Generate with AI</h2>
+              </div>
+              <button
+                onClick={() => setShowAIModal(false)}
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
+              <p className="text-muted-foreground text-sm">
+                Pilih bagaimana AI akan membuat konten blog untuk Anda.
+              </p>
+
+              {/* Option: Auto Generate */}
+              <label className="flex items-start gap-4 p-4 border border-border cursor-pointer hover:border-purple-500/50 transition-colors group">
+                <input
+                  type="radio"
+                  name="aiMode"
+                  value="auto"
+                  checked={aiMode === "auto"}
+                  onChange={() => setAiMode("auto")}
+                  className="mt-1 accent-purple-500"
+                />
+                <div className="flex-1">
+                  <span className="font-medium text-foreground group-hover:text-purple-500 transition-colors">
+                    Auto Generate
+                  </span>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Biarkan AI memilih topik trending dari dunia web development, React, atau JavaScript.
+                  </p>
+                </div>
+              </label>
+
+              {/* Option: Custom Topic */}
+              <label className="flex items-start gap-4 p-4 border border-border cursor-pointer hover:border-purple-500/50 transition-colors group">
+                <input
+                  type="radio"
+                  name="aiMode"
+                  value="custom"
+                  checked={aiMode === "custom"}
+                  onChange={() => setAiMode("custom")}
+                  className="mt-1 accent-purple-500"
+                />
+                <div className="flex-1">
+                  <span className="font-medium text-foreground group-hover:text-purple-500 transition-colors">
+                    Custom Topic / Reference
+                  </span>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Masukkan topik atau referensi spesifik yang ingin dibahas.
+                  </p>
+                </div>
+              </label>
+
+              {/* Custom Topic Input */}
+              {aiMode === "custom" && (
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Topic / Reference
+                  </label>
+                  <textarea
+                    value={aiTopic}
+                    onChange={(e) => setAiTopic(e.target.value)}
+                    placeholder="Contoh: Next.js 15 Server Actions, atau link artikel yang ingin dibahas..."
+                    rows={3}
+                    className="w-full bg-transparent border border-border px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all resize-none text-sm"
+                    autoFocus
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setShowAIModal(false)}
+                className="px-4 py-2 text-muted-foreground font-medium text-sm uppercase tracking-wider hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmGenerate}
+                disabled={aiMode === "custom" && !aiTopic.trim()}
+                className="px-6 py-2 bg-purple-500 text-white font-bold text-sm uppercase tracking-wider hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Generate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+    </>
   );
 }

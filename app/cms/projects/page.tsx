@@ -122,7 +122,7 @@ export default async function ProjectsListPage() {
                       >
                         <Edit className="w-4 h-4" />
                       </Link>
-                      <DeleteButton id={project.id} onDelete={handleDelete} />
+                      <DeleteButton id={project.id} onDelete={handleDelete} itemName={project.title} />
                     </div>
                   </td>
                 </tr>
