@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SecretLoginModal } from "@/components/admin/SecretLoginModal";
 
 const navItems = [
   { name: "01. MISSION", path: "/#lens" },
@@ -17,6 +18,25 @@ export function Header() {
   const pathname = usePathname();
   const headerRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  
+  // Triple-click detection
+  const clickTimesRef = useRef<number[]>([]);
+  
+  const handleLogoClick = useCallback((e: React.MouseEvent) => {
+    const now = Date.now();
+    clickTimesRef.current.push(now);
+    
+    // Keep only clicks within last 1 second
+    clickTimesRef.current = clickTimesRef.current.filter(t => now - t < 1000);
+    
+    // If 3 clicks within 1 second, show admin login
+    if (clickTimesRef.current.length >= 3) {
+      e.preventDefault();
+      setShowAdminLogin(true);
+      clickTimesRef.current = [];
+    }
+  }, []);
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, path: string) => {
     if (pathname === "/" && path.startsWith("/#")) {
@@ -36,7 +56,11 @@ export function Header() {
         ref={headerRef}
         className="fixed top-0 w-full z-50 px-6 md:px-8 py-6 flex justify-between items-center bg-background/50 backdrop-blur-md border-b border-border transition-all duration-300"
       >
-        <Link href="/" className="font-bold text-xl tracking-tighter text-foreground z-50">
+        <Link 
+          href="/" 
+          className="font-bold text-xl tracking-tighter text-foreground z-50"
+          onClick={handleLogoClick}
+        >
           RDEV
         </Link>
 
@@ -84,6 +108,13 @@ export function Header() {
           ))}
 
       </div>
+
+      {/* Secret Admin Login Modal */}
+      <SecretLoginModal 
+        isOpen={showAdminLogin} 
+        onClose={() => setShowAdminLogin(false)} 
+      />
     </>
   );
 }
+
