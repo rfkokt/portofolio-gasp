@@ -122,13 +122,17 @@ export function FractureAbout({ projects }: FractureAboutProps) {
                     maskImage: "linear-gradient(to right, black 95%, transparent 100%)" // Soft edge for overlap
                 }}
             >
-                <Image 
-                    src={getPbImage(project.collectionId, project.id, project.image)}
-                    alt={project.title}
-                    fill
-                    className="object-cover object-center grayscale-0 md:grayscale md:group-hover:grayscale-0 transition-all duration-700 ease-out opacity-100 md:opacity-60 md:group-hover:opacity-100"
-                    sizes="(max-width: 768px) 25vw, 20vw"
-                />
+                {project.image ? (
+                    <Image 
+                        src={getPbImage(project.collectionId, project.id, project.image)}
+                        alt={project.title}
+                        fill
+                        className="object-cover object-center grayscale-0 md:grayscale md:group-hover:grayscale-0 transition-all duration-700 ease-out opacity-100 md:opacity-60 md:group-hover:opacity-100"
+                        sizes="(max-width: 768px) 25vw, 20vw"
+                    />
+                ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-900" />
+                )}
                 
                 {/* Folder Tab/Label */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
