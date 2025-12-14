@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'images.placeholders.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+      },
+      {
+        protocol: 'https',
         hostname: 'pocketbase.rdev.cloud',
       },
     ],

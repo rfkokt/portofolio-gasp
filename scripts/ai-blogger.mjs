@@ -1,8 +1,8 @@
-// import OpenAI from 'openai'; // Removed, using fetch
 import PocketBase from 'pocketbase';
 import 'dotenv/config';
 import { fetch, Agent } from 'undici';
 import JSON5 from 'json5';
+import Parser from 'rss-parser';
 
 // Configuration
 const Z_AI_API_KEY = process.env.Z_AI_API_KEY;
@@ -25,160 +25,129 @@ const dispatcher = new Agent({
 const ANTHROPIC_ENDPOINT = 'https://api.z.ai/api/anthropic/v1/messages';
 
 const pb = new PocketBase(PB_URL);
+const parser = new Parser();
 
-const YEAR = new Date().getFullYear();
-
-// Topics to rotate or randomize (Security, FE AI, & Modern Tech Focus)
-const TOPICS = [
-    `Web Security Best Practices ${YEAR}`,
-    "AI Agents in Frontend Development", 
-    "Zero Trust Architecture for Web Apps",
-    "Next.js Security Headers & Middleware",
-    "The Future of React and AI Integration",
-    "Supply Chain Attacks in npm",
-    `Browser Security Features ${YEAR}`,
-    "Large Language Models for Coding",
-    "Frontend Performance & Security Trade-offs",
-    `New CSS Features ${YEAR} & Beyond`,
-    "Deepfake Detection on the Web",
-    "State Management in the Era of AI",
-    `Understanding OWASP Top 10 for ${YEAR}`
+const FEEDS = [
+    { name: 'Node.js Security', url: 'https://nodejs.org/en/feed/vulnerability.xml', type: 'security' },
+    { name: 'React Blog', url: 'https://react.dev/feed.xml', type: 'frontend' },
+    { name: 'Vercel Blog', url: 'https://vercel.com/atom', type: 'infrastructure' }
 ];
 
-// Curated Unsplash images for each topic category (stable direct URLs)
-const TOPIC_IMAGES = {
-    "Web Security": [
-        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&h=800&fit=crop", // Cybersecurity
-        "https://images.unsplash.com/photo-1563206767-5b1d972d93e7?w=1200&h=800&fit=crop", // Matrix code
-        "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?w=1200&h=800&fit=crop" // Shield
-    ],
-    "AI Agents": [
-        "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=800&fit=crop", // AI/Robot
-        "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1200&h=800&fit=crop", // Brain
-        "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=1200&h=800&fit=crop" // Face
-    ],
-    "Zero Trust": [
-        "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1200&h=800&fit=crop", // Lock
-        "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=1200&h=800&fit=crop", // Access
-        "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=1200&h=800&fit=crop", // Server
-    ],
-    "Next.js": [
-        "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&h=800&fit=crop", // Code
-        "https://images.unsplash.com/photo-1618477247222-ac59124c6282?w=1200&h=800&fit=crop", // Developer
-        "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=800&fit=crop" // Laptop
-    ],
-    "React": [
-        "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=800&fit=crop", // React logo
-        "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&h=800&fit=crop", // Technology
-        "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200&h=800&fit=crop" // Coding
-    ],
-    "Supply Chain": [
-        "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&h=800&fit=crop", // Matrix
-        "https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=1200&h=800&fit=crop", // Network
-        "https://images.unsplash.com/photo-1558494949-efc52728101c?w=1200&h=800&fit=crop" // Server
-    ],
-    "Browser Security": [
-        "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=1200&h=800&fit=crop", // Browser
-        "https://images.unsplash.com/photo-1481487484168-9b930d5b7d93?w=1200&h=800&fit=crop", // Internet
-        "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=1200&h=800&fit=crop" // Security
-    ],
-    "Large Language": [
-        "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1200&h=800&fit=crop", // Brain
-        "https://images.unsplash.com/photo-1655720828018-edd2daec9349?w=1200&h=800&fit=crop", // AI Abstract
-        "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?w=1200&h=800&fit=crop" // AI Head
-    ],
-    "Frontend Performance": [
-        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=800&fit=crop", // Dashboard
-        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop", // Analytics
-        "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=1200&h=800&fit=crop" // Network
-    ],
-    "CSS Features": [
-        "https://images.unsplash.com/photo-1507721999472-8ed4421c4af2?w=1200&h=800&fit=crop", // Design
-        "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=1200&h=800&fit=crop", // Colors
-        "https://images.unsplash.com/photo-1558655146-d09347e92766?w=1200&h=800&fit=crop" // Art
-    ],
-    "Deepfake": [
-        "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=1200&h=800&fit=crop", // AI Face
-        "https://images.unsplash.com/photo-1531297461136-82lwDe8j4e0?w=1200&h=800&fit=crop", // Robot
-        "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&h=800&fit=crop" // Cyborg
-    ],
-    "State Management": [
-        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop", // Data
-        "https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=1200&h=800&fit=crop", // Flow
-        "https://images.unsplash.com/photo-1556155092-490a1ba16284?w=1200&h=800&fit=crop" // Connection
-    ],
-    "OWASP": [
-        "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?w=1200&h=800&fit=crop", // Shield
-        "https://images.unsplash.com/photo-1614064548237-096f7aa5f5a9?w=1200&h=800&fit=crop", // Lock
-        "https://images.unsplash.com/photo-1603899122634-f086ca5f5ddd?w=1200&h=800&fit=crop" // Cyber
-    ]
-};
+// Helper to wrap text for the image
+function generateCoverImageURL(title) {
+    const MAX_LINE_LENGTH = 18;
+    const words = title.split(' ');
+    let lines = [];
+    let currentLine = words[0];
 
-function getTopicImage(topic) {
-    // Find matching image set from curated set
-    for (const [key, urls] of Object.entries(TOPIC_IMAGES)) {
-        if (topic.toLowerCase().includes(key.toLowerCase())) {
-            // Pick random image from the set
-            return urls[Math.floor(Math.random() * urls.length)];
+    for (let i = 1; i < words.length; i++) {
+        if ((currentLine + " " + words[i]).length < MAX_LINE_LENGTH) {
+            currentLine += " " + words[i];
+        } else {
+            lines.push(currentLine);
+            currentLine = words[i];
         }
     }
-    // Default fallback - tech abstract
-    const FALLBACKS = [
-       "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=800&fit=crop",
-       "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=800&fit=crop",
-       "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&h=800&fit=crop"
-    ];
-    return FALLBACKS[Math.floor(Math.random() * FALLBACKS.length)];
+    lines.push(currentLine);
+
+    const encodedText = encodeURIComponent(lines.join('\n'));
+    // Using placehold.co with dark background and fixed font size
+    return `https://placehold.co/398x498/1a1a1a/FFF.png?text=${encodedText}&font=montserrat&font_size=28`;
 }
 
-async function generatePost(excludeTopics = new Set()) {
-    // Filter available topics
-    const availableTopics = TOPICS.filter(t => !excludeTopics.has(t));
-    
-    if (availableTopics.length === 0) {
-        console.warn("⚠️ All topics have been used! improvements needed for infinite content.");
-        return null;
+async function fetchNews() {
+    console.log("📡 Fetching RSS feeds...");
+    let allNews = [];
+
+    for (const feed of FEEDS) {
+        try {
+            const feedData = await parser.parseURL(feed.url);
+            console.log(`✅ Fetched ${feedData.items.length} items from ${feed.name}`);
+            
+            // Map items to a standard format
+            const items = feedData.items.map(item => ({
+                source: feed.name,
+                title: item.title,
+                link: item.link,
+                pubDate: new Date(item.pubDate || item.isoDate || new Date()),
+                content: item.contentSnippet || item.content || "",
+                guid: item.guid || item.link
+            }));
+            
+            allNews = [...allNews, ...items];
+        } catch (e) {
+            console.error(`❌ Failed to fetch ${feed.name}:`, e.message);
+        }
     }
 
-    const topic = availableTopics[Math.floor(Math.random() * availableTopics.length)];
-    console.log(`🤖 Generating post about: "${topic}"...`);
+    // Sort by date, newest first
+    return allNews.sort((a, b) => b.pubDate - a.pubDate);
+}
+
+async function isPostExists(link, title) {
+    try {
+        // Check if there is a post with this specific source link in the description or similar title
+        // Since we don't store the source link in a dedicated column, we'll check title.
+        // Or better, we can check if a slug related to this title exists.
+        
+        // Strategy: Slugify the title and check. 
+        // Note: The previous logic added timestamp to slug if duplicate, so slug check might not be enough if we renamed it.
+        // Better: Fetch recent posts and check fuzzy match on title?
+        // Simple 1: Check exact title match.
+        const exactTitle = await pb.collection('posts').getList(1, 1, {
+            filter: `title="${title}"`
+        });
+        if (exactTitle.totalItems > 0) return true;
+
+        return false;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function generatePost(newsItem) {
+    console.log(`🤖 Generating post for: "${newsItem.title}" (${newsItem.source})`);
 
     const systemPrompt = `
-    You are an expert technical writer and security researcher.
+    You are an expert Senior Security Engineer and Tech Writer.
     
-    TASK: Write a highly structured, engaging, and visually clean technical blog post about the given topic.
-    LANGUAGE: **Bahasa Indonesia** (Indonesian). The content MUST be in Indonesian.
+    TASK: Write a comprehensive, solution-oriented technical blog post based on the following security news/update.
+    TARGET AUDIENCE: Developers, specialized in Web Security, React, and Node.js.
+    LANGUAGE: **Bahasa Indonesia** (Indonesian).
     DATE: Today is ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}.
 
-    CRITICAL STRUCTURE INSTRUCTIONS:
-    1. **Title & Excerpt**: Engaging, SEO-friendly title (Indonesian) and a 2-sentence summary.
-    2. **Content Body** (In Indonesian):
-       - **Introduction**: Briefly state the problem and what the reader will learn.
-       - **Main Sections**: Use clear **H2 (##)** and **H3 (###)** headings to break up the text. NEVER write a "wall of text".
-       - **Paragraphs**: Keep paragraphs SHORT (max 3-4 lines). Use double newlines between them.
-       - **Formatting**: Use **Bold** for emphasis. Use **Bullet Points** or **Numbered Lists** frequently for readability.
-       - **Code**: Use \`\`\`language blocks with comments.
-    3. **References Section**:
-       - MUST explicitly include a '## Referensi' section at the very end.
-       - Format references as a Markdown list of links: "- [Title of Source](URL)".
-       - Use authoritative international sources (English or Indonesian) like MDN, OWASP, Vercel, React Docs, ArXiv, etc.
-       - Do NOT force references to be in Indonesian if the best source is English.
+    SOURCE NEWS:
+    - Title: "${newsItem.title}"
+    - Source: ${newsItem.source}
+    - Link: ${newsItem.link}
+    - Summary/Snippet: "${newsItem.content.substring(0, 1000)}..."
 
-    The JSON structure must be:
+    CRITICAL STRUCTURE & CONTENT INSTRUCTIONS:
+    1.  **Title**: Catchy, urgent, and clear title in Indonesian.
+    2.  **Introduction**: What happened? Briefly explain the vulnerability or update.
+    3.  **Impact / The Problem**: (H2) Why does this matter? What is the risk? (Exploit potential, performance hit, etc.)
+    4.  **Solution / Mitigation / How to Use**: (H2) THIS IS THE MOST IMPORTANT PART.
+        - Provide concrete code examples on how to fix/patch it.
+        - If it's a new feature, show how to use it.
+        - Use code blocks frequently.
+    5.  **Conclusion**: Brief wrap up.
+    6.  **References**:
+        - MUST include the original source link: ${newsItem.link}
+        - Add other relevant official documentation links.
+
+    FORMATTING RULES:
+    - Use Markdown (H2, H3, Bold, Code Blocks).
+    - Paragraphs: Short and punchy.
+    - Style: Professional, authoritative, but easy to read.
+
+    OUTPUT JSON FORMAT (Strict Minified JSON, no markdown fencing):
     {
-        "title": "Title String",
-        "slug": "kebab-case-slug",
-        "excerpt": "Short summary string",
-        "content": "Markdown content string (Intro -> H2 Sections -> H3 Subsections -> Conclusion -> ## References)",
-        "tags": ["tag1", "tag2", "tag3"]
+        "title": "Indonesian Title",
+        "slug": "kebab-case-slug-based-on-title",
+        "excerpt": "Urgent summary (2 sentences).",
+        "content": "Full markdown content with escaped newlines (\\n). Include the References section at the end.",
+        "tags": ["Security", "Node.js", "${newsItem.source}", "Patch"]
     }
-
-    JSON FORMATTING RULES (STRICT):
-    - Output MUST be valid JSON only. NO markdown blocks (no \`\`\`json).
-    - **MINIFIED JSON ONLY**: Do NOT use pretty-print. Do NOT add newlines for indentation.
-    - **ESCAPE ALL NEWLINES**: Any newlines inside the "content" string MUST be escaped as \\n.
-    - Example: {"title": "X", "content": "Line 1\\n\\nLine 2"}
-    - DO NOT output real newlines (Enter key) anywhere in the response.
     `;
 
     try {
@@ -192,11 +161,11 @@ async function generatePost(excludeTopics = new Set()) {
             },
             body: JSON.stringify({
                 model: "glm-4.6v",
-                max_tokens: 3000,
+                max_tokens: 3500,
                 messages: [
                     { 
                         role: "user", 
-                        content: `${systemPrompt}\n\nTopic: "${topic}"\n\nREMINDER: Output RAW MINIFIED JSON ONLY.` 
+                        content: `Generate the blog post JSON for this news item. REMINDER: Output RAW MINIFIED JSON ONLY. \n\n ${systemPrompt}` 
                     }
                 ]
             })
@@ -209,7 +178,7 @@ async function generatePost(excludeTopics = new Set()) {
 
         const data = await response.json();
         let content = data.content?.[0]?.text;
-
+        
         if (!content) throw new Error("No content generated");
 
         // Robust JSON extraction: Find the first '{' and the last '}'
@@ -224,13 +193,13 @@ async function generatePost(excludeTopics = new Set()) {
 
         let postData;
         try {
-            console.log("🧹 Parsing JSON with JSON5...");
+            // console.log("🧹 Parsing JSON with JSON5...");
             postData = JSON5.parse(jsonString);
         } catch (e) {
             console.warn("⚠️ JSON5 Parse Failed, checking for unescaped newlines...");
             // Fallback: State-Machine Repair
             try {
-                console.log("🧹 JSON5 Parse Failed. Running custom state-machine repair...");
+                // console.log("🧹 JSON5 Parse Failed. Running custom state-machine repair...");
                 
                 let inString = false;
                 let isEscaped = false;
@@ -272,7 +241,6 @@ async function generatePost(excludeTopics = new Set()) {
                     }
                 }
                 
-                console.log("🧹 Parsing state-machine repaired JSON...");
                 postData = JSON5.parse(result);
             } catch (e2) {
                  console.warn("⚠️ State-machine repair failed. Attempting Emergency Regex Extraction...");
@@ -305,17 +273,24 @@ async function generatePost(excludeTopics = new Set()) {
                      console.log("✅ Emergency Extraction Successful!");
                  } catch (e3) {
                      console.error("❌ All parsing attempts failed.");
-                     console.error("Partial Content:", jsonString.substring(0, 200) + "...");
+                     // console.error("Partial Content:", jsonString.substring(0, 200) + "...");
                      throw e2; // Throw original parsing error
                  }
             }
         }
-        
+
         // Add meta
         postData.published = true;
         postData.published_at = new Date().toISOString();
+        postData.cover_image = generateCoverImageURL(postData.title);
 
-        return { ...postData, originalTopic: topic, cover_image: getTopicImage(topic) };
+        // Append original link to content if missing (safety net)
+        if (!postData.content.includes(newsItem.link)) {
+            postData.content += `\n\n## Referensi\n- [Sumber Asli (${newsItem.source})](${newsItem.link})`;
+        }
+
+        return postData;
+
     } catch (e) {
         console.error("Failed to generate content:", e);
         return null;
@@ -325,63 +300,61 @@ async function generatePost(excludeTopics = new Set()) {
 async function main() {
     const args = process.argv.slice(2);
     const countArg = args.find(arg => arg.startsWith('--count='));
-    const count = countArg ? parseInt(countArg.split('=')[1]) : 1;
+    const maxCount = countArg ? parseInt(countArg.split('=')[1]) : 1;
 
     try {
-        console.log(`🔌 Connecting to PocketBase... v${count}`);
+        console.log(`🔌 Connecting to PocketBase...`);
         await pb.admins.authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASS);
+
+        // 1. Fetch News
+        const newsItems = await fetchNews();
+        console.log(`📰 Found ${newsItems.length} total news items.`);
+
+        let processedCount = 0;
         
-        // 1. Fetch existing titles to avoid duplicates globaly
-        let usedTopics = new Set();
-        try {
-            const records = await pb.collection('posts').getFullList({ fields: 'title' });
-            records.forEach(r => usedTopics.add(r.title));
-            console.log(`📚 Found ${usedTopics.size} existing articles.`);
-        } catch (e) { 
-            console.warn("⚠️ Could not fetch existing posts:", e.message); 
-        }
+        for (const item of newsItems) {
+            if (processedCount >= maxCount) break;
 
-        console.log(`🚀 Starting generation for ${count} posts...`);
-
-        for (let i = 0; i < count; i++) {
-            console.log(`\n⏳ [${i+1}/${count}] Generating post...`);
-            
-            // Pass Set to filter out used topics
-            const post = await generatePost(usedTopics);
-            
-            if (!post) {
-                console.error(`❌ [${i+1}/${count}] Failed to generate. Skipping.`);
+            // 2. Check duplicates
+            const exists = await isPostExists(item.link, item.title);
+            if (exists) {
+                console.log(`⏭️ Skipping "${item.title}" (Already exists)`);
                 continue;
             }
 
-            console.log(`📝 Saving post: "${post.title}"`);
+            // 3. Generate
+            console.log(`\n⏳ Processing [${processedCount + 1}/${maxCount}]: ${item.title}`);
+            const post = await generatePost(item);
+            
+            if (!post) continue;
 
-            // Check for duplicate slug just in case
+            // 4. Save
             try {
-                await pb.collection('posts').getFirstListItem(`slug="${post.slug}"`);
-                console.log("⚠️ Post with this slug already exists. Renaming.");
-                post.slug = `${post.slug}-${Date.now()}`;
-            } catch (e) { /* slug is unique */ }
+                // Check slug uniqueness again before save
+                try {
+                    await pb.collection('posts').getFirstListItem(`slug="${post.slug}"`);
+                    post.slug = `${post.slug}-${Date.now()}`;
+                } catch (e) { /* unique */ }
 
-            try {
                 await pb.collection('posts').create(post);
-                console.log(`✅ [${i+1}/${count}] Post published!`);
+                console.log(`✅ Published: "${post.title}"`);
+                processedCount++;
                 
-                // Add the new title/topic to the Set to prevent repetition in this batch
-                usedTopics.add(post.title);
-                usedTopics.add(post.originalTopic); 
-            } catch (e) {
-                console.error(`❌ Failed to save to PB:`, e.message);
-            }
+                // Wait a bit between generations
+                if (processedCount < maxCount) {
+                    await new Promise(r => setTimeout(r, 5000));
+                }
 
-            // Slight delay to be nice to the API
-            if (i < count - 1) {
-                console.log("💤 Resting for 2s...");
-                await new Promise(r => setTimeout(r, 2000));
+            } catch (e) {
+                console.error(`❌ Failed to save post:`, e.message);
             }
         }
 
-        console.log(`\n✨ Batch job processing complete.`);
+        if (processedCount === 0) {
+            console.log("No new articles to publish.");
+        } else {
+            console.log(`\n✨ Successfully published ${processedCount} news articles.`);
+        }
 
     } catch (err) {
         console.error('❌ Script failed:', err);

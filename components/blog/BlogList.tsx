@@ -1,21 +1,31 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Link from "next/link";
 import { PostRecord } from "@/lib/pb_schema";
+import { fetchMorePosts } from "@/actions/blog";
+import { Loader2 } from "lucide-react";
 
 interface BlogListProps {
   posts: PostRecord[];
 }
 
-export function BlogList({ posts }: BlogListProps) {
+export function BlogList({ posts: initialPosts }: BlogListProps) {
   const container = useRef<HTMLDivElement>(null);
+  const [posts, setPosts] = useState<PostRecord[]>(initialPosts);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(initialPosts.length >= 10);
 
   useGSAP(
     () => {
-      gsap.from(".blog-row", {
+      // Animate only the newly added items or initial items?
+      // Simple approach: animate all .blog-row that are visible
+      // Ideally we should target only new ones, but re-animating is acceptable for now or just rely on CSS
+      const items = gsap.utils.toArray(".blog-row");
+      gsap.from(items, {
         y: 20,
         opacity: 0,
         duration: 0.6,
@@ -24,11 +34,40 @@ export function BlogList({ posts }: BlogListProps) {
         scrollTrigger: {
             trigger: container.current,
             start: "top 80%",
-        }
+        },
+        clearProps: "all" // unexpected behavior fix
       });
     },
-    { scope: container }
+    { scope: container, dependencies: [posts] } // Re-run when posts change
   );
+
+  const loadMore = async () => {
+    if (loading) return;
+    setLoading(true);
+    
+    try {
+      const nextPage = page + 1;
+      const res = await fetchMorePosts(nextPage);
+      
+      if (res.success && res.items) {
+        if (res.items.length > 0) {
+            setPosts(prev => [...prev, ...res.items]);
+            setPage(nextPage);
+        }
+        
+        // Check if we reached the end
+        if (res.page >= res.totalPages || res.items.length < 10) {
+            setHasMore(false);
+        }
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div ref={container} className="max-w-7xl mx-auto px-6 mb-20">
@@ -67,6 +106,25 @@ export function BlogList({ posts }: BlogListProps) {
             </article>
         ))}
       </div>
+
+      {hasMore && (
+        <div className="mt-12 text-center">
+            <button 
+                onClick={loadMore}
+                disabled={loading}
+                className="px-8 py-3 bg-foreground text-background font-bold tracking-wider hover:bg-foreground/90 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+            >
+                {loading ? (
+                    <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        LOADING...
+                    </>
+                ) : (
+                    "LOAD MORE"
+                )}
+            </button>
+        </div>
+      )}
     </div>
   );
 }

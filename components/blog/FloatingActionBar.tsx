@@ -110,7 +110,6 @@ export function FloatingActionBar({ postId, slug, title }: FloatingActionBarProp
             type: type,
             visitor_id: vid,
         });
-
         if (result.error) {
             console.error(`Failed to track ${type}:`, result.error);
         }
