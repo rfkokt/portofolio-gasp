@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MoveLeft } from "lucide-react";
 import { TableOfContents } from "@/components/blog/TableOfContents";
+import { ProjectActionBar } from "@/components/project/ProjectActionBar";
 
 interface ProjectPageProps {
   params: Promise<{
@@ -124,6 +125,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
              </div>
          )}
       </div>
+
+      {/* Floating Action Bar */}
+      <ProjectActionBar projectId={project.id} slug={slug} title={project.title} />
     </div>
   );
 }

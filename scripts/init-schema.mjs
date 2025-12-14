@@ -135,6 +135,29 @@ async function main() {
             console.log('✅ Collection "admin_logs" created');
         }
 
+        // Create 'project_interactions' collection
+        try {
+            await pb.collections.getOne('project_interactions');
+            console.log('⚠️ Collection "project_interactions" already exists. Skipping.');
+        } catch (e) {
+            // Get projects collection ID for the relation
+            const projectsCollection = await pb.collections.getOne('projects');
+            
+            await pb.collections.create({
+                name: 'project_interactions',
+                type: 'base',
+                fields: [
+                    { name: 'project', type: 'relation', collectionId: projectsCollection.id, cascadeDelete: true, required: true, maxSelect: 1 },
+                    { name: 'type', type: 'select', values: ['clap', 'love', 'care', 'view', 'share'], required: true, maxSelect: 1 },
+                    { name: 'visitor_id', type: 'text', required: true },
+                ],
+                listRule: '', // Public read
+                viewRule: '',
+                createRule: '', // Public create
+            });
+            console.log('✅ Collection "project_interactions" created');
+        }
+
     } catch (err) {
         console.error('❌ Failed to initialize schema:', err);
         if (err.data) {
