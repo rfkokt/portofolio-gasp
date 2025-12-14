@@ -2,9 +2,9 @@
 
 import { getPosts } from "@/lib/pocketbase";
 
-export async function fetchMorePosts(page: number) {
+export async function fetchMorePosts(page: number, search: string = "") {
   try {
-    const result = await getPosts(page, 10);
+    const result = await getPosts(page, 10, search);
     return {
       success: true,
       items: result.items,

@@ -13,9 +13,14 @@ export const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http
 // Disable auto-cancellations to avoid request aborts in React Strict Mode
 pb.autoCancellation(false);
 
-export async function getPosts(page = 1, limit = 10) {
+export async function getPosts(page = 1, limit = 10, search = "") {
+    let filter = 'published = true';
+    if (search) {
+        filter += ` && (title ~ "${search}" || content ~ "${search}")`;
+    }
+    
     return await pb.collection('posts').getList<PostRecord>(page, limit, {
-        filter: 'published = true',
+        filter,
         sort: '-published_at',
     });
 }
