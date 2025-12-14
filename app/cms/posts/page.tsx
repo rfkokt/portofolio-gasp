@@ -76,6 +76,9 @@ export default async function PostsListPage({
                   Title
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Author
+                </th>
+                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -109,6 +112,11 @@ export default async function PostsListPage({
                     </span>
                   </td>
                   <td className="px-6 py-4">
+                    <span className={`text-sm ${post.created_by === 'AI' ? 'text-purple-500 font-medium' : 'text-muted-foreground'}`}>
+                      {post.created_by || '-'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
                     <span
                       className={`px-2 py-1 text-xs font-bold uppercase ${
                         post.published
@@ -120,8 +128,8 @@ export default async function PostsListPage({
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {post.created || post.published_at
-                      ? new Date(post.created || post.published_at).toLocaleDateString("id-ID", {
+                    {post.created_at || post.published_at
+                      ? new Date(post.created_at || post.published_at).toLocaleDateString("id-ID", {
                           year: "numeric",
                           month: "short",
                           day: "numeric",

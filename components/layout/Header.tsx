@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SecretLoginModal } from "@/components/admin/SecretLoginModal";
+import { checkAdminAuth } from "@/actions/admin";
 
-const navItems = [
+const baseNavItems = [
   { name: "01. MISSION", path: "/#lens" },
   { name: "02. ABOUT", path: "/#about" },
   { name: "03. ARTICLES", path: "/#liquid" },
@@ -19,6 +20,19 @@ export function Header() {
   const headerRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Check admin auth on mount
+  useEffect(() => {
+    checkAdminAuth().then(({ authenticated }) => {
+      setIsAdmin(authenticated);
+    });
+  }, [pathname]); // Re-check when pathname changes
+  
+  // Build nav items with optional CMS link
+  const navItems = isAdmin 
+    ? [...baseNavItems, { name: "05. CMS", path: "/cms" }]
+    : baseNavItems;
   
   // Triple-click detection
   const clickTimesRef = useRef<number[]>([]);

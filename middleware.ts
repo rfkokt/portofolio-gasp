@@ -12,15 +12,15 @@ export async function middleware(request: NextRequest) {
     const token = request.cookies.get('admin_session')?.value;
 
     if (!token) {
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL('/404', request.url));
     }
 
     try {
       await jwtVerify(token, ADMIN_SECRET);
       return NextResponse.next();
     } catch {
-      // Invalid token, redirect to home
-      const response = NextResponse.redirect(new URL('/', request.url));
+      // Invalid token, redirect to 404
+      const response = NextResponse.redirect(new URL('/404', request.url));
       response.cookies.delete('admin_session');
       return response;
     }

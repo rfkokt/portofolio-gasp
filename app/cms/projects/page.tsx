@@ -50,6 +50,9 @@ export default async function ProjectsListPage() {
                   Title
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Author
+                </th>
+                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                   Tech Stack
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -73,6 +76,11 @@ export default async function ProjectsListPage() {
                     <p className="text-sm text-muted-foreground truncate max-w-md mt-1">
                       {project.description}
                     </p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`text-sm ${project.created_by === 'AI' ? 'text-purple-500 font-medium' : 'text-muted-foreground'}`}>
+                      {project.created_by || '-'}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">

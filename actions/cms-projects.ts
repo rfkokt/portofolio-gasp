@@ -1,6 +1,8 @@
 "use server";
 
 import PocketBase from "pocketbase";
+import { logAdminAction } from "./admin-logs";
+import { getAdminSession } from "@/lib/admin-auth";
 
 const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || "https://pocketbase.rdev.cloud");
 
@@ -53,7 +55,16 @@ export async function getProjectById(id: string) {
 export async function createProject(data: ProjectData) {
   try {
     await authenticateAdmin();
-    const record = await pb.collection("projects").create(data);
+    const session = await getAdminSession();
+
+    const projectData = {
+      ...data,
+      created_by: session?.username || 'Unknown',
+      updated_by: session?.username || 'Unknown',
+    };
+
+    const record = await pb.collection("projects").create(projectData);
+    await logAdminAction("Create Project", `Created project: ${data.title}`);
     return { success: true, id: record.id };
   } catch (error: any) {
     console.error("Error creating project:", error);
@@ -64,7 +75,13 @@ export async function createProject(data: ProjectData) {
 export async function updateProject(id: string, data: Partial<ProjectData>) {
   try {
     await authenticateAdmin();
-    await pb.collection("projects").update(id, data);
+    const session = await getAdminSession();
+
+    await pb.collection("projects").update(id, {
+      ...data,
+      updated_by: session?.username || 'Unknown',
+    });
+    await logAdminAction("Update Project", `Updated project ID: ${id}`);
     return { success: true };
   } catch (error: any) {
     console.error("Error updating project:", error);
@@ -76,6 +93,7 @@ export async function deleteProject(id: string) {
   try {
     await authenticateAdmin();
     await pb.collection("projects").delete(id);
+    await logAdminAction("Delete Project", `Deleted project ID: ${id}`);
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting project:", error);

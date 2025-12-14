@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, FolderOpen } from "lucide-react";
+import { LayoutDashboard, FileText, FolderOpen, Settings, Users } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", path: "/cms", icon: LayoutDashboard },
   { name: "Blog Posts", path: "/cms/posts", icon: FileText },
   { name: "Projects", path: "/cms/projects", icon: FolderOpen },
+  { name: "Admins", path: "/cms/admins", icon: Users },
+  { name: "Settings", path: "/cms/settings", icon: Settings },
 ];
 
 export function CMSSidebar({ username }: { username: string }) {

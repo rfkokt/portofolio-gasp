@@ -442,7 +442,11 @@ async function main() {
                     post.slug = `${post.slug}-${Date.now()}`;
                 } catch (e) { /* unique */ }
 
-                await pb.collection('posts').create(post);
+                await pb.collection('posts').create({
+                    ...post,
+                    created_by: 'AI',
+                    updated_by: 'AI',
+                });
                 console.log(`✅ Published: "${post.title}"`);
                 processedCount++;
                 

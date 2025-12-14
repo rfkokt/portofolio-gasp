@@ -90,6 +90,51 @@ async function main() {
             console.log('✅ Collection "interactions" created');
         }
 
+        // Create 'cms_admins' collection
+        try {
+            await pb.collections.getOne('cms_admins');
+            console.log('⚠️ Collection "cms_admins" already exists. Skipping.');
+        } catch (e) {
+            await pb.collections.create({
+                name: 'cms_admins',
+                type: 'base',
+                fields: [
+                    { name: 'username', type: 'text', required: true },
+                    { name: 'password_hash', type: 'text', required: true }
+                ],
+                listRule: null, // No public access
+                viewRule: null,
+                createRule: null,
+                updateRule: null,
+                deleteRule: null,
+            });
+            console.log('✅ Collection "cms_admins" created');
+        }
+
+        // Create 'admin_logs' collection
+        try {
+            await pb.collections.getOne('admin_logs');
+            console.log('⚠️ Collection "admin_logs" already exists. Skipping.');
+        } catch (e) {
+            await pb.collections.create({
+                name: 'admin_logs',
+                type: 'base',
+                fields: [
+                    { name: 'admin_id', type: 'text', required: true },
+                    { name: 'admin_username', type: 'text', required: true },
+                    { name: 'action', type: 'text', required: true },
+                    { name: 'details', type: 'text', required: false },
+                    { name: 'ip_address', type: 'text', required: false }
+                ],
+                listRule: null, // No public access
+                viewRule: null,
+                createRule: null,
+                updateRule: null,
+                deleteRule: null,
+            });
+            console.log('✅ Collection "admin_logs" created');
+        }
+
     } catch (err) {
         console.error('❌ Failed to initialize schema:', err);
         if (err.data) {
