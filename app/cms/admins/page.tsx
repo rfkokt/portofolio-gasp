@@ -331,7 +331,7 @@ export default function AdminsPage() {
                       }}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold uppercase tracking-wider transition-colors ${
                         admin.role === 'admin'
-                          ? 'bg-purple-500/20 text-purple-500 hover:bg-purple-500/30'
+                          ? 'bg-neutral-800/20 text-neutral-800 hover:bg-neutral-800/30'
                           : 'bg-foreground/10 text-muted-foreground hover:bg-foreground/20'
                       }`}
                       title={`Click to change to ${admin.role === 'admin' ? 'user' : 'admin'}`}

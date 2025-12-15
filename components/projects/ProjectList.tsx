@@ -35,13 +35,13 @@ export function ProjectList({ projects }: ProjectListProps) {
       {projects.map((project) => (
         <div
           key={project.id}
-          className="project-card group relative p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-1 hover:bg-white/10"
+          className="project-card group relative p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-neutral-800/50 transition-all duration-300 hover:-translate-y-1 hover:bg-white/10"
         >
           <div className="mb-4">
-            <span className="text-xs font-mono text-purple-400 uppercase tracking-wider">
+            <span className="text-xs font-mono text-neutral-600 uppercase tracking-wider">
               {project.tech_stack?.[0] || 'Project'}
             </span>
-            <h3 className="text-2xl font-bold mt-2 group-hover:text-purple-200 transition-colors">
+            <h3 className="text-2xl font-bold mt-2 group-hover:text-neutral-300 transition-colors">
               {project.title}
             </h3>
           </div>

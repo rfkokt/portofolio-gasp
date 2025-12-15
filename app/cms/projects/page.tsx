@@ -78,7 +78,7 @@ export default async function ProjectsListPage() {
                     </p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-sm ${project.created_by === 'AI' ? 'text-purple-500 font-medium' : 'text-muted-foreground'}`}>
+                    <span className={`text-sm ${project.created_by === 'AI' ? 'text-neutral-800 font-medium' : 'text-muted-foreground'}`}>
                       {project.created_by || '-'}
                     </span>
                   </td>

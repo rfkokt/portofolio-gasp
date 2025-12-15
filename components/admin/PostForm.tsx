@@ -262,7 +262,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
             type="button"
             onClick={handleOpenAIModal}
             disabled={generating}
-            className="px-4 py-2 border border-purple-500 text-purple-500 font-medium text-sm uppercase tracking-wider hover:bg-purple-500 hover:text-white disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+            className="px-4 py-2 border border-foreground text-foreground font-medium text-sm uppercase tracking-wider hover:bg-foreground hover:text-background disabled:opacity-50 transition-colors inline-flex items-center gap-2"
           >
             {generating ? (
               <>
@@ -429,7 +429,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-border">
               <div className="flex items-center gap-3">
-                <Sparkles className="w-5 h-5 text-purple-500" />
+                <Sparkles className="w-5 h-5 text-neutral-800" />
                 <h2 className="text-lg font-bold text-foreground">Generate with AI</h2>
               </div>
               <button
@@ -447,17 +447,17 @@ export function PostForm({ initialData, mode }: PostFormProps) {
               </p>
 
               {/* Option: Auto Generate */}
-              <label className="flex items-start gap-4 p-4 border border-border cursor-pointer hover:border-purple-500/50 transition-colors group">
+              <label className="flex items-start gap-4 p-4 border border-border cursor-pointer hover:border-neutral-800/50 transition-colors group">
                 <input
                   type="radio"
                   name="aiMode"
                   value="auto"
                   checked={aiMode === "auto"}
                   onChange={() => setAiMode("auto")}
-                  className="mt-1 accent-purple-500"
+                  className="mt-1 accent-neutral-800"
                 />
                 <div className="flex-1">
-                  <span className="font-medium text-foreground group-hover:text-purple-500 transition-colors">
+                  <span className="font-medium text-foreground group-hover:text-neutral-800 transition-colors">
                     Auto Generate
                   </span>
                   <p className="text-muted-foreground text-sm mt-1">
@@ -467,17 +467,17 @@ export function PostForm({ initialData, mode }: PostFormProps) {
               </label>
 
               {/* Option: Custom Topic */}
-              <label className="flex items-start gap-4 p-4 border border-border cursor-pointer hover:border-purple-500/50 transition-colors group">
+              <label className="flex items-start gap-4 p-4 border border-border cursor-pointer hover:border-neutral-800/50 transition-colors group">
                 <input
                   type="radio"
                   name="aiMode"
                   value="custom"
                   checked={aiMode === "custom"}
                   onChange={() => setAiMode("custom")}
-                  className="mt-1 accent-purple-500"
+                  className="mt-1 accent-neutral-800"
                 />
                 <div className="flex-1">
-                  <span className="font-medium text-foreground group-hover:text-purple-500 transition-colors">
+                  <span className="font-medium text-foreground group-hover:text-neutral-800 transition-colors">
                     Custom Topic / Reference
                   </span>
                   <p className="text-muted-foreground text-sm mt-1">
@@ -497,7 +497,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
                     onChange={(e) => setAiTopic(e.target.value)}
                     placeholder="Contoh: Next.js 15 Server Actions, atau link artikel yang ingin dibahas..."
                     rows={3}
-                    className="w-full bg-transparent border border-border px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all resize-none text-sm"
+                    className="w-full bg-transparent border border-border px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-neutral-800 transition-all resize-none text-sm"
                     autoFocus
                   />
                 </div>
@@ -517,7 +517,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
                 type="button"
                 onClick={handleConfirmGenerate}
                 disabled={aiMode === "custom" && !aiTopic.trim()}
-                className="px-6 py-2 bg-purple-500 text-white font-bold text-sm uppercase tracking-wider hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
+                className="px-6 py-2 bg-neutral-800 text-white font-bold text-sm uppercase tracking-wider hover:bg-neutral-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
               >
                 <Sparkles className="w-4 h-4" />
                 Generate

@@ -121,7 +121,7 @@ export default async function PostsListPage({
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-sm ${post.created_by === 'AI' ? 'text-purple-500 font-medium' : 'text-muted-foreground'}`}>
+                    <span className={`text-sm ${post.created_by === 'AI' ? 'text-neutral-800 font-medium' : 'text-muted-foreground'}`}>
                       {post.created_by || '-'}
                     </span>
                   </td>

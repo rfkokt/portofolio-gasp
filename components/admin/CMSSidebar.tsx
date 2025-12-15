@@ -49,7 +49,7 @@ export function CMSSidebar({ username, role }: CMSSidebarProps) {
         </Link>
         <p className="text-xs text-muted-foreground mt-1">
           Welcome, {username}
-          <span className={`ml-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${role === 'admin' ? 'bg-purple-500/20 text-purple-500' : 'bg-foreground/10'}`}>
+          <span className={`ml-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wider rounded ${role === 'admin' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-foreground/10 text-foreground/60'}`}>
             {role}
           </span>
         </p>

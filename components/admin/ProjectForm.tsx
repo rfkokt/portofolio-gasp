@@ -406,7 +406,7 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
             type="button"
             onClick={handleOpenAIModal}
             disabled={generating}
-            className="px-4 py-2 border border-purple-500 text-purple-500 font-medium text-sm uppercase tracking-wider hover:bg-purple-500 hover:text-white disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+            className="px-4 py-2 border border-neutral-800 text-neutral-800 font-medium text-sm uppercase tracking-wider hover:bg-neutral-800 hover:text-white disabled:opacity-50 transition-colors inline-flex items-center gap-2"
           >
             {generating ? (
               <>
@@ -664,7 +664,7 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
                 onClick={() => setAiMode("auto")}
                 className={`flex-1 px-4 py-3 text-sm font-medium uppercase tracking-wider transition-colors ${
                   aiMode === "auto"
-                    ? "bg-purple-500 text-white"
+                    ? "bg-neutral-800 text-white"
                     : "border border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -675,7 +675,7 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
                 onClick={() => setAiMode("custom")}
                 className={`flex-1 px-4 py-3 text-sm font-medium uppercase tracking-wider transition-colors ${
                   aiMode === "custom"
-                    ? "bg-purple-500 text-white"
+                    ? "bg-neutral-800 text-white"
                     : "border border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -688,7 +688,7 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
                 value={aiTopic}
                 onChange={(e) => setAiTopic(e.target.value)}
                 rows={3}
-                className="w-full bg-transparent border border-border px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all resize-none"
+                className="w-full bg-transparent border border-border px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-neutral-800 transition-all resize-none"
                 placeholder="Masukkan topik project atau URL referensi...
 
 Contoh:
@@ -700,7 +700,7 @@ Contoh:
             <button
               type="button"
               onClick={handleConfirmGenerate}
-              className="w-full px-4 py-3 bg-purple-500 text-white font-bold text-sm uppercase tracking-wider hover:bg-purple-600 transition-colors inline-flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 bg-neutral-800 text-white font-bold text-sm uppercase tracking-wider hover:bg-neutral-900 transition-colors inline-flex items-center justify-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
               Generate
