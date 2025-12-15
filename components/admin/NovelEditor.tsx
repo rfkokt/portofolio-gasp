@@ -55,6 +55,8 @@ import {
   RotateCcw,
   Sparkles,
   Loader2,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { improveText } from "@/actions/ai-generate";
 
@@ -296,6 +298,7 @@ function BlockHandle({ editorRef }: { editorRef: React.RefObject<HTMLDivElement 
   const [showTurnInto, setShowTurnInto] = useState(false);
   const [showColors, setShowColors] = useState(false);
   const handleRef = useRef<HTMLDivElement>(null);
+  const currentBlockRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -318,6 +321,9 @@ function BlockHandle({ editorRef }: { editorRef: React.RefObject<HTMLDivElement 
       if (blockEl && blockEl !== proseMirror && blockEl.parentElement === proseMirror) {
         const rect = blockEl.getBoundingClientRect();
         const proseMirrorRect = proseMirror.getBoundingClientRect();
+        
+        // Store reference to current block for drag operations
+        currentBlockRef.current = blockEl;
         
         setBlockMenuPos({
           x: proseMirrorRect.left + 12, // Position inside editor padding area
@@ -346,12 +352,126 @@ function BlockHandle({ editorRef }: { editorRef: React.RefObject<HTMLDivElement 
     };
   }, [editorRef, showBlockMenu]);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!handleRef.current?.contains(e.target as Node)) {
+        setShowBlockMenu(false);
+        setShowAddMenu(false);
+        setShowTurnInto(false);
+        setShowColors(false);
+      }
+    };
+
+    if (showBlockMenu || showAddMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showBlockMenu, showAddMenu]);
+
   const closeAllMenus = () => {
     setShowBlockMenu(false);
     setShowAddMenu(false);
     setShowTurnInto(false);
     setShowColors(false);
     setBlockMenuPos(null);
+  };
+
+  // Helper to select the block that the handle is currently hovering over
+  const selectCurrentBlock = () => {
+    if (!editor || !currentBlockRef.current) return false;
+    
+    const proseMirror = editorRef.current?.querySelector('.ProseMirror');
+    if (!proseMirror) return false;
+    
+    const blocks = Array.from(proseMirror.children);
+    const currentIndex = blocks.indexOf(currentBlockRef.current);
+    if (currentIndex < 0) return false;
+    
+    // Find the position of this block in ProseMirror
+    const { doc } = editor.state;
+    let targetPos = 0;
+    
+    doc.forEach((node, offset, index) => {
+      if (index === currentIndex) {
+        targetPos = offset + 1; // +1 to be inside the block
+      }
+    });
+    
+    // Move selection to this block
+    editor.chain().focus().setTextSelection(targetPos).run();
+    return true;
+  };
+  const moveBlockUp = () => {
+    if (!editor || !currentBlockRef.current) return;
+    
+    const proseMirror = editorRef.current?.querySelector('.ProseMirror');
+    if (!proseMirror) return;
+    
+    const blocks = Array.from(proseMirror.children);
+    const currentIndex = blocks.indexOf(currentBlockRef.current);
+    
+    if (currentIndex > 0) {
+      // Use ProseMirror transaction to swap blocks
+      const { state } = editor;
+      const { doc, tr } = state;
+      
+      let fromPos = 0;
+      let toPos = 0;
+      let prevBlockEnd = 0;
+      
+      doc.forEach((node, offset, index) => {
+        if (index === currentIndex - 1) {
+          prevBlockEnd = offset;
+        }
+        if (index === currentIndex) {
+          fromPos = offset;
+          toPos = offset + node.nodeSize;
+        }
+      });
+      
+      const nodeToMove = doc.slice(fromPos, toPos);
+      const transaction = tr.delete(fromPos, toPos).insert(prevBlockEnd, nodeToMove.content);
+      editor.view.dispatch(transaction);
+    }
+    closeAllMenus();
+  };
+
+  const moveBlockDown = () => {
+    if (!editor || !currentBlockRef.current) return;
+    
+    const proseMirror = editorRef.current?.querySelector('.ProseMirror');
+    if (!proseMirror) return;
+    
+    const blocks = Array.from(proseMirror.children);
+    const currentIndex = blocks.indexOf(currentBlockRef.current);
+    
+    if (currentIndex < blocks.length - 1) {
+      const { state } = editor;
+      const { doc, tr } = state;
+      
+      let fromPos = 0;
+      let toPos = 0;
+      let nextBlockEnd = 0;
+      
+      doc.forEach((node, offset, index) => {
+        if (index === currentIndex) {
+          fromPos = offset;
+          toPos = offset + node.nodeSize;
+        }
+        if (index === currentIndex + 1) {
+          nextBlockEnd = offset + node.nodeSize;
+        }
+      });
+      
+      const nodeToMove = doc.slice(fromPos, toPos);
+      const transaction = tr.delete(fromPos, toPos).insert(nextBlockEnd - (toPos - fromPos), nodeToMove.content);
+      editor.view.dispatch(transaction);
+    }
+    closeAllMenus();
   };
 
   const handlePlusClick = (e: React.MouseEvent) => {
@@ -388,6 +508,10 @@ function BlockHandle({ editorRef }: { editorRef: React.RefObject<HTMLDivElement 
 
   const turnInto = (type: string) => {
     if (!editor) return;
+    
+    // First, select the block that the handle is hovering over
+    selectCurrentBlock();
+    
     switch (type) {
       case "paragraph": editor.chain().focus().clearNodes().setParagraph().run(); break;
       case "heading1": editor.chain().focus().clearNodes().setHeading({ level: 1 }).run(); break;
@@ -464,7 +588,7 @@ function BlockHandle({ editorRef }: { editorRef: React.RefObject<HTMLDivElement 
           <div className="relative">
             <button
               className="flex items-center justify-between w-full px-3 py-2 text-sm hover:bg-muted text-left"
-              onClick={() => { setShowTurnInto(!showTurnInto); setShowColors(false); }}
+              onMouseEnter={() => { setShowTurnInto(true); setShowColors(false); }}
             >
               <div className="flex items-center gap-2">
                 <RotateCcw className="w-4 h-4" />
@@ -493,7 +617,7 @@ function BlockHandle({ editorRef }: { editorRef: React.RefObject<HTMLDivElement 
           <div className="relative">
             <button
               className="flex items-center justify-between w-full px-3 py-2 text-sm hover:bg-muted text-left"
-              onClick={() => { setShowColors(!showColors); setShowTurnInto(false); }}
+              onMouseEnter={() => { setShowColors(true); setShowTurnInto(false); }}
             >
               <div className="flex items-center gap-2">
                 <Palette className="w-4 h-4" />
@@ -537,6 +661,26 @@ function BlockHandle({ editorRef }: { editorRef: React.RefObject<HTMLDivElement 
               </div>
             )}
           </div>
+
+          <div className="border-t border-border my-1" />
+
+          {/* Move Up */}
+          <button
+            onClick={moveBlockUp}
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted text-left"
+          >
+            <ArrowUp className="w-4 h-4" />
+            <span>Move up</span>
+          </button>
+
+          {/* Move Down */}
+          <button
+            onClick={moveBlockDown}
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted text-left"
+          >
+            <ArrowDown className="w-4 h-4" />
+            <span>Move down</span>
+          </button>
 
           <div className="border-t border-border my-1" />
 
