@@ -9,6 +9,12 @@ services:
       - "${APP_PORT:-3000}:3000"
     environment:
       - NEXT_PUBLIC_POCKETBASE_URL=${NEXT_PUBLIC_POCKETBASE_URL}
+      - NEXT_PUBLIC_GA_ID=${NEXT_PUBLIC_GA_ID}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      - ADMIN_SECRET=${ADMIN_SECRET}
+      - PB_ADMIN_EMAIL=${PB_ADMIN_EMAIL}
+      - PB_ADMIN_PASS=${PB_ADMIN_PASS}
+      - Z_AI_API_KEY=${Z_AI_API_KEY}
     networks:
       - app_network
 
