@@ -318,6 +318,11 @@ export async function generateBlogPost(topic?: string) {
     // Add cover image based on title
     postData.cover_image = generateCoverImageURL(postData.title);
 
+    // Safety net: Append reference link if missing from content
+    if (sourceUrl && !postData.content.includes(sourceUrl)) {
+      postData.content += `\n\n## Referensi\n- [Sumber Asli](${sourceUrl})`;
+    }
+
     return { success: true, data: postData };
   } catch (error: any) {
     console.error("AI generation error:", error);
@@ -554,9 +559,86 @@ export async function generateProject(topic?: string) {
       }
     }
 
+    // Safety net: Append reference link if missing from content
+    if (sourceUrl && !projectData.content.includes(sourceUrl)) {
+      projectData.content += `\n\n## Referensi\n- [Sumber](${sourceUrl})`;
+    }
+
     return { success: true, data: projectData };
   } catch (error: any) {
     console.error("AI generation error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function improveText(selectedText: string, instructions: string) {
+  if (!Z_AI_API_KEY) {
+    return { success: false, error: "AI API key not configured" };
+  }
+
+  if (!selectedText.trim()) {
+    return { success: false, error: "No text selected" };
+  }
+
+  const prompt = `
+  You are a senior Indonesian developer who edits tech content with PERSONALITY. Your job is to improve this text while keeping the original meaning and style.
+  
+  LANGUAGE: Keep the SAME language as the original text (if Indonesian, output Indonesian. If English, output English).
+  
+  ORIGINAL TEXT TO IMPROVE:
+  """
+  ${selectedText}
+  """
+  
+  USER INSTRUCTIONS:
+  ${instructions || "Make it better, clearer, and more engaging while keeping the original meaning."}
+  
+  🎨 WRITING STYLE (WAJIB):
+  - Kalau teks asli Bahasa Indonesia, tulis seperti developer Indonesia ngobrol sama developer lain
+  - Boleh pakai ekspresi santai: "Nah,", "Jadi gini,", "Yang menarik,", "Wah,"
+  - Struktur kalimat harus NATURAL, bukan formal berlebihan
+  - Hindari bahasa terjemahan yang kaku
+  
+  ⚠️ CRITICAL RULES:
+  1. KEEP the original meaning - don't add new information
+  2. KEEP the original format (if it's a list, keep it a list; if paragraph, keep paragraph)
+  3. If the text has markdown (##, **, -, etc), PRESERVE the markdown formatting
+  4. Return ONLY the improved text, NO explanations or meta-commentary
+  5. Do NOT wrap in quotes or add "Here's the improved version" or similar
+  
+  OUTPUT: Return the improved text directly, preserving any markdown formatting.
+  `;
+
+  try {
+    const response = await fetch(ANTHROPIC_ENDPOINT, {
+      dispatcher,
+      method: 'POST',
+      headers: {
+        'x-api-key': Z_AI_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "glm-4.6v",
+        max_tokens: 2000,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+    const improvedText = data.content?.[0]?.text?.trim();
+
+    if (!improvedText) {
+      throw new Error("No content generated");
+    }
+
+    return { success: true, data: improvedText };
+  } catch (error: any) {
+    console.error("AI improve error:", error);
     return { success: false, error: error.message };
   }
 }

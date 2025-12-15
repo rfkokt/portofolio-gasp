@@ -53,7 +53,10 @@ import {
   Trash2,
   Copy,
   RotateCcw,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
+import { improveText } from "@/actions/ai-generate";
 
 const lowlight = createLowlight(common);
 
@@ -194,8 +197,16 @@ export function NovelEditor({ value, onChange, onImageUpload }: NovelEditorProps
           }}
           onCreate={({ editor }) => {
             if (value) {
+              // Configure marked for proper parsing
+              marked.setOptions({
+                breaks: true, // Treat single \n as <br>
+                gfm: true,    // Enable GitHub Flavored Markdown
+              });
+              
               // Convert markdown to HTML for display
               const htmlContent = marked.parse(value) as string;
+              console.log('[NovelEditor] Markdown input:', value.substring(0, 200));
+              console.log('[NovelEditor] HTML output:', htmlContent.substring(0, 200));
               editor.commands.setContent(htmlContent);
             }
           }}
@@ -263,6 +274,8 @@ export function NovelEditor({ value, onChange, onImageUpload }: NovelEditorProps
             <div className="w-px h-4 bg-border" />
             <BubbleLinkButton />
             <BubbleColorButton />
+            <div className="w-px h-4 bg-border" />
+            <BubbleAIButton />
           </EditorBubble>
         </EditorContent>
       </EditorRoot>
@@ -743,5 +756,115 @@ function BubbleButton({ command, icon }: { command: string; icon: React.ReactNod
     <EditorBubbleItem onSelect={(editor) => { (editor.chain().focus() as any)[command]().run(); }}>
       <button type="button" className={`p-1.5 rounded hover:bg-muted ${isActive ? "bg-muted text-foreground" : "text-muted-foreground"}`}>{icon}</button>
     </EditorBubbleItem>
+  );
+}
+
+function BubbleAIButton() {
+  const { editor } = useEditor();
+  const [open, setOpen] = useState(false);
+  const [instructions, setInstructions] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  if (!editor) return null;
+
+  const handleImprove = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, " ");
+    
+    if (!selectedText.trim()) {
+      setError("Please select some text first");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const result = await improveText(selectedText, instructions);
+      
+      if (result.success && result.data) {
+        // Convert markdown to HTML before inserting
+        const htmlContent = marked.parse(result.data) as string;
+        editor.chain().focus().deleteSelection().insertContent(htmlContent).run();
+        setOpen(false);
+        setInstructions("");
+      } else {
+        setError(result.error || "Failed to improve text");
+      }
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`p-1.5 rounded hover:bg-muted ${open ? "bg-muted text-foreground" : "text-muted-foreground"}`}
+        title="Improve with AI"
+      >
+        <Sparkles className="w-4 h-4" />
+      </button>
+      
+      {open && (
+        <form 
+          onSubmit={handleImprove}
+          className="absolute top-full left-0 mt-2 p-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-lg z-50 w-80"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-neutral-900 dark:text-neutral-100" />
+            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Improve with AI</span>
+          </div>
+          
+          <textarea
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            placeholder="How should I improve this? (e.g., 'make it more formal', 'simplify', 'add more detail')"
+            className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400 resize-none"
+            rows={3}
+            disabled={loading}
+          />
+          
+          {error && (
+            <p className="text-xs text-red-500 mt-1">{error}</p>
+          )}
+          
+          <div className="flex gap-2 mt-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-3 py-1.5 text-sm border-2 border-neutral-900 dark:border-neutral-100 text-neutral-900 dark:text-neutral-100 rounded-md hover:bg-neutral-900 hover:text-white dark:hover:bg-neutral-100 dark:hover:text-neutral-900 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors font-medium"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Improving...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3 h-3" />
+                  Improve
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setOpen(false); setError(""); }}
+              className="px-3 py-1.5 text-sm text-neutral-500 dark:text-neutral-400 border border-neutral-300 dark:border-neutral-600 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }
