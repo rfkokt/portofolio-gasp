@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { createProject, updateProject, ProjectData } from "@/actions/cms-projects";
+import { createProjectWithImage, updateProjectWithImage } from "@/actions/cms-projects";
+import { uploadContentImage } from "@/actions/upload-image";
 import { generateProject } from "@/actions/ai-generate";
-import { Loader2, Sparkles, Save, ArrowLeft, Star, Eye, X } from "lucide-react";
+import { Loader2, Sparkles, Save, ArrowLeft, Star, Eye, X, Upload, Trash2 } from "lucide-react";
 import { useConfirm } from "./ConfirmModal";
+import { getPbImage } from "@/lib/pocketbase";
+import Image from "next/image";
+import { NovelEditor } from "./NovelEditor";
 
 interface ProjectFormProps {
   initialData?: any;
@@ -29,11 +33,26 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [description, setDescription] = useState(initialData?.description || "");
   const [content, setContent] = useState(initialData?.content || "");
+  const [editorKey, setEditorKey] = useState(0);
   const [demoUrl, setDemoUrl] = useState(initialData?.demo_url || "");
   const [repoUrl, setRepoUrl] = useState(initialData?.repo_url || "");
   const [featured, setFeatured] = useState(initialData?.featured || false);
   const [techStack, setTechStack] = useState<string[]>(initialData?.tech_stack || []);
   const [techInput, setTechInput] = useState("");
+  
+  // Image upload state
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [existingImage, setExistingImage] = useState<string>(initialData?.image || "");
+  const [removeImage, setRemoveImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Initialize existing image preview
+  useEffect(() => {
+    if (initialData?.image && initialData?.collectionId && initialData?.id) {
+      setImagePreview(getPbImage(initialData.collectionId, initialData.id, initialData.image));
+    }
+  }, [initialData]);
 
   // Use ref for beforeunload to allow immediate disable
   const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
@@ -82,6 +101,125 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
   const handleRemoveTech = (techToRemove: string) => {
     setTechStack(techStack.filter((t) => t !== techToRemove));
   };
+  
+  // Image resize utility - resize to Full HD (1920x1080) maintaining aspect ratio
+  const resizeImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = document.createElement('img');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      img.onload = () => {
+        const targetWidth = 1920;
+        const targetHeight = 1080;
+        
+        // Calculate dimensions maintaining aspect ratio with cover behavior
+        const srcRatio = img.width / img.height;
+        const targetRatio = targetWidth / targetHeight;
+        
+        let drawWidth = targetWidth;
+        let drawHeight = targetHeight;
+        let offsetX = 0;
+        let offsetY = 0;
+        
+        if (srcRatio > targetRatio) {
+          // Image is wider - fit height, crop width
+          drawWidth = img.height * targetRatio;
+          offsetX = (img.width - drawWidth) / 2;
+          drawWidth = img.width;
+          drawHeight = img.width / targetRatio;
+          offsetY = (img.height - drawHeight) / 2;
+        } else {
+          // Image is taller - fit width, crop height  
+          drawHeight = img.width / targetRatio;
+          offsetY = (img.height - drawHeight) / 2;
+          drawHeight = img.height;
+          drawWidth = img.height * targetRatio;
+          offsetX = (img.width - drawWidth) / 2;
+        }
+        
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+        
+        // Draw resized image
+        ctx.drawImage(
+          img,
+          Math.max(0, offsetX), Math.max(0, offsetY),
+          Math.min(img.width, drawWidth), Math.min(img.height, drawHeight),
+          0, 0,
+          targetWidth, targetHeight
+        );
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const resizedFile = new File([blob], file.name, { type: 'image/jpeg' });
+            resolve(resizedFile);
+          } else {
+            resolve(file);
+          }
+        }, 'image/jpeg', 0.9);
+      };
+      
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Image upload handlers
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const resizedFile = await resizeImage(file);
+      setImageFile(resizedFile);
+      setRemoveImage(false);
+      const previewUrl = URL.createObjectURL(resizedFile);
+      setImagePreview(previewUrl);
+      setHasUnsavedChanges(true);
+    }
+  };
+  
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    setRemoveImage(true);
+    setExistingImage("");
+    setHasUnsavedChanges(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleImagePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) continue;
+        
+        // Validate file size (5MB before resize)
+        if (file.size > 5 * 1024 * 1024) {
+          alert("Image must be less than 5MB");
+          return;
+        }
+        
+        const resizedFile = await resizeImage(file);
+        setImageFile(resizedFile);
+        setRemoveImage(false);
+        const previewUrl = URL.createObjectURL(resizedFile);
+        setImagePreview(previewUrl);
+        setHasUnsavedChanges(true);
+        return;
+      }
+    }
+  };
 
   const handleGenerate = async (topic?: string) => {
     setShowAIModal(false);
@@ -95,6 +233,7 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
         setSlug(result.data.slug || generateSlug(result.data.title));
         setDescription(result.data.description);
         setContent(result.data.content);
+        setEditorKey(prev => prev + 1); // Force editor remount
         setTechStack(result.data.tech_stack || []);
         setDemoUrl(result.data.demo_url || "");
         setRepoUrl(result.data.repo_url || "");
@@ -143,27 +282,33 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
     setLoading(true);
     setError("");
 
-    const projectData: ProjectData = {
-      title,
-      slug: slug || generateSlug(title),
-      description,
-      content: content || undefined,
-      tech_stack: techStack,
-      demo_url: demoUrl || undefined,
-      repo_url: repoUrl || undefined,
-      featured,
-    };
+    // Build FormData for image upload
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("slug", slug || generateSlug(title));
+    formData.append("description", description);
+    if (content) formData.append("content", content);
+    formData.append("tech_stack", JSON.stringify(techStack));
+    if (demoUrl) formData.append("demo_url", demoUrl);
+    if (repoUrl) formData.append("repo_url", repoUrl);
+    formData.append("featured", featured.toString());
+    
+    // Add image file if selected
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
+    formData.append("remove_image", removeImage.toString());
 
     try {
       let result;
       if (mode === "create") {
-        result = await createProject(projectData);
+        result = await createProjectWithImage(formData);
       } else {
-        result = await updateProject(initialData.id, projectData);
+        result = await updateProjectWithImage(initialData.id, formData);
       }
 
       if (result.success) {
-        setHasUnsavedChanges(false); // Clear unsaved flag
+        setHasUnsavedChanges(false);
         window.location.href = "/cms/projects";
       } else {
         setError(result.error || "Failed to save project");
@@ -321,17 +466,83 @@ export function ProjectForm({ initialData, mode }: ProjectFormProps) {
           />
         </div>
 
+        {/* Project Image */}
+        <div>
+          <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+            Project Image
+          </label>
+          
+          {/* Image Preview */}
+          {imagePreview ? (
+            <div className="relative mb-4 w-full max-w-md aspect-video border border-border overflow-hidden group">
+              <Image
+                src={imagePreview}
+                alt="Project preview"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="absolute top-2 right-2 p-2 bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              onPaste={handleImagePaste}
+              tabIndex={0}
+              className="w-full max-w-md aspect-video border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-foreground focus:border-foreground focus:outline-none transition-colors mb-4"
+            >
+              <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+              <span className="text-sm text-muted-foreground">Click to upload or paste image</span>
+              <span className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP (max 5MB)</span>
+            </div>
+          )}
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+          
+          {imagePreview && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-sm text-muted-foreground hover:text-foreground underline"
+            >
+              Change image
+            </button>
+          )}
+        </div>
+
         {/* Content */}
         <div>
           <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-            Detailed Content (Markdown, optional)
+            Detailed Content (optional)
           </label>
-          <textarea
+          <NovelEditor
+            key={editorKey}
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={12}
-            className="w-full bg-transparent border border-border px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-all resize-y font-mono text-sm"
-            placeholder="Detailed project description in Markdown..."
+            onChange={(val) => {
+              setContent(val);
+              setHasUnsavedChanges(true);
+            }}
+            onImageUpload={async (file) => {
+              const formData = new FormData();
+              formData.append("file", file);
+              const result = await uploadContentImage(formData);
+              if (result.success && result.url) {
+                return result.url;
+              }
+              throw new Error(result.error || "Failed to upload image");
+            }}
           />
         </div>
 

@@ -248,3 +248,220 @@ body {
 .hljs-link {
   text-decoration: underline;
 }
+
+/* Novel Editor - Drag Handle Styles */
+[data-novel-editor] .ProseMirror {
+  position: relative;
+}
+
+[data-novel-editor] .ProseMirror > * {
+  position: relative;
+}
+
+/* Drag handle container */
+.drag-handle {
+  position: fixed;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+  border-radius: 4px;
+  padding: 2px;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  z-index: 50;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle button {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.drag-handle button:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+/* Global drag handle from tiptap extension */
+.global-drag-handle {
+  position: fixed;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  cursor: grab;
+  z-index: 50;
+}
+
+.global-drag-handle:hover,
+.global-drag-handle.show {
+  opacity: 1;
+}
+
+.global-drag-handle::before {
+  content: "⋮⋮";
+  font-size: 14px;
+  color: var(--muted-foreground);
+  line-height: 1;
+}
+
+.global-drag-handle:hover::before {
+  color: var(--foreground);
+}
+
+/* Custom styling for tiptap-extension-global-drag-handle */
+[data-drag-handle] {
+  position: fixed;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  cursor: grab;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 24px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+[data-drag-handle]:hover {
+  opacity: 1 !important;
+  background: var(--muted);
+}
+
+[data-drag-handle]::after {
+  content: "⋮⋮";
+  font-size: 12px;
+  color: var(--muted-foreground);
+  letter-spacing: -2px;
+}
+
+[data-drag-handle]:hover::after {
+  color: var(--foreground);
+}
+
+/* Prose styling for editor blocks */
+[data-novel-editor] .prose > p,
+[data-novel-editor] .prose > h1,
+[data-novel-editor] .prose > h2,
+[data-novel-editor] .prose > h3,
+[data-novel-editor] .prose > ul,
+[data-novel-editor] .prose > ol,
+[data-novel-editor] .prose > blockquote,
+[data-novel-editor] .prose > pre,
+[data-novel-editor] .prose > hr {
+  position: relative;
+  transition: background-color 0.15s ease;
+}
+
+[data-novel-editor] .prose > *:hover {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+/* Placeholder styling */
+[data-novel-editor] .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Empty node placeholder */
+[data-novel-editor] .ProseMirror p.is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Task list styling */
+[data-novel-editor] ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+
+[data-novel-editor] ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+[data-novel-editor] ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  user-select: none;
+}
+
+[data-novel-editor] ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+/* Novel Bubble Menu - Use theme colors */
+.tippy-box[data-theme~='novel'],
+.tippy-box,
+[data-novel-editor] .tippy-box {
+  background-color: var(--card) !important;
+  color: var(--card-foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.5rem !important;
+}
+
+.tippy-box[data-theme~='novel'] .tippy-content,
+.tippy-content {
+  background-color: var(--card) !important;
+  color: var(--card-foreground) !important;
+}
+
+.tippy-box[data-theme~='novel'] .tippy-arrow::before,
+.tippy-arrow::before {
+  border-top-color: var(--card) !important;
+}
+
+/* Bubble menu ALL child elements */
+.tippy-box *,
+.tippy-box button,
+.tippy-box span,
+.tippy-box svg,
+.tippy-content *,
+.tippy-content button,
+.tippy-content span,
+.tippy-content svg {
+  color: var(--card-foreground) !important;
+  stroke: var(--card-foreground) !important;
+}
+
+/* Exception for form submit buttons */
+.tippy-box button[data-submit="true"],
+.tippy-content button[data-submit="true"] {
+  color: #fff !important;
+  background-color: #000 !important;
+}
+
+/* Bubble menu hover states */
+.tippy-box button:hover {
+  background-color: var(--muted) !important;
+}
+
+.tippy-box button[data-submit="true"]:hover {
+  opacity: 0.8;
+  background-color: #000 !important;
+}

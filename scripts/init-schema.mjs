@@ -158,6 +158,27 @@ async function main() {
             console.log('✅ Collection "project_interactions" created');
         }
 
+        // Create 'media_uploads' collection for markdown content images
+        try {
+            await pb.collections.getOne('media_uploads');
+            console.log('⚠️ Collection "media_uploads" already exists. Skipping.');
+        } catch (e) {
+            await pb.collections.create({
+                name: 'media_uploads',
+                type: 'base',
+                fields: [
+                    { name: 'file', type: 'file', required: true, options: { mimeTypes: ['image/*'], maxSize: 5242880 } },
+                    { name: 'uploaded_by', type: 'text', required: false },
+                ],
+                listRule: '', // Public read for displaying images
+                viewRule: '',
+                createRule: null, // Admin only create
+                updateRule: null,
+                deleteRule: null,
+            });
+            console.log('✅ Collection "media_uploads" created');
+        }
+
     } catch (err) {
         console.error('❌ Failed to initialize schema:', err);
         if (err.data) {

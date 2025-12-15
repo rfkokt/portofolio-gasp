@@ -2,7 +2,9 @@
 
 import { useRef, MouseEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ProjectRecord } from "@/lib/pb_schema";
+import { getPbImage } from "@/lib/pocketbase";
 
 interface SpotlightGridProps {
   projects: ProjectRecord[];
@@ -45,9 +47,20 @@ export function SpotlightGrid({ projects }: SpotlightGridProps) {
                 "--mouse-y": "-100px"
             } as React.CSSProperties}
           >
-            {/* Spotlight Effect Elements (::before and ::after handled via CSS in globals or scoped class) */}
-            {/* We need to ensure the CSS for spotlight-card matches the reference in globals.css or here with tailwind arbitrary values */}
-            
+            {/* Project Image as Background */}
+            {project.image ? (
+              <Image
+                src={getPbImage(project.collectionId, project.id, project.image)}
+                alt={project.title}
+                fill
+                className="object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500"
+                sizes="(max-width: 768px) 100vw, 33vw"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-neutral-800/50 to-neutral-900/50" />
+            )}
+
+            {/* Spotlight Effect Elements */}
             <div 
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10"
                 style={{
@@ -70,7 +83,7 @@ export function SpotlightGrid({ projects }: SpotlightGridProps) {
 
             <div className="card-content relative z-30 h-full flex flex-col justify-end p-8">
               <div className="mb-auto opacity-50 group-hover:opacity-100 transition-opacity">
-                 <span className="text-xs font-mono uppercase tracking-widest border border-border px-2 py-1 rounded">
+                 <span className="text-xs font-mono uppercase tracking-widest border border-border px-2 py-1 rounded bg-background/50 backdrop-blur-sm">
                     {/* Display first tech stack item as category */}
                     {Array.isArray(project.tech_stack) && project.tech_stack.length > 0 
                         ? project.tech_stack[0] 

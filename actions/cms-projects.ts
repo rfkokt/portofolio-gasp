@@ -116,6 +116,117 @@ export async function updateProject(id: string, data: Partial<ProjectData>) {
   }
 }
 
+// Create project with image file upload support
+export async function createProjectWithImage(formData: FormData) {
+  try {
+    await authenticateAdmin();
+    const session = await getAdminSession();
+
+    // Extract fields from FormData
+    const title = formData.get("title") as string;
+    const slug = formData.get("slug") as string;
+    const description = formData.get("description") as string;
+    const content = formData.get("content") as string | null;
+    const techStackJson = formData.get("tech_stack") as string;
+    const demoUrl = formData.get("demo_url") as string | null;
+    const repoUrl = formData.get("repo_url") as string | null;
+    const featured = formData.get("featured") === "true";
+    const imageFile = formData.get("image") as File | null;
+
+    const techStack = techStackJson ? JSON.parse(techStackJson) : [];
+
+    // Prepare data for PocketBase
+    const pbFormData = new FormData();
+    pbFormData.append("title", title);
+    pbFormData.append("slug", slug);
+    pbFormData.append("description", description);
+    if (content) pbFormData.append("content", content);
+    pbFormData.append("tech_stack", JSON.stringify(techStack));
+    if (demoUrl) pbFormData.append("demo_url", demoUrl);
+    if (repoUrl) pbFormData.append("repo_url", repoUrl);
+    pbFormData.append("featured", featured.toString());
+    pbFormData.append("created_by", session?.username || "Unknown");
+    pbFormData.append("updated_by", session?.username || "Unknown");
+    
+    // Add image file if present
+    if (imageFile && imageFile.size > 0) {
+      pbFormData.append("image", imageFile);
+    }
+
+    const record = await pb.collection("projects").create(pbFormData);
+    await logAdminAction("Create Project", `Created project: ${title}`);
+    return { success: true, id: record.id };
+  } catch (error: any) {
+    console.error("Error creating project with image:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Update project with image file upload support
+export async function updateProjectWithImage(id: string, formData: FormData) {
+  try {
+    await authenticateAdmin();
+    const session = await getAdminSession();
+
+    if (!session) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    // Get the project to check ownership
+    const project = await pb.collection("projects").getOne(id);
+
+    // Role-based validation
+    if (session.role !== "admin") {
+      if (project.created_by === "AI") {
+        return { success: false, error: "Only admins can edit AI-generated content" };
+      }
+      if (project.created_by !== session.username) {
+        return { success: false, error: "You can only edit your own projects" };
+      }
+    }
+
+    // Extract fields from FormData
+    const title = formData.get("title") as string;
+    const slug = formData.get("slug") as string;
+    const description = formData.get("description") as string;
+    const content = formData.get("content") as string | null;
+    const techStackJson = formData.get("tech_stack") as string;
+    const demoUrl = formData.get("demo_url") as string | null;
+    const repoUrl = formData.get("repo_url") as string | null;
+    const featured = formData.get("featured") === "true";
+    const imageFile = formData.get("image") as File | null;
+    const removeImage = formData.get("remove_image") === "true";
+
+    const techStack = techStackJson ? JSON.parse(techStackJson) : [];
+
+    // Prepare data for PocketBase
+    const pbFormData = new FormData();
+    pbFormData.append("title", title);
+    pbFormData.append("slug", slug);
+    pbFormData.append("description", description);
+    if (content) pbFormData.append("content", content);
+    pbFormData.append("tech_stack", JSON.stringify(techStack));
+    if (demoUrl) pbFormData.append("demo_url", demoUrl);
+    if (repoUrl) pbFormData.append("repo_url", repoUrl);
+    pbFormData.append("featured", featured.toString());
+    pbFormData.append("updated_by", session.username);
+
+    // Handle image: add new, remove existing, or keep existing
+    if (imageFile && imageFile.size > 0) {
+      pbFormData.append("image", imageFile);
+    } else if (removeImage) {
+      pbFormData.append("image", ""); // Clear image
+    }
+
+    await pb.collection("projects").update(id, pbFormData);
+    await logAdminAction("Update Project", `Updated project ID: ${id}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating project with image:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function deleteProject(id: string) {
   try {
     await authenticateAdmin();

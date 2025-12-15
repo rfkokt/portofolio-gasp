@@ -3,10 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createPost, updatePost, PostData } from "@/actions/cms-posts";
+import { uploadContentImage } from "@/actions/upload-image";
 import { generateBlogPost } from "@/actions/ai-generate";
 import { Loader2, Sparkles, Save, Send, ArrowLeft, Eye, X } from "lucide-react";
 import Link from "next/link";
 import { useConfirm } from "./ConfirmModal";
+import { NovelEditor } from "./NovelEditor";
 
 interface PostFormProps {
   initialData?: any;
@@ -320,15 +322,23 @@ export function PostForm({ initialData, mode }: PostFormProps) {
         {/* Content */}
         <div>
           <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-            Content (Markdown)
+            Content
           </label>
-          <textarea
+          <NovelEditor
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={20}
-            className="w-full bg-transparent border border-border px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-all resize-y font-mono text-sm"
-            placeholder="Write your post content in Markdown..."
-            required
+            onChange={(val: string) => {
+              setContent(val);
+              setHasUnsavedChanges(true);
+            }}
+            onImageUpload={async (file: File) => {
+              const formData = new FormData();
+              formData.append("file", file);
+              const result = await uploadContentImage(formData);
+              if (result.success && result.url) {
+                return result.url;
+              }
+              throw new Error(result.error || "Failed to upload image");
+            }}
           />
         </div>
 
