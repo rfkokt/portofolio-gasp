@@ -77,7 +77,13 @@ jobs:
             ENV_NAME=prod
             APP_PORT=${{ vars.APP_PORT }}
             PB_PORT=${{ vars.PB_PORT }}
-            NEXT_PUBLIC_POCKETBASE_URL=${{ vars.NEXT_PUBLIC_POCKETBASE_URL }}
+            NEXT_PUBLIC_POCKETBASE_URL=${{ secrets.NEXT_PUBLIC_POCKETBASE_URL }}
+            NEXT_PUBLIC_GA_ID=${{ secrets.NEXT_PUBLIC_GA_ID }}
+            NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
+            ADMIN_SECRET=${{ secrets.ADMIN_SECRET }}
+            PB_ADMIN_EMAIL=${{ secrets.PB_ADMIN_EMAIL }}
+            PB_ADMIN_PASS=${{ secrets.PB_ADMIN_PASS }}
+            Z_AI_API_KEY=${{ secrets.Z_AI_API_KEY }}
             GITHUB_REPOSITORY=${{ github.repository }}
             EOF
             
@@ -126,7 +132,13 @@ jobs:
             ENV_NAME=dev
             APP_PORT=${{ vars.APP_PORT }}
             PB_PORT=${{ vars.PB_PORT }}
-            NEXT_PUBLIC_POCKETBASE_URL=${{ vars.NEXT_PUBLIC_POCKETBASE_URL }}
+            NEXT_PUBLIC_POCKETBASE_URL=${{ secrets.NEXT_PUBLIC_POCKETBASE_URL }}
+            NEXT_PUBLIC_GA_ID=${{ secrets.NEXT_PUBLIC_GA_ID }}
+            NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
+            ADMIN_SECRET=${{ secrets.ADMIN_SECRET }}
+            PB_ADMIN_EMAIL=${{ secrets.PB_ADMIN_EMAIL }}
+            PB_ADMIN_PASS=${{ secrets.PB_ADMIN_PASS }}
+            Z_AI_API_KEY=${{ secrets.Z_AI_API_KEY }}
             GITHUB_REPOSITORY=${{ github.repository }}
             EOF
             
