@@ -32,6 +32,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [excerpt, setExcerpt] = useState(initialData?.excerpt || "");
   const [content, setContent] = useState(initialData?.content || "");
+  const [editorKey, setEditorKey] = useState(0);
   const [coverImage, setCoverImage] = useState(initialData?.cover_image || "");
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [tagInput, setTagInput] = useState("");
@@ -96,6 +97,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
         setSlug(result.data.slug || generateSlug(result.data.title));
         setExcerpt(result.data.excerpt);
         setContent(result.data.content);
+        setEditorKey(prev => prev + 1); // Force editor remount
         setTags(result.data.tags || []);
         setCoverImage(result.data.cover_image || "");
         setHasUnsavedChanges(true); // Mark as unsaved
@@ -325,6 +327,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
             Content
           </label>
           <NovelEditor
+            key={editorKey}
             value={content}
             onChange={(val: string) => {
               setContent(val);

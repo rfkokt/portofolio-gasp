@@ -106,19 +106,18 @@ export default async function ProjectsListPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {project.demo_url && (
-                        <a
-                          href={project.demo_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      )}
+                      <Link
+                        href={`/projects/${project.slug}`}
+                        target="_blank"
+                        className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                        title="Preview"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Link>
                       <Link
                         href={`/cms/projects/${project.id}/edit`}
                         className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                        title="Edit"
                       >
                         <Edit className="w-4 h-4" />
                       </Link>
