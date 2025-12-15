@@ -40,7 +40,7 @@ const FEEDS = [
     { name: 'GitHub Blog', url: 'https://github.blog/feed/', type: 'tech' },
     { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', type: 'tech' },
     { name: 'Web.dev', url: 'https://web.dev/feed.xml', type: 'frontend-security' },
-    { name: 'Chrome Developers', url: 'https://developer.chrome.com/feeds/all.xml', type: 'frontend-security' }
+    { name: 'Mozilla Hacks', url: 'https://hacks.mozilla.org/feed/', type: 'frontend' }
 ];
 
 // Helper to wrap text for the image
@@ -113,16 +113,45 @@ async function fetchNews(targetFeeds = FEEDS) {
 
 async function isPostExists(link, title) {
     try {
-        // Check if there is a post with this specific source link in the content or similar title
-        // We compare RSS title (English) with DB Title (Indonesian) which often fails,
-        // so checking 'content' for the original link is much more robust.
-        const result = await pb.collection('posts').getList(1, 1, {
-            filter: `(title="${title}" || content ~ "${link}")`
-        });
-        if (result.totalItems > 0) return true;
+        // Extract key parts of the URL for matching
+        const url = new URL(link);
+        const pathPart = url.pathname.split('/').filter(Boolean).slice(-2).join('/'); // Last 2 path segments
+        
+        // Extract key words from title (remove common words, keep important ones)
+        const titleWords = title.toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '')
+            .split(/\s+/)
+            .filter(w => w.length > 4) // Keep words longer than 4 chars
+            .slice(0, 5) // Only check first 5 meaningful words
+            .join(' ');
+
+        // Check multiple conditions for duplicates
+        const checks = [
+            // Check if link appears in content
+            `content ~ "${link}"`,
+            // Check if URL path appears in content (in case of slightly different URL)
+            pathPart.length > 5 ? `content ~ "${pathPart}"` : null,
+            // Check for similar title keywords
+            titleWords.length > 10 ? `title ~ "${titleWords}"` : null,
+        ].filter(Boolean);
+
+        for (const check of checks) {
+            try {
+                const result = await pb.collection('posts').getList(1, 1, {
+                    filter: check
+                });
+                if (result.totalItems > 0) {
+                    console.log(`   ↳ Duplicate check: matched on "${check.substring(0, 50)}..."`);
+                    return true;
+                }
+            } catch (e) {
+                // Filter might be invalid, continue to next check
+            }
+        }
 
         return false;
     } catch (e) {
+        console.log(`   ↳ Duplicate check error: ${e.message}`);
         return false;
     }
 }
@@ -305,39 +334,81 @@ async function generatePost(newsItem) {
                 }
                 
                 postData = JSON5.parse(result);
+                console.log("✅ State-machine repair successful!");
             } catch (e2) {
-                 console.warn("⚠️ State-machine repair failed. Attempting Emergency Regex Extraction...");
+                 console.log("⚠️ State-machine repair failed. Trying Emergency Regex...");
                  try {
-                     // Regex to extract fields ignoring strict JSON structure
-                     const titleMatch = jsonString.match(/"title"\s*:\s*"(.*?)"/);
-                     const slugMatch = jsonString.match(/"slug"\s*:\s*"(.*?)"/);
-                     const excerptMatch = jsonString.match(/"excerpt"\s*:\s*"(.*?)"/);
+                     // More robust regex extraction
+                     // Extract title - handle escaped quotes
+                     const titleMatch = jsonString.match(/"title"\s*:\s*"((?:[^"\\]|\\.)*)"/);
                      
-                     // Extract content: Match from "content": " until the next field or end
-                     // Matches: "content": " [captured group] " followed by comma or }
-                     const contentMatch = jsonString.match(/"content"\s*:\s*"([\s\S]*?)"(?=\s*,\s*"|\s*})/);
+                     // Extract slug
+                     const slugMatch = jsonString.match(/"slug"\s*:\s*"((?:[^"\\]|\\.)*)"/);
                      
-                     if (!titleMatch && !contentMatch) throw new Error("Could not extract minimal fields");
+                     // Extract excerpt
+                     const excerptMatch = jsonString.match(/"excerpt"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+                     
+                     // Extract content - this is the tricky one, use a greedy match
+                     // Find "content": " and capture everything until we hit ", followed by another field or }
+                     let rawContent = "";
+                     const contentStartMatch = jsonString.match(/"content"\s*:\s*"/);
+                     if (contentStartMatch) {
+                         const startIdx = jsonString.indexOf(contentStartMatch[0]) + contentStartMatch[0].length;
+                         // Find the end by looking for ", followed by a key or closing brace
+                         let endIdx = -1;
+                         let depth = 1; // track nested quotes
+                         let inEscape = false;
+                         
+                         for (let i = startIdx; i < jsonString.length; i++) {
+                             const c = jsonString[i];
+                             if (inEscape) {
+                                 inEscape = false;
+                                 continue;
+                             }
+                             if (c === '\\') {
+                                 inEscape = true;
+                                 continue;
+                             }
+                             if (c === '"') {
+                                 // Check if followed by , or }
+                                 const after = jsonString.substring(i + 1, i + 20).trim();
+                                 if (after.startsWith(',') || after.startsWith('}')) {
+                                     endIdx = i;
+                                     break;
+                                 }
+                             }
+                         }
+                         
+                         if (endIdx > startIdx) {
+                             rawContent = jsonString.substring(startIdx, endIdx);
+                         }
+                     }
+                     
+                     if (!titleMatch && !rawContent) {
+                         throw new Error("Could not extract minimal fields");
+                     }
 
-                     // Unescape standard JSON escapes in the extracted content
-                     let rawContent = contentMatch ? contentMatch[1] : "";
-                     // Fix escaped quotes
-                     rawContent = rawContent.replace(/\\"/g, '"');
-                     // Fix escaped newlines if any
-                     rawContent = rawContent.replace(/\\n/g, '\n');
+                     // Unescape standard JSON escapes
+                     rawContent = rawContent
+                         .replace(/\\"/g, '"')
+                         .replace(/\\n/g, '\n')
+                         .replace(/\\r/g, '')
+                         .replace(/\\t/g, '\t')
+                         .replace(/\\\\/g, '\\');
 
+                     const extractedTitle = titleMatch ? titleMatch[1].replace(/\\"/g, '"') : "Untitled Post";
+                     
                      postData = {
-                         title: titleMatch ? titleMatch[1] : "Untitled Post",
+                         title: extractedTitle,
                          slug: slugMatch ? slugMatch[1] : `post-${Date.now()}`,
-                         excerpt: excerptMatch ? excerptMatch[1] : "",
-                         content: rawContent,
+                         excerpt: excerptMatch ? excerptMatch[1].replace(/\\"/g, '"') : "",
+                         content: rawContent || "Content extraction failed. Please check original source.",
                          tags: []
                      };
                      console.log("✅ Emergency Extraction Successful!");
                  } catch (e3) {
-                     console.error("❌ All parsing attempts failed.");
-                     // console.error("Partial Content:", jsonString.substring(0, 200) + "...");
-                     throw e2; // Throw original parsing error
+                     console.error("❌ All parsing attempts failed. Skipping this article.");
+                     return null; // Return null instead of throwing to continue with next article
                  }
             }
         }
@@ -423,7 +494,10 @@ async function checkUrgency(newsItem) {
 async function main() {
     const args = process.argv.slice(2);
     const countArg = args.find(arg => arg.startsWith('--count='));
-    const maxCount = countArg ? parseInt(countArg.split('=')[1]) : 1;
+    // Support both --count argument and MAX_BLOGS environment variable
+    const maxCount = countArg 
+        ? parseInt(countArg.split('=')[1]) 
+        : (process.env.MAX_BLOGS ? parseInt(process.env.MAX_BLOGS) : 1);
     
     const typeArg = args.find(arg => arg.startsWith('--type='));
     const filterType = typeArg ? typeArg.split('=')[1] : null;
@@ -447,6 +521,7 @@ async function main() {
         console.log(`📰 Found ${newsItems.length} total news items.`);
 
         let processedCount = 0;
+        let failedCount = 0;
         
         for (const item of newsItems) {
             if (processedCount >= maxCount) break;
@@ -470,9 +545,21 @@ async function main() {
 
             // 3. Generate
             console.log(`\n⏳ Processing [${processedCount + 1}/${maxCount}]: ${item.title}`);
-            const post = await generatePost(item);
             
-            if (!post) continue;
+            let post;
+            try {
+                post = await generatePost(item);
+            } catch (genError) {
+                console.log(`⚠️ Generation failed, skipping to next article...`);
+                failedCount++;
+                continue;
+            }
+            
+            if (!post) {
+                console.log(`⚠️ Post generation returned null, skipping to next article...`);
+                failedCount++;
+                continue;
+            }
 
             // 4. Save
             try {
@@ -497,13 +584,18 @@ async function main() {
 
             } catch (e) {
                 console.error(`❌ Failed to save post:`, e.message);
+                failedCount++;
             }
         }
 
-        if (processedCount === 0) {
-            console.log("No new articles to publish.");
-        } else {
-            console.log(`\n✨ Successfully published ${processedCount} news articles.`);
+        // Summary
+        console.log(`\n📊 Generation Summary:`);
+        console.log(`   ✅ Successfully published: ${processedCount}`);
+        if (failedCount > 0) {
+            console.log(`   ❌ Failed: ${failedCount}`);
+        }
+        if (processedCount === 0 && failedCount === 0) {
+            console.log(`   ℹ️ No new articles to publish (all existing or skipped).`);
         }
 
     } catch (err) {

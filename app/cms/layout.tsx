@@ -4,6 +4,7 @@ import { logoutAdmin } from "@/actions/admin";
 import { LogOut } from "lucide-react";
 import { CMSSidebar } from "@/components/admin/CMSSidebar";
 import { ConfirmProvider } from "@/components/admin/ConfirmModal";
+import { BlogGenerationNotification } from "@/components/admin/BlogGenerationNotification";
 
 export default async function CMSLayout({
   children,
@@ -68,6 +69,9 @@ export default async function CMSLayout({
             {children}
           </div>
         </main>
+        
+        {/* Global Blog Generation Notification */}
+        <BlogGenerationNotification />
       </div>
     </ConfirmProvider>
   );

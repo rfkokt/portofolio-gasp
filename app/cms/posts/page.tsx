@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { PostActions } from "@/components/admin/PostActions";
+import { GenerateBlogButton } from "@/components/admin/GenerateBlogButton";
 
 export default async function PostsListPage({
   searchParams,
@@ -42,13 +43,16 @@ export default async function PostsListPage({
             Manage your blog articles
           </p>
         </div>
-        <Link
-          href="/cms/posts/new"
-          className="px-6 py-3 bg-foreground text-background font-bold text-sm uppercase tracking-wider hover:bg-foreground/90 transition-colors inline-flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          New Post
-        </Link>
+        <div className="flex items-center gap-3">
+          <GenerateBlogButton />
+          <Link
+            href="/cms/posts/new"
+            className="px-6 py-2 bg-foreground text-background font-bold text-sm uppercase tracking-wider hover:bg-foreground/90 transition-colors inline-flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            New Post
+          </Link>
+        </div>
       </div>
 
       {/* Filter Tabs */}
