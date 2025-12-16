@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import PocketBase from "pocketbase";
 import ReactMarkdown from "react-markdown";
@@ -21,7 +21,7 @@ interface PreviewPost {
   published_at?: string;
 }
 
-export default function BlogPreviewPage() {
+function BlogPreviewContent() {
   const [post, setPost] = useState<PreviewPost | null>(null);
   const [error, setError] = useState("");
 
@@ -167,5 +167,17 @@ export default function BlogPreviewPage() {
         </div>
       </div>
     </article>
+  );
+}
+
+export default function BlogPreviewPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background pt-32 pb-20 flex items-center justify-center">
+        <div className="text-muted-foreground">Loading preview environment...</div>
+      </div>
+    }>
+      <BlogPreviewContent />
+    </Suspense>
   );
 }
