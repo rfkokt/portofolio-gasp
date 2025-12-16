@@ -174,13 +174,15 @@ async function sendTelegramNotification(post) {
 
     try {
         const message = `
-🚀 *New Post Published!*
+🚀 *New Post Generated (DRAFT)*
 
 **${post.title}**
 
 ${post.excerpt}
 
-🔗 [Read More](https://quis.rifkioktapratama.com/blog/${post.slug})
+🔗 [Preview Link](https://rdev.cloud/preview/posts?id=${post.id})
+
+_Select an action below or wait 15m for auto-publish._
         `.trim();
 
         await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -189,10 +191,18 @@ ${post.excerpt}
             body: JSON.stringify({
                 chat_id: TELEGRAM_CHAT_ID,
                 text: message,
-                parse_mode: 'Markdown'
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: "✅ Publish Now", callback_data: `publish:${post.id}` },
+                            { text: "❌ Delete", callback_data: `delete:${post.id}` }
+                        ]
+                    ]
+                }
             })
         });
-        console.log("📱 Telegram notification sent!");
+        console.log("📱 Telegram notification (with buttons) sent!");
     } catch (e) {
         console.error("❌ Failed to send Telegram notification:", e.message);
     }
@@ -547,8 +557,8 @@ async function generatePost(newsItem) {
             }
         }
 
-        // Add meta
-        postData.published = true;
+        // Add meta - DEFAULT TO DRAFT
+        postData.published = false;
         postData.published_at = new Date().toISOString();
         
         // Use shorter thumbnail title if available, otherwise truncate aggressively
@@ -706,13 +716,16 @@ async function main() {
                     post.slug = `${post.slug}-${Date.now()}`;
                 } catch (e) { /* unique */ }
 
-                await pb.collection('posts').create({
+                const savedRecord = await pb.collection('posts').create({
                     ...post,
                     created_by: 'AI',
                     updated_by: 'AI',
                 });
-                console.log(`✅ Published: "${post.title}"`);
+                console.log(`✅ Draft Saved: "${post.title}" (ID: ${savedRecord.id})`);
                 
+                // Inject ID for buttons
+                post.id = savedRecord.id;
+
                 // Send Notification
                 await sendTelegramNotification(post);
 
