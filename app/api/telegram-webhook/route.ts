@@ -91,6 +91,29 @@ export async function POST(req: NextRequest) {
 
     } catch (e: any) {
         console.error("Telegram Webhook Error:", e);
+        
+        // Attempt to notify user in Telegram about the error
+        if (TELEGRAM_BOT_TOKEN && req.body) {
+             try {
+                // Need to re-parse body safely as it might have been consumed
+                const clonedReq = await req.clone();
+                const update = await clonedReq.json();
+                if (update?.callback_query?.id) {
+                     await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            callback_query_id: update.callback_query.id,
+                            text: `❌ Error: ${e.message}`,
+                            show_alert: true // Show as popup
+                        })
+                    });
+                }
+             } catch (innerError) {
+                 console.error("Failed to send error feedback to Telegram", innerError);
+             }
+        }
+
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
