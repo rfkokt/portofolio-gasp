@@ -70,7 +70,7 @@ async function main() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             chat_id: TELEGRAM_CHAT_ID,
-                            text: `🤖 *Auto-Published:* ${post.title}\n(No action taken in 15m)`,
+                            text: `🤖 *Auto-Published:* ${post.title}\n(No action taken in 15m)\n\n🔗 [Live Link](https://rdev.cloud/blog/${post.slug})`,
                             parse_mode: 'Markdown',
                             disable_notification: true
                         })

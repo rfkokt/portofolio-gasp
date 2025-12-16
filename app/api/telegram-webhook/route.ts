@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
         const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
         if (action === 'publish') {
-            await pb.collection('posts').update(postId, { published: true });
+            const updatedPost = await pb.collection('posts').update(postId, { published: true });
+            const liveLink = `https://rdev.cloud/blog/${updatedPost.slug}`;
             
             // Update Telegram message to show success
             await fetch(`${telegramApiUrl}/editMessageText`, {
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
                 body: JSON.stringify({
                     chat_id: chatId,
                     message_id: messageId,
-                    text: `${callbackQuery.message.text}\n\n✅ *Status: Published via Telegram*\n🔗 [Live Link](https://rdev.cloud/blog/${postId})`,
+                    text: `${callbackQuery.message.text}\n\n✅ *Status: Published via Telegram*\n🔗 [Live Link](${liveLink})`,
                     parse_mode: 'Markdown'
                 })
             });
