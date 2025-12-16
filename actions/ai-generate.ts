@@ -45,34 +45,74 @@ export async function generateBlogPost(topic?: string) {
   const urlMatches = topic ? topic.match(urlRegex) : null;
   let referenceContent = "";
   let sourceUrl = "";
+  let supplementaryContext = "";
 
   if (urlMatches && urlMatches.length > 0) {
     sourceUrl = urlMatches[0];
-    console.log(`🔗 Fetching reference URL: ${sourceUrl}`);
+    const { fetchUrlContent, searchWeb } = await import('./web-search');
     
-    try {
-      // Fetch the URL content
-      const urlResponse = await fetch(sourceUrl, {
-        dispatcher,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; BlogBot/1.0)'
+    // 1. Fetch Primary Source
+    const primaryContent = await fetchUrlContent(sourceUrl);
+    if (primaryContent) {
+      referenceContent = primaryContent.substring(0, 5000);
+      console.log(`✅ Primary source fetched: ${referenceContent.length} chars`);
+    }
+
+    // 2. Perform Multi-Source Research
+    if (referenceContent && process.env.SERPER_API_KEY) {
+      console.log("🕵️ Starting Multi-Source Research...");
+      try {
+        // A. Generate Search Queries
+        const queryPrompt = `
+        Analyze this content and generate 2 search queries to find RELATED technical perspectives or comprehensive guides.
+        CONTENT SNIPPET: "${referenceContent.substring(0, 300)}..."
+        
+        OUTPUT JSON: ["query1", "query2"]
+        `;
+
+        const queryResponse = await fetch(ANTHROPIC_ENDPOINT, {
+          dispatcher,
+          method: 'POST',
+          headers: {
+            'x-api-key': Z_AI_API_KEY,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: "glm-4.6v",
+            max_tokens: 200,
+            messages: [{ role: "user", content: queryPrompt }]
+          }),
+        });
+
+        const queryData = await queryResponse.json() as any;
+        const queryContent = queryData.content?.[0]?.text || "[]";
+        const jsonMatch = queryContent.match(/\[[\s\S]*\]/);
+        const queries = jsonMatch ? JSON5.parse(jsonMatch[0]) : [];
+
+        console.log(`🔍 Research Queries: ${queries.join(', ')}`);
+
+        // B. Search and Fetch Supplementary Content
+        let referencesFound = 0;
+        for (const query of queries) {
+          if (referencesFound >= 2) break;
+          
+          const results = await searchWeb(query, 2);
+          for (const result of results) {
+            if (result.link === sourceUrl || supplementaryContext.includes(result.link)) continue;
+            
+            const content = await fetchUrlContent(result.link);
+            if (content && content.length > 500) {
+              supplementaryContext += `\n\n--- SUPPLEMENTARY SOURCE START ---\nURL: ${result.link}\nTITLE: ${result.title}\nCONTENT: ${content.substring(0, 3000)}\n--- SUPPLEMENTARY SOURCE END ---\n`;
+              referencesFound++;
+              console.log(`   + Added source: ${result.title}`);
+              if (referencesFound >= 2) break;
+            }
+          }
         }
-      });
-      
-      if (urlResponse.ok) {
-        const html = await urlResponse.text();
-        // Extract text content (simple HTML stripping)
-        referenceContent = html
-          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-          .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .substring(0, 5000); // Limit to 5000 chars
-        console.log(`✅ Fetched ${referenceContent.length} chars from reference`);
+      } catch (err) {
+        console.warn("⚠️ Research phase failed:", err);
       }
-    } catch (e: any) {
-      console.warn(`⚠️ Could not fetch URL: ${e.message}`);
     }
   }
 
@@ -82,73 +122,59 @@ export async function generateBlogPost(topic?: string) {
   if (referenceContent && sourceUrl) {
     // URL-based: EXTREMELY STRICT on facts, but with personality
     prompt = `
-    You are a senior Indonesian developer who writes tech blogs with PERSONALITY. Your job is to ACCURATELY REPORT what the source says, but in YOUR OWN VOICE.
+    You are a senior Indonesian developer who writes tech blogs with PERSONALITY. Your job is to SYNTHESIZE the provided sources into a comprehensive, insightful article.
     
     LANGUAGE: **Bahasa Indonesia** (Indonesian) - NATURAL, not translated.
     DATE: Today is ${today}.
 
-    SOURCE URL: ${sourceUrl}
-    SOURCE CONTENT:
+    PRIMARY SOURCE (The Main Topic):
+    URL: ${sourceUrl}
+    CONTENT:
     """
-    ${referenceContent.substring(0, 4000)}
+    ${referenceContent}
     """
+
+    ${supplementaryContext ? `
+    SUPPLEMENTARY SOURCES (Use these to verify facts, add context, or provide alternative views):
+    ${supplementaryContext}
+    ` : ""}
 
     🎨 WRITING STYLE (WAJIB):
-    - Tulis seperti developer Indonesia ngobrol sama developer lain, BUKAN seperti translate Google
-    - Boleh pakai ekspresi santai: "Nah,", "Jadi gini,", "Yang menarik,", "Wah,", "Oke,", "Tenang,"
-    - Boleh pakai bahasa gaul tech: "bug", "patch", "deploy", "production", "nge-push", "ke-trigger"
-    - Tambah komentar ringan/humor RINGAN yang relate sama developer Indonesia
-    - Struktur kalimat harus NATURAL, bukan "Ini adalah fitur yang..." tapi "Fitur ini..."
-    - Hindari bahasa formal berlebihan seperti "sebagaimana", "adapun", "demikian"
+    - Tulis seperti developer Indonesia ngobrol sama developer lain
+    - Gabungkan informasi dari berbagai sumber menjadi satu narasi yang utuh
+    - Jangan hanya merangkum satu per satu, tapi PADUKAN informasinya
+    - Validasi klaim dari sumber utama menggunakan sumber tambahan jika ada
     
-    📝 KLARIFIKASI TEKNIS (PENTING!):
-    - JANGAN tulis kalimat ambigu seperti "tidak menggunakan server" - jelaskan konteksnya!
-    - Contoh SALAH: "Jika aplikasi React kamu tidak menggunakan server, kamu tidak terpengaruh."
-    - Contoh BENAR: "Jika kamu pakai React client-side biasa (tanpa Server Components), kamu aman."
-    - Selalu jelaskan istilah teknis dalam konteks yang jelas bagi developer Indonesia
-
-    ⚠️ CRITICAL RULES - FAKTA HARUS AKURAT:
-    
-    1. **ONLY REPORT WHAT'S IN THE SOURCE**:
-       - Version numbers: COPY EXACTLY from source (jangan ubah!)
-       - CVE IDs, dates, affected products: COPY EXACTLY
-       - JANGAN interpretasi sendiri versi mana yang kena
-    
-    2. **NO CODE EXAMPLES UNLESS COPIED**:
-       - Kalau source ada code, boleh include
-       - Kalau TIDAK ada code di source, JANGAN BIKIN CODE
-       - Tulis: "Untuk detail teknis, cek langsung di ${sourceUrl}"
-    
-    3. **NO MADE-UP SOLUTIONS**:
-       - Kalau source kasih solusi, laporin solusi itu
-       - Kalau TIDAK ada solusi, tulis jujur: "Sampai artikel ini ditulis, tim [nama] belum kasih patch resmi. Stay tuned!"
-       - JANGAN bikin solusi sendiri (rate limiting, CORS, validation, dll)
-
     📝 STRUKTUR MARKDOWN (WAJIB PAKAI HEADING H2/H3 untuk TOC!):
+    [Opening - Hook menarik tentang topik ini]
     
-    [Opening paragraph - 1-2 kalimat hook yang bikin penasaran]
+    ## [Dynamic Header 1: Deep Dive / Apa yang Terjadi]
+    [Jelaskan inti masalah/berita dengan detail dari Primary Source]
     
-    ## Apa yang Terjadi
-    [Rangkum beritanya FROM SOURCE - 2-3 paragraf]
+    ## [Dynamic Header 2: Analisis / Dampak]
+    [Gunakan informasi dari Supplementary Sources untuk memperkaya pembahasan]
     
-    ## Dampak & Versi yang Terkena
-    [Siapa yang kena, versi apa, kenapa penting FROM SOURCE]
-    
-    ## Solusi & Langkah Mitigasi
-    [Apa yang harus dilakukan FROM SOURCE, atau tulis "belum ada patch resmi"]
+    ## [Dynamic Header 3: Relevan Section]
+    - JIKA News/Funding/Release: "Market Context" atau "Fitur Baru"
+    - JIKA Security/Bug: "Solusi & Mitigasi" atau "Langkah Perbaikan"
+    - JIKA Tutorial: "Implementasi Code"
+    - Pilih header yang PALING COCOK dengan kontennya!
     
     ## Kesimpulan
-    [Saran ringan 1-2 kalimat]
+    [Wrap up]
     
     ## Referensi
-    - [Nama Source](${sourceUrl})
-    - [Link dokumentasi resmi lain jika ada]
-    
-    ⚠️ SETIAP SECTION HARUS PAKAI HEADING "##" AGAR MUNCUL DI TOC!
+    - [Sumber Utama](${sourceUrl})
+    ${supplementaryContext ? "- [Referensi Tambahan (Sebutkan domainnya/judulnya jika relevan)]" : ""}
+
+    ⚠️ ATURAN SECTION:
+    1. JANGAN PAKAI "Solusi / Cara Pakai" jika itu berita umum/funding/akuisisi.
+    2. Sesuaikan header dengan topik. Jadilah cerdas dalam memilih struktur.
 
     OUTPUT JSON (Strict Minified JSON, no markdown fencing):
     {
       "title": "Judul Catchy Bahasa Indonesia",
+      "thumbnail_title": "Judul Singkat Max 5 Kata",
       "slug": "kebab-case-slug",
       "excerpt": "2 kalimat rangkuman yang bikin penasaran.",
       "content": "Markdown dengan H2 headings (## Heading). Fakta dari source, gaya natural. Use \\n for newlines.",
@@ -182,16 +208,18 @@ export async function generateBlogPost(topic?: string) {
 
     STRUCTURE:
     1. **Title**: Catchy, clear title in Indonesian.
-    2. **Introduction**: What is this about? Briefly explain the topic.
-    3. **Main Content**: (Use H2 and H3 headings)
+    2. **Short Title**: Very short (max 4-5 words) for thumbnail.
+    3. **Introduction**: What is this about? Briefly explain the topic.
+    4. **Main Content**: (Use H2 and H3 headings)
        - Provide concrete code examples that are VERIFIED patterns.
        - Include practical tips and best practices.
-    4. **Conclusion**: Brief wrap up.
-    5. **Referensi**: Add relevant REAL official documentation links.
+    5. **Conclusion**: Brief wrap up.
+    6. **Referensi**: Add relevant REAL official documentation links.
 
     OUTPUT JSON FORMAT (Strict Minified JSON, no markdown fencing):
     {
       "title": "Indonesian Title",
+      "thumbnail_title": "Short Title Max 5 words",
       "slug": "kebab-case-slug-based-on-title",
       "excerpt": "Brief summary (2 sentences).",
       "content": "Full markdown content with escaped newlines (\\n). Include the References section at the end.",
@@ -291,6 +319,7 @@ export async function generateBlogPost(topic?: string) {
         console.warn("⚠️ State-machine repair failed. Attempting Emergency Regex Extraction...");
         // Emergency Regex Extraction
         const titleMatch = jsonString.match(/"title"\s*:\s*"(.*?)"/);
+        const thumbTitleMatch = jsonString.match(/"thumbnail_title"\s*:\s*"(.*?)"/);
         const slugMatch = jsonString.match(/"slug"\s*:\s*"(.*?)"/);
         const excerptMatch = jsonString.match(/"excerpt"\s*:\s*"(.*?)"/);
         const contentMatch = jsonString.match(/"content"\s*:\s*"([\s\S]*?)"(?=\s*,\s*"|\s*})/);
@@ -306,6 +335,7 @@ export async function generateBlogPost(topic?: string) {
 
         postData = {
           title: titleMatch ? titleMatch[1] : "Untitled Post",
+          thumbnail_title: thumbTitleMatch ? thumbTitleMatch[1] : (titleMatch ? titleMatch[1] : "Untitled"),
           slug: slugMatch ? slugMatch[1] : `post-${Date.now()}`,
           excerpt: excerptMatch ? excerptMatch[1] : "",
           content: rawContent,
@@ -316,7 +346,8 @@ export async function generateBlogPost(topic?: string) {
     }
 
     // Add cover image based on title
-    postData.cover_image = generateCoverImageURL(postData.title);
+    const coverText = postData.thumbnail_title || postData.title;
+    postData.cover_image = generateCoverImageURL(coverText);
 
     // Safety net: Append reference link if missing from content
     if (sourceUrl && !postData.content.includes(sourceUrl)) {

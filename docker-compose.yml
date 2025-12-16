@@ -15,6 +15,7 @@ services:
       - PB_ADMIN_EMAIL=${PB_ADMIN_EMAIL}
       - PB_ADMIN_PASS=${PB_ADMIN_PASS}
       - Z_AI_API_KEY=${Z_AI_API_KEY}
+      - SERPER_API_KEY=${SERPER_API_KEY}
     networks:
       - app_network
 

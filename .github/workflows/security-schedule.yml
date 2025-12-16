@@ -28,4 +28,5 @@ jobs:
           NEXT_PUBLIC_POCKETBASE_URL: ${{ secrets.NEXT_PUBLIC_POCKETBASE_URL }}
           PB_ADMIN_EMAIL: ${{ secrets.PB_ADMIN_EMAIL }}
           PB_ADMIN_PASS: ${{ secrets.PB_ADMIN_PASS }}
+          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
         run: node scripts/ai-blogger.mjs --count=1 --type=frontend-security --urgent-only

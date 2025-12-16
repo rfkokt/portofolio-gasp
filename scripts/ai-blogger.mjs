@@ -29,6 +29,62 @@ const dispatcher = new Agent({
 // Note: We use native fetch for the Anthropic-compatible endpoint
 const ANTHROPIC_ENDPOINT = 'https://api.z.ai/api/anthropic/v1/messages';
 
+const SERPER_API_KEY = process.env.SERPER_API_KEY;
+
+// Search Utilities
+let isSearchEnabled = !!process.env.SERPER_API_KEY;
+
+async function searchWeb(query, limit = 2) {
+    if (!isSearchEnabled || !process.env.SERPER_API_KEY) return [];
+    try {
+        const response = await fetch('https://google.serper.dev/search', {
+            method: "POST",
+            headers: {
+                "X-API-KEY": process.env.SERPER_API_KEY,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ q: query, num: limit }),
+            dispatcher
+        });
+
+        if (!response.ok) {
+            if (response.status === 403 || response.status === 402 || response.status === 401) {
+                console.warn(`🛑 Serper API Quota Exceeded (Status: ${response.status}). Disabling search for remaining items.`);
+                isSearchEnabled = false; // Stop trying for future items in this run
+                return [];
+            }
+            return [];
+        }
+
+        const data = await response.json();
+        return data.organic ? data.organic.map(item => ({ title: item.title, link: item.link })) : [];
+    } catch (e) {
+        console.warn(`⚠️ Search failed for "${query}":`, e.message);
+        return [];
+    }
+}
+
+async function fetchUrlContent(url) {
+    try {
+        console.log(`🔗 Fetching supplementary: ${url}`);
+        const response = await fetch(url, { 
+            dispatcher,
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BlogBot/1.0)' }
+        });
+        if (!response.ok) return null;
+        const html = await response.text();
+        return html
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .substring(0, 4000);
+    } catch (e) {
+        return null;
+    }
+}
+
 const pb = new PocketBase(PB_URL);
 const parser = new Parser();
 
@@ -159,25 +215,61 @@ async function isPostExists(link, title) {
 async function generatePost(newsItem) {
     console.log(`🤖 Generating post for: "${newsItem.title}" (${newsItem.source})`);
 
+    let supplementaryContext = "";
+
+    // Research Phase
+    if (isSearchEnabled) {
+        console.log("🕵️ Doing extra research...");
+        try {
+            // A. Generate Queries
+            const queryResponse = await fetch(ANTHROPIC_ENDPOINT, {
+                dispatcher, method: 'POST',
+                headers: { 'x-api-key': Z_AI_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+                body: JSON.stringify({
+                    model: "glm-4.6v", max_tokens: 200,
+                    messages: [{ role: "user", content: `Generate 2 search queries to find MORE DETAILS about: "${newsItem.title}"\nOUTPUT JSON: ["q1", "q2"]` }]
+                })
+            });
+            const qData = await queryResponse.json();
+            const qText = qData.content?.[0]?.text || "[]";
+            const queries = JSON5.parse(qText.match(/\[[\s\S]*\]/)?.[0] || "[]");
+
+            // B. Search & Fetch
+            let found = 0;
+            for (const q of queries) {
+                if (found >= 2) break;
+                const results = await searchWeb(q, 2);
+                for (const res of results) {
+                    if (res.link === newsItem.link || supplementaryContext.includes(res.link)) continue;
+                    const content = await fetchUrlContent(res.link);
+                    if (content) {
+                        supplementaryContext += `\nSOURCE: ${res.link}\nCONTENT: ${content}\n`;
+                        found++;
+                        if (found >= 2) break;
+                    }
+                }
+            }
+        } catch (e) { console.warn("Research failed:", e.message); }
+    }
+
     const systemPrompt = `
-    You are a senior Indonesian developer who writes tech blogs with PERSONALITY. Your job is to ACCURATELY REPORT what the source says, but in YOUR OWN VOICE.
+    You are a senior Indonesian developer who writes tech blogs with PERSONALITY. Your job is to SYNTHESIZE the sources into a comprehensive article.
     
     LANGUAGE: **Bahasa Indonesia** (Indonesian) - NATURAL, not translated.
     DATE: Today is ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}.
 
-    SOURCE NEWS:
+    SOURCE NEWS (Primary):
     - Title: "${newsItem.title}"
-    - Source: ${newsItem.source}
     - Link: ${newsItem.link}
-    - Summary/Snippet: "${newsItem.content.substring(0, 1500)}..."
+    - Summary: "${newsItem.content.substring(0, 1500)}..."
+
+    ${supplementaryContext ? `SUPPLEMENTARY INFO:\n${supplementaryContext}` : ""}
 
     🎨 WRITING STYLE (WAJIB):
-    - Tulis seperti developer Indonesia ngobrol sama developer lain, BUKAN seperti translate Google
-    - Boleh pakai ekspresi santai: "Nah,", "Jadi gini,", "Yang menarik,", "Wah,", "Oke,", "Tenang,"
-    - Boleh pakai bahasa gaul tech: "bug", "patch", "deploy", "production", "nge-push", "ke-trigger"
-    - Tambah komentar ringan/humor RINGAN yang relate sama developer Indonesia
-    - Struktur kalimat harus NATURAL, bukan "Ini adalah fitur yang..." tapi "Fitur ini..."
-    - Hindari bahasa formal berlebihan seperti "sebagaimana", "adapun", "demikian"
+    - Tulis seperti developer Indonesia ngobrol sama developer lain
+    - Gabungkan informasi dari berbagai sumber menjadi satu kesatuan
+    - Jangan hanya translate, tapi berikan Analisis dan Konteks
+    - Validasi klaim menggunakan sumber tambahan
     
     📝 KLARIFIKASI TEKNIS (PENTING!):
     - JANGAN tulis kalimat ambigu seperti "tidak menggunakan server" - jelaskan konteksnya!
@@ -204,29 +296,36 @@ async function generatePost(newsItem) {
 
     📝 STRUKTUR MARKDOWN (WAJIB PAKAI HEADING H2/H3 untuk TOC!):
     
-    [Opening paragraph - 1-2 kalimat hook yang bikin penasaran]
+    [Opening paragraph - Hook menarik]
     
-    ## Apa yang Terjadi
-    [Rangkum beritanya FROM SOURCE - 2-3 paragraf]
+    ## [Dynamic Header 1: Deep Dive / Apa yang Terjadi]
+    [Jelaskan inti topik dengan detail dari Primary Source]
     
-    ## Dampak & Versi yang Terkena
-    [Siapa yang kena, versi apa, kenapa penting FROM SOURCE]
+    ## [Dynamic Header 2: Konteks / Analisis / Dampak]
+    [Kenapa ini penting? Apa dampaknya? Gunakan info tambahan disini]
     
-    ## Solusi & Langkah Mitigasi
-    [Apa yang harus dilakukan FROM SOURCE, atau tulis "belum ada patch resmi"]
+    ## [Dynamic Header 3: Relevan Section]
+    - JIKA News/Funding: "Market Context" atau "Masa Depan [Company]"
+    - JIKA Security/Bug: "Solusi & Mitigasi" atau "Cara Fix"
+    - JIKA Tutorial: "Langkah Implementasi"
+    - Pilih header yang PALING COCOK dengan kontennya!
     
     ## Kesimpulan
-    [Saran ringan 1-2 kalimat]
+    [Wrap up]
     
     ## Referensi
-    - [Nama Source](${newsItem.link})
-    - [Link dokumentasi resmi lain jika ada]
+    - [${newsItem.source}](${newsItem.link})
+    ${supplementaryContext ? "- [Sumber Tambahan] (Link sources included above)" : ""}
     
-    ⚠️ SETIAP SECTION HARUS PAKAI HEADING "##" AGAR MUNCUL DI TOC!
+    ⚠️ ATURAN SECTION:
+    1. JANGAN PAKAI "Solusi / Cara Pakai" jika itu berita umum/funding/akuisisi (Tidak Relevan!).
+    2. Sesuaikan header dengan topik. Kalau bahas duit, bahas "Market". Kalau bahas kode, bahas "Teknis".
+    3. H2 (##) Wajib untuk TOC.
 
     OUTPUT JSON FORMAT (Strict Minified JSON, no markdown fencing):
     {
         "title": "Judul Catchy Bahasa Indonesia",
+        "thumbnail_title": "Judul Singkat Max 5 Kata",
         "slug": "kebab-case-slug-based-on-title",
         "excerpt": "2 kalimat rangkuman yang bikin penasaran.",
         "content": "Markdown dengan H2 headings (## Heading). Fakta dari source, gaya natural. Use \\n for newlines.",
@@ -342,6 +441,9 @@ async function generatePost(newsItem) {
                      // Extract title - handle escaped quotes
                      const titleMatch = jsonString.match(/"title"\s*:\s*"((?:[^"\\]|\\.)*)"/);
                      
+                     // Extract thumbnail_title
+                     const thumbTitleMatch = jsonString.match(/"thumbnail_title"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+
                      // Extract slug
                      const slugMatch = jsonString.match(/"slug"\s*:\s*"((?:[^"\\]|\\.)*)"/);
                      
@@ -400,6 +502,7 @@ async function generatePost(newsItem) {
                      
                      postData = {
                          title: extractedTitle,
+                         thumbnail_title: thumbTitleMatch ? thumbTitleMatch[1].replace(/\\"/g, '"') : extractedTitle,
                          slug: slugMatch ? slugMatch[1] : `post-${Date.now()}`,
                          excerpt: excerptMatch ? excerptMatch[1].replace(/\\"/g, '"') : "",
                          content: rawContent || "Content extraction failed. Please check original source.",
@@ -416,7 +519,10 @@ async function generatePost(newsItem) {
         // Add meta
         postData.published = true;
         postData.published_at = new Date().toISOString();
-        postData.cover_image = generateCoverImageURL(postData.title);
+        
+        // Use shorter thumbnail title if available, otherwise truncate aggressively
+        const coverText = postData.thumbnail_title || postData.title;
+        postData.cover_image = generateCoverImageURL(coverText);
 
         // Append original link to content if missing (safety net)
         if (!postData.content.includes(newsItem.link)) {
