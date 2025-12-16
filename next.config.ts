@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  serverExternalPackages: ['rss-parser', 'json5', 'undici', 'pocketbase', 'dotenv'],
   images: {
     remotePatterns: [
       {
