@@ -89,14 +89,14 @@ const pb = new PocketBase(PB_URL);
 const parser = new Parser();
 
 const FEEDS = [
-    { name: 'Node.js Security', url: 'https://nodejs.org/en/feed/vulnerability.xml', type: 'security' },
-    { name: 'React Blog', url: 'https://react.dev/feed.xml', type: 'frontend' },
-    { name: 'Vercel Blog', url: 'https://vercel.com/atom', type: 'infrastructure' },
-    { name: 'OpenAI Blog', url: 'https://openai.com/news/rss.xml', type: 'ai' },
-    { name: 'GitHub Blog', url: 'https://github.blog/feed/', type: 'tech' },
-    { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', type: 'tech' },
-    { name: 'Web.dev', url: 'https://web.dev/feed.xml', type: 'frontend-security' },
-    { name: 'Mozilla Hacks', url: 'https://hacks.mozilla.org/feed/', type: 'frontend' }
+    { name: 'Node.js Security', url: 'https://nodejs.org/en/feed/vulnerability.xml', type: ['security', 'node'] },
+    { name: 'React Blog', url: 'https://react.dev/feed.xml', type: ['frontend', 'react'] },
+    { name: 'Vercel Blog', url: 'https://vercel.com/atom', type: ['infrastructure', 'frontend', 'vercel'] },
+    { name: 'OpenAI Blog', url: 'https://openai.com/news/rss.xml', type: ['ai'] },
+    { name: 'GitHub Blog', url: 'https://github.blog/feed/', type: ['tech', 'devops', 'github'] },
+    { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', type: ['tech', 'news'] },
+    { name: 'Web.dev', url: 'https://web.dev/feed.xml', type: ['frontend', 'security', 'performance'] },
+    { name: 'Mozilla Hacks', url: 'https://hacks.mozilla.org/feed/', type: ['frontend', 'browser'] }
 ];
 
 // Helper to wrap text for the image
@@ -616,7 +616,7 @@ async function main() {
 
         // Determine feeds
         const targetFeeds = filterType 
-            ? FEEDS.filter(f => f.type === filterType)
+            ? FEEDS.filter(f => f.type.includes(filterType))
             : FEEDS;
 
         if (filterType) console.log(`🎯 Filtering by type: ${filterType}`);

@@ -181,8 +181,10 @@ export async function generateBlogPost(topic?: string) {
       "tags": ["React", "Security", "CVE-2025-XXXXX"]
     }
     
-    ⚠️ TAGS HARUS SPESIFIK! Contoh tags yang bagus:
-    - Nama teknologi: "React", "Next.js", "Node.js", "JavaScript"
+    ⚠️ TAGS HARUS SPESIFIK & LENGKAP!
+    - Sertakan kategori broad (misal: "Frontend", "Backend", "Security")
+    - DAN kategori spesifik (misal: "React", "Next.js", "Docker")
+    - Contoh tags yang bagus: ["Frontend", "React", "Performance", "Web Vitals"]
     - Tipe masalah: "Security", "Bug Fix", "Performance", "Breaking Change"  
     - CVE ID jika ada: "CVE-2025-12345"
     - Nama library yang kena: "react-server-dom-webpack"
