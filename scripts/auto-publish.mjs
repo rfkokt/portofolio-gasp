@@ -21,22 +21,41 @@ async function main() {
         await pb.admins.authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASS);
 
         // Calculate time 15 minutes ago
-        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-
-        // Query: published = false (Draft), created by AI, and older than 15 mins
-        // Note: PocketBase filter syntax
-        const result = await pb.collection('posts').getList(1, 50, {
-            filter: `published = false && created_by = 'AI' && created < "${fifteenMinutesAgo}"`
-        });
+        // Query: published = false (Draft)
+        // We filter date and tags in JS to avoid 400 errors from API
+        const result = await pb.collection('posts').getList(1, 50);
 
         if (result.totalItems === 0) {
-            console.log("✅ No pending drafts to auto-publish.");
+            console.log("✅ No posts found.");
             return;
         }
 
-        console.log(`🔍 Found ${result.totalItems} drafts pending auto-publish...`);
+        console.log(`🔍 Found ${result.totalItems} posts. Checking criteria...`);
 
         for (const post of result.items) {
+             // 0. Check Status (Draft only)
+             if (post.published) {
+                 continue;
+             }
+
+            // 1. Check if AI Post
+            const tags = post.tags || [];
+            const isAIPost = Array.isArray(tags) ? tags.includes('AI') : JSON.stringify(tags).includes('AI');
+
+            if (!isAIPost) {
+                // console.log(`⏭️ Skipping "${post.title}" (Not an AI post)`);
+                continue;
+            }
+
+            // 2. Check Age (Older than 15 mins)
+            const created = new Date(post.created);
+            const cutoff = new Date(Date.now() - 15 * 60 * 1000); // 15 mins ago
+
+            if (created > cutoff) {
+                console.log(`⏳ Pending: "${post.title}" (Wait time remaining)`);
+                continue;
+            }
+
             try {
                 // Update to published
                 await pb.collection('posts').update(post.id, {

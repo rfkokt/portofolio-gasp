@@ -547,7 +547,7 @@ async function generatePost(newsItem) {
                          slug: slugMatch ? slugMatch[1] : `post-${Date.now()}`,
                          excerpt: excerptMatch ? excerptMatch[1].replace(/\\"/g, '"') : "",
                          content: rawContent || "Content extraction failed. Please check original source.",
-                         tags: []
+                         tags: ["AI"]
                      };
                      console.log("✅ Emergency Extraction Successful!");
                  } catch (e3) {
