@@ -2,6 +2,13 @@ import { NextRequest } from "next/server";
 import { spawn } from "child_process";
 import path from "path";
 
+// Force inclusion of dependencies used by the external script (ai-blogger.mjs)
+import "rss-parser";
+import "json5";
+import "undici";
+import "pocketbase";
+import "dotenv";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for AI generation
