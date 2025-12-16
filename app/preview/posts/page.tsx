@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import PocketBase from "pocketbase";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
@@ -23,19 +25,38 @@ export default function BlogPreviewPage() {
   const [post, setPost] = useState<PreviewPost | null>(null);
   const [error, setError] = useState("");
 
+  const searchParams = useSearchParams();
+  const postId = searchParams.get('id');
+
   useEffect(() => {
-    // Read preview data from localStorage
-    const previewData = localStorage.getItem("blog_preview");
-    if (previewData) {
-      try {
-        setPost(JSON.parse(previewData));
-      } catch {
-        setError("Failed to load preview data");
+    const loadPreview = async () => {
+      // 1. If ID is present in URL, fetch from PocketBase (for Telegram links)
+      if (postId) {
+        try {
+          const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://43.134.114.243:8090');
+          const record = await pb.collection('posts').getOne(postId);
+          setPost(record as unknown as PreviewPost);
+        } catch (err: any) {
+          setError(`Failed to load draft: ${err.message}`);
+        }
+        return;
       }
-    } else {
-      setError("No preview data found. Please open preview from the editor.");
-    }
-  }, []);
+
+      // 2. Fallback: Read preview data from localStorage (for Editor preview)
+      const previewData = localStorage.getItem("blog_preview");
+      if (previewData) {
+        try {
+          setPost(JSON.parse(previewData));
+        } catch {
+          setError("Failed to load preview data");
+        }
+      } else {
+        setError("No preview data found. Please open preview from the editor.");
+      }
+    };
+
+    loadPreview();
+  }, [postId]);
 
   if (error) {
     return (
