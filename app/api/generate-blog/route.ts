@@ -35,12 +35,11 @@ export async function GET(request: NextRequest) {
         sendEvent({ type: "start", message: "Starting blog generator...", count });
 
         const scriptRelative = Buffer.from("c2NyaXB0cy9haS1ibG9nZ2VyLm1qcw==", "base64").toString("utf-8"); // scripts/ai-blogger.mjs
-        const scriptPath = path.join(process.cwd(), scriptRelative);
         
-        console.log("🚀 Spawning AI Blogger script:", scriptPath);
+        console.log("🚀 Spawning AI Blogger script:", scriptRelative);
         console.log("📂 Current directory:", process.cwd());
 
-        const child = spawn("node", [scriptPath], {
+        const child = spawn("node", [scriptRelative], {
           env: {
             ...process.env,
             MAX_BLOGS: count.toString(),
