@@ -9,6 +9,8 @@ const Z_AI_API_KEY = process.env.Z_AI_API_KEY;
 const PB_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://43.134.114.243:8090';
 const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL;
 const PB_ADMIN_PASS = process.env.PB_ADMIN_PASS;
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 if (!PB_ADMIN_EMAIL || !PB_ADMIN_PASS) {
     console.error('❌ Error: PB_ADMIN_EMAIL and PB_ADMIN_PASS environment variables are required.');
@@ -165,6 +167,35 @@ async function fetchNews(targetFeeds = FEEDS) {
     }
 
     return balancedNews;
+}
+
+async function sendTelegramNotification(post) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+
+    try {
+        const message = `
+🚀 *New Post Published!*
+
+**${post.title}**
+
+${post.excerpt}
+
+🔗 [Read More](https://quis.rifkioktapratama.com/blog/${post.slug})
+        `.trim();
+
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: message,
+                parse_mode: 'Markdown'
+            })
+        });
+        console.log("📱 Telegram notification sent!");
+    } catch (e) {
+        console.error("❌ Failed to send Telegram notification:", e.message);
+    }
 }
 
 async function isPostExists(link, title) {
@@ -681,6 +712,10 @@ async function main() {
                     updated_by: 'AI',
                 });
                 console.log(`✅ Published: "${post.title}"`);
+                
+                // Send Notification
+                await sendTelegramNotification(post);
+
                 processedCount++;
                 
                 // Wait a bit between generations
