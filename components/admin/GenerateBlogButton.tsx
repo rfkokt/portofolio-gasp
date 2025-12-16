@@ -177,13 +177,13 @@ export function GenerateBlogButton() {
           value={count}
           onChange={(e) => setCount(Number(e.target.value))}
           disabled={loading}
-          className="w-16 px-2 py-2 border border-border bg-background text-foreground text-center text-sm"
+          className="w-[50px] h-[40px] px-2 py-2 border border-border bg-background text-foreground text-center text-sm rounded-md focus:outline-none focus:ring-1 focus:ring-foreground"
           title="Number of blogs to generate (1-10)"
         />
         {loading ? (
           <button
             onClick={handleCancel}
-            className="px-4 py-2 border border-red-500 text-red-500 font-medium text-sm uppercase tracking-wider hover:bg-red-500 hover:text-white transition-colors inline-flex items-center gap-2"
+            className="h-[40px] px-4 py-2 border border-red-500 text-red-500 font-bold text-sm uppercase tracking-wider hover:bg-red-500 hover:text-white transition-colors inline-flex items-center gap-2 rounded-md"
           >
             <XCircle className="w-4 h-4" />
             Cancel
@@ -191,7 +191,7 @@ export function GenerateBlogButton() {
         ) : (
           <button
             onClick={handleGenerate}
-            className="px-4 py-2 border border-foreground text-foreground font-medium text-sm uppercase tracking-wider hover:bg-foreground hover:text-background transition-colors inline-flex items-center gap-2"
+            className="h-[40px] px-4 py-2 border border-border text-foreground font-bold text-xs uppercase tracking-wider hover:bg-muted transition-colors inline-flex items-center gap-2 rounded-md bg-background"
           >
             <Sparkles className="w-4 h-4" />
             Generate AI

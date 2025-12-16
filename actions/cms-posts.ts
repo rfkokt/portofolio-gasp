@@ -29,7 +29,12 @@ export interface PostData {
   tags?: string[];
 }
 
-export async function getPostsForCMS(filter?: "drafts" | "published" | "all") {
+export async function getPostsForCMS(
+  filter: "drafts" | "published" | "all" = "all",
+  page: number = 1,
+  search: string = "",
+  author: string = ""
+) {
   try {
     await authenticateAdmin();
     const session = await getAdminSession();
@@ -48,16 +53,46 @@ export async function getPostsForCMS(filter?: "drafts" | "published" | "all") {
       filterParts.push(`created_by = "${session.username}"`);
     }
 
+    // Search filter
+    if (search) {
+      filterParts.push(`title ~ "${search}"`);
+    }
+
+    // Author filter
+    if (author && author !== "all") {
+      filterParts.push(`created_by = "${author}"`);
+    }
+
     const filterQuery = filterParts.join(" && ");
 
-    const result = await pb.collection("posts").getList(1, 100, {
+    const result = await pb.collection("posts").getList(page, 10, {
       filter: filterQuery || undefined,
+      sort: '-created_at',
     });
 
-    return { success: true, posts: result.items };
+    return { 
+      success: true, 
+      posts: result.items,
+      pagination: {
+        page: result.page,
+        perPage: result.perPage,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages
+      }
+    };
   } catch (error: any) {
     console.error("Error fetching posts:", error);
-    return { success: false, error: error.message, posts: [] };
+    return { 
+      success: false, 
+      error: error.message, 
+      posts: [],
+      pagination: {
+        page: 1,
+        perPage: 10,
+        totalItems: 0,
+        totalPages: 0
+      }
+    };
   }
 }
 

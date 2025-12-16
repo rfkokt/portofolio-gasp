@@ -29,23 +29,56 @@ export interface ProjectData {
   featured?: boolean;
 }
 
-export async function getProjectsForCMS() {
+export async function getProjectsForCMS(
+  page: number = 1,
+  search: string = ""
+) {
   try {
     await authenticateAdmin();
     const session = await getAdminSession();
 
+    let filterParts: string[] = [];
+
     // Role-based filter: users can only see their own projects
-    let filter = undefined;
     if (session && session.role !== 'admin') {
-      filter = `created_by = "${session.username}"`;
+      filterParts.push(`created_by = "${session.username}"`);
     }
 
-    const result = await pb.collection("projects").getList(1, 100, { filter });
+    // Search filter
+    if (search) {
+      filterParts.push(`title ~ "${search}"`);
+    }
 
-    return { success: true, projects: result.items };
+    const filterQuery = filterParts.join(" && ");
+
+    const result = await pb.collection("projects").getList(page, 10, { 
+      filter: filterQuery || undefined,
+      sort: '-created_at'
+    });
+
+    return { 
+      success: true, 
+      projects: result.items,
+      pagination: {
+        page: result.page,
+        perPage: result.perPage,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages
+      }
+    };
   } catch (error: any) {
     console.error("Error fetching projects:", error);
-    return { success: false, error: error.message, projects: [] };
+    return { 
+      success: false, 
+      error: error.message, 
+      projects: [],
+      pagination: {
+        page: 1,
+        perPage: 10,
+        totalItems: 0,
+        totalPages: 0
+      }
+    };
   }
 }
 
