@@ -84,6 +84,8 @@ jobs:
             PB_ADMIN_EMAIL=${{ secrets.PB_ADMIN_EMAIL }}
             PB_ADMIN_PASS=${{ secrets.PB_ADMIN_PASS }}
             Z_AI_API_KEY=${{ secrets.Z_AI_API_KEY }}
+            TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+            TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
             GITHUB_REPOSITORY=${{ github.repository }}
             EOF
             
@@ -139,6 +141,8 @@ jobs:
             PB_ADMIN_EMAIL=${{ secrets.PB_ADMIN_EMAIL }}
             PB_ADMIN_PASS=${{ secrets.PB_ADMIN_PASS }}
             Z_AI_API_KEY=${{ secrets.Z_AI_API_KEY }}
+            TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+            TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
             GITHUB_REPOSITORY=${{ github.repository }}
             EOF
             
