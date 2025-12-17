@@ -2,7 +2,7 @@ name: Hourly Frontend Security Check
 
 on:
   schedule:
-    - cron: '0 * * * *' # Every hour
+    - cron: '0 0 * * *' # Every day at midnight
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -32,5 +32,5 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          node scripts/ai-blogger.mjs --count=1 --type=security --urgent-only
+          node scripts/ai-blogger.mjs --count=1 --type=frontend,node,security --prioritize=frontend,node --urgent-only
           node scripts/auto-publish.mjs

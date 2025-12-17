@@ -688,7 +688,10 @@ async function main() {
         : (process.env.MAX_BLOGS ? parseInt(process.env.MAX_BLOGS) : 1);
     
     const typeArg = args.find(arg => arg.startsWith('--type='));
-    const filterType = typeArg ? typeArg.split('=')[1] : null;
+    const filterTypes = typeArg ? typeArg.split('=')[1].split(',') : null;
+    
+    const prioritizeArg = args.find(arg => arg.startsWith('--prioritize='));
+    const prioritizeTypes = prioritizeArg ? prioritizeArg.split('=')[1].split(',') : [];
 
     const urgentOnly = args.includes('--urgent-only');
 
@@ -697,15 +700,37 @@ async function main() {
         await pb.admins.authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASS);
 
         // Determine feeds
-        const targetFeeds = filterType 
-            ? FEEDS.filter(f => f.type.includes(filterType))
+        // If filterTypes is present, include feeds that match AT LEAST ONE of the types
+        const targetFeeds = filterTypes 
+            ? FEEDS.filter(f => f.type.some(t => filterTypes.includes(t)))
             : FEEDS;
 
-        if (filterType) console.log(`🎯 Filtering by type: ${filterType}`);
+        if (filterTypes) console.log(`🎯 Filtering by types: ${filterTypes.join(', ')}`);
+        if (prioritizeTypes.length > 0) console.log(`⭐ Prioritizing types: ${prioritizeTypes.join(', ')}`);
         if (urgentOnly) console.log(`🚨 URGENCE MODE: Only posting critical updates.`);
 
         // 1. Fetch News
-        const newsItems = await fetchNews(targetFeeds);
+        let newsItems = await fetchNews(targetFeeds);
+        
+        // 1.5 PRIORITIZATION SORT
+        if (prioritizeTypes.length > 0) {
+           newsItems.sort((a, b) => {
+               // Find the feed definition for each item to check its types
+               const feedA = FEEDS.find(f => f.name === a.source);
+               const feedB = FEEDS.find(f => f.name === b.source);
+               
+               if (!feedA || !feedB) return 0;
+               
+               const aPrioritized = feedA.type.some(t => prioritizeTypes.includes(t));
+               const bPrioritized = feedB.type.some(t => prioritizeTypes.includes(t));
+               
+               if (aPrioritized && !bPrioritized) return -1; // a comes first
+               if (!aPrioritized && bPrioritized) return 1;  // b comes first
+               return 0; // Same priority
+           });
+           console.log(`✨ Re-sorted ${newsItems.length} items based on priority.`);
+        }
+
         console.log(`📰 Found ${newsItems.length} total news items.`);
 
         let processedCount = 0;
