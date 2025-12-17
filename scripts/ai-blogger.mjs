@@ -91,14 +91,34 @@ const pb = new PocketBase(PB_URL);
 const parser = new Parser();
 
 const FEEDS = [
-    { name: 'Node.js Security', url: 'https://nodejs.org/en/feed/vulnerability.xml', type: ['security', 'node'] },
+    // Frontend
     { name: 'React Blog', url: 'https://react.dev/feed.xml', type: ['frontend', 'react'] },
-    { name: 'Vercel Blog', url: 'https://vercel.com/atom', type: ['infrastructure', 'frontend', 'vercel'] },
-    { name: 'OpenAI Blog', url: 'https://openai.com/news/rss.xml', type: ['ai'] },
-    { name: 'GitHub Blog', url: 'https://github.blog/feed/', type: ['tech', 'devops', 'github'] },
-    { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', type: ['tech', 'news'] },
-    { name: 'Web.dev', url: 'https://web.dev/feed.xml', type: ['frontend', 'security', 'performance'] },
-    { name: 'Mozilla Hacks', url: 'https://hacks.mozilla.org/feed/', type: ['frontend', 'browser'] }
+    { name: 'Vercel Blog', url: 'https://vercel.com/atom', type: ['frontend', 'infrastructure', 'vercel'] },
+    { name: 'Web.dev', url: 'https://web.dev/feed.xml', type: ['frontend', 'performance', 'google'] },
+    { name: 'CSS-Tricks', url: 'https://css-tricks.com/feed/', type: ['frontend', 'css'] },
+
+    // Backend & Language
+    { name: 'Node.js Security', url: 'https://nodejs.org/en/feed/vulnerability.xml', type: ['backend', 'security', 'node'] },
+    { name: 'Go Blog', url: 'https://go.dev/blog/feed.atom', type: ['backend', 'go'] },
+    
+    // AI & Data
+    { name: 'OpenAI Blog', url: 'https://openai.com/news/rss.xml', type: ['ai', 'tech'] },
+    { name: 'Huggin Face', url: 'https://huggingface.co/blog/feed.xml', type: ['ai', 'opensource'] },
+    { name: 'Microsoft AI', url: 'https://blogs.microsoft.com/ai/feed/', type: ['ai', 'tech'] },
+    
+    // DevOps, Infra, Cloud
+    { name: 'AWS News', url: 'https://aws.amazon.com/about-aws/whats-new/recent/feed/', type: ['infrastructure', 'cloud', 'aws'] },
+    { name: 'Docker Blog', url: 'https://www.docker.com/blog/feed/', type: ['devops', 'docker'] },
+    { name: 'Kubernetes', url: 'https://kubernetes.io/feed.xml', type: ['devops', 'kubernetes'] },
+    { name: 'HashiCorp', url: 'https://www.hashicorp.com/blog/feed.xml', type: ['devops', 'infrastructure'] },
+    { name: 'Cloudflare', url: 'https://blog.cloudflare.com/rss/', type: ['infrastructure', 'security', 'networking'] },
+
+    // General Tech & Security
+    { name: 'GitHub Blog', url: 'https://github.blog/feed/', type: ['tech', 'devops', 'opensource'] },
+    { name: 'The Hacker News', url: 'https://feeds.feedburner.com/TheHackersNews', type: ['security', 'news'] },
+    { name: 'Wired Tech', url: 'https://www.wired.com/feed/category/tech/latest/rss', type: ['tech', 'news'] },
+    { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', type: ['tech', 'news'] },
+    { name: 'Mozilla Hacks', url: 'https://hacks.mozilla.org/feed/', type: ['frontend', 'browser', 'tech'] }
 ];
 
 // Helper to wrap text for the image
@@ -143,8 +163,26 @@ async function fetchNews(targetFeeds = FEEDS) {
             }));
             
             // Sort each source by date desc immediately
+            // Sort each source by date desc immediately
             items.sort((a, b) => b.pubDate - a.pubDate);
-            sourceGroups[feed.name] = items;
+            
+            // FILTER: Keep only items from the last 24 hours
+            const CUTOFF_TIME = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const recentItems = items.filter(item => {
+                const isRecent = item.pubDate >= CUTOFF_TIME;
+                if (!isRecent) {
+                    // console.log(`   Start Date: ${item.pubDate.toISOString()} < Cutoff: ${CUTOFF_TIME.toISOString()}`);
+                }
+                return isRecent;
+            });
+            
+            if (items.length > 0 && recentItems.length === 0) {
+                 console.log(`   ⚠️ All ${items.length} items from ${feed.name} were skipped (Older than 24h).`);
+            } else if (items.length !== recentItems.length) {
+                 console.log(`   ℹ️ Filtered out ${items.length - recentItems.length} old items from ${feed.name}.`);
+            }
+
+            sourceGroups[feed.name] = recentItems;
 
         } catch (e) {
             console.error(`❌ Failed to fetch ${feed.name}:`, e.message);
@@ -307,16 +345,19 @@ async function generatePost(newsItem) {
     ${supplementaryContext ? `SUPPLEMENTARY INFO:\n${supplementaryContext}` : ""}
 
     🎨 WRITING STYLE (WAJIB):
-    - Tulis seperti developer Indonesia ngobrol sama developer lain
-    - Gabungkan informasi dari berbagai sumber menjadi satu kesatuan
-    - Jangan hanya translate, tapi berikan Analisis dan Konteks
-    - Validasi klaim menggunakan sumber tambahan
-    
+    - Tulis seperti developer Indonesia senior yang antusias tapi objektif.
+    - **Tone Adjustment**:
+        - Security/Bug: Serius, analitis, fokus mitigasi.
+        - AI/Tech News: Excited, visioner, tapi tetap kritis.
+        - Tutorials: Edukatif, step-by-step, sabar.
+    - Gabungkan informasi dari berbagai sumber menjadi satu kesatuan.
+    - JANGAN translate mentah-mentah! Gunakan istilah teknis yang umum di Indo (e.g., "deploy", "build", "bug").
+    - Berikan konteks: "Kenapa ini penting buat dev Indo?"
+
     📝 KLARIFIKASI TEKNIS (PENTING!):
-    - JANGAN tulis kalimat ambigu seperti "tidak menggunakan server" - jelaskan konteksnya!
-    - Contoh SALAH: "Jika aplikasi React kamu tidak menggunakan server, kamu tidak terpengaruh."
-    - Contoh BENAR: "Jika kamu pakai React client-side biasa (tanpa Server Components), kamu aman."
-    - Selalu jelaskan istilah teknis dalam konteks yang jelas bagi developer Indonesia
+    - Jelaskan istilah asing jika terlalu niche.
+    - Selalu berikan contoh kasus nyata.
+    - Jika bahas Framework/Library, sebutkan versi minimal yang dibutuhkan.
 
     ⚠️ CRITICAL RULES - FAKTA HARUS AKURAT:
     

@@ -140,9 +140,14 @@ export async function generateBlogPost(topic?: string) {
     ` : ""}
 
     🎨 WRITING STYLE (WAJIB):
-    - Tulis seperti developer Indonesia ngobrol sama developer lain
-    - Gabungkan informasi dari berbagai sumber menjadi satu narasi yang utuh
-    - Jangan hanya merangkum satu per satu, tapi PADUKAN informasinya
+    - Tulis seperti developer Indonesia senior yang antusias tapi objektif.
+    - **Tone Adjustment**:
+        - Security/Bug: Serius, analitis, fokus mitigasi.
+        - AI/Tech News: Excited, visioner, tapi tetap kritis.
+        - Tutorials: Edukatif, step-by-step, sabar.
+    - Gabungkan informasi dari berbagai sumber menjadi satu kesatuan.
+    - JANGAN translate mentah-mentah! Gunakan istilah teknis yang umum di Indo.
+    - Berikan konteks: "Kenapa ini penting buat dev Indo?"
     - Validasi klaim dari sumber utama menggunakan sumber tambahan jika ada
     
     📝 STRUKTUR MARKDOWN (WAJIB PAKAI HEADING H2/H3 untuk TOC!):
