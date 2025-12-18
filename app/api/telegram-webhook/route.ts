@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
 
     try {
         const update = await req.json();
+        console.log("📨 Webhook received:", JSON.stringify(update, null, 2));
 
         // 1. Handle Callback Query (Buttons)
         if (update.callback_query) { 
