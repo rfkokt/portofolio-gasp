@@ -16,7 +16,9 @@ pb.autoCancellation(false);
 export async function getPosts(page = 1, limit = 10, search = "") {
     let filter = 'published = true';
     if (search) {
-        filter += ` && (title ~ "${search}" || content ~ "${search}")`;
+        // Sanitize search input to prevent injection
+        const sanitizedSearch = search.replace(/"/g, '\\"');
+        filter += ` && (title ~ "${sanitizedSearch}" || content ~ "${sanitizedSearch}")`;
     }
     
     return await pb.collection('posts').getList<PostRecord>(page, limit, {

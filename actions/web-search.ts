@@ -15,6 +15,38 @@ export interface SearchResult {
   snippet: string;
 }
 
+const PRIVATE_IP_RANGES = [
+  /^127\./,
+  /^10\./,
+  /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
+  /^192\.168\./,
+  /^0\./,
+  /^169\.254\./,
+  /^::1$/,
+  /^fc00:/,
+  /^fe80:/
+];
+
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname;
+
+    // Block localhost
+    if (hostname === 'localhost' || hostname === '[::1]') return false;
+
+    // Block private IPs
+    if (PRIVATE_IP_RANGES.some(regex => regex.test(hostname))) return false;
+
+    // Only allow http/https
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function searchWeb(query: string, limit = 3): Promise<SearchResult[]> {
   if (!SERPER_API_KEY) {
     console.warn("⚠️ SERPER_API_KEY not found. Skipping web search.");
@@ -22,6 +54,7 @@ export async function searchWeb(query: string, limit = 3): Promise<SearchResult[
   }
 
   try {
+    // Only search - validation happens on fetch
     const response = await fetch('https://google.serper.dev/search', {
       method: "POST",
       headers: {
@@ -61,6 +94,12 @@ export async function searchWeb(query: string, limit = 3): Promise<SearchResult[
 
 export async function fetchUrlContent(url: string): Promise<string | null> {
   console.log(`🔗 Fetching content: ${url}`);
+  
+  if (!isSafeUrl(url)) {
+    console.warn(`🛑 Blocked unsafe URL: ${url}`);
+    return null;
+  }
+
   try {
     const response = await fetch(url, {
       dispatcher,
