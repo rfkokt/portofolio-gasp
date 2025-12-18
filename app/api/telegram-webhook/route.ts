@@ -188,6 +188,39 @@ export async function POST(req: NextRequest) {
 
                  // Run script
                  runBloggerScript(scriptArgs);
+
+            } else if (text.startsWith('/help') || text.startsWith('/start')) {
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: "🤖 *Quis AI Blogger Bot Commands:*\n\n" +
+                              "🔹 `/auto`\n" +
+                              "Trigger automatic blog generation based on RSS feeds.\n\n" +
+                              "🔹 `/blog <Topic>`\n" +
+                              "Generate a blog post about a specific topic.\n" +
+                              "Example: `/blog Next.js 15 Features`\n\n" +
+                              "🔹 `/blog <Link>`\n" +
+                              "Summarize or rewrite a specific article from a URL.\n" +
+                              "Example: `/blog https://example.com/article`\n\n" +
+                              "🔹 `/blog <Topic|Link> | <Instruction>`\n" +
+                              "Generate with specific custom instructions.\n" +
+                              "Example: `/blog React Hooks | Make it funny and beginner friendly`",
+                        parse_mode: 'Markdown'
+                    })
+                });
+            } else {
+                // Handle unknown commands or plain text
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                         text: "❓ *Unknown Command*\n\nI didn't recognize that command. Type `/help` to see what I can do.",
+                        parse_mode: 'Markdown'
+                    })
+                });
             }
 
             return NextResponse.json({ success: true });
