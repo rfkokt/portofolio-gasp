@@ -1,10 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import PocketBase from 'pocketbase';
+import path from 'path';
 
 const PB_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://43.134.114.243:8090';
 const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL;
 const PB_ADMIN_PASS = process.env.PB_ADMIN_PASS;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+// Helper to escape shell args (basic)
+function escapeShellArg(arg: string) {
+    return `'${arg.replace(/'/g, "'\\''")}'`;
+}
+
+// Execute script asynchronously
+async function runBloggerScript(args: string[] = []) {
+    const { exec } = await import('child_process'); // Dynamic import to avoid edge runtime issues if any (though this is node runtime)
+    const scriptPath = path.join(process.cwd(), "scripts", "ai-blogger.mjs");
+    
+    console.log(`🚀 Spawning blogger: node ${scriptPath} ${args.join(' ')}`);
+
+    exec(`node "${scriptPath}" ${args.join(' ')}`, {
+        env: { ...process.env, MAX_BLOGS: '1' } // Force 1 blog for manual trigger
+    }, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`❌ Script error:`, error);
+        } else {
+            console.log(`✅ Script finished. Stdout:`, stdout);
+        }
+    });
+}
 
 export async function POST(req: NextRequest) {
     if (!TELEGRAM_BOT_TOKEN) {
@@ -14,107 +38,165 @@ export async function POST(req: NextRequest) {
     try {
         const update = await req.json();
 
-        // Only handle callback_query (button clicks)
-        if (!update.callback_query) {
-            return NextResponse.json({ message: 'Not a callback query, ignoring.' });
+        // 1. Handle Callback Query (Buttons)
+        if (update.callback_query) { 
+            const callbackQuery = update.callback_query;
+            const data = callbackQuery.data; // e.g., "publish:RECORD_ID"
+            const chatId = callbackQuery.message.chat.id;
+            const messageId = callbackQuery.message.message_id;
+
+            const [action, postId] = data.split(':');
+
+            if (!postId) {
+                return NextResponse.json({ error: 'Invalid callback data' }, { status: 400 });
+            }
+
+            // Connect to PocketBase
+            const pb = new PocketBase(PB_URL);
+            await pb.admins.authWithPassword(PB_ADMIN_EMAIL!, PB_ADMIN_PASS!);
+
+            const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+
+            if (action === 'publish') {
+                const updatedPost = await pb.collection('posts').update(postId, { published: true });
+                const liveLink = `https://rdev.cloud/blog/${updatedPost.slug}`;
+                
+                // Update Telegram message to show success
+                await fetch(`${telegramApiUrl}/editMessageText`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        message_id: messageId,
+                        text: `${callbackQuery.message.text}\n\n✅ *Status: Published via Telegram*\n🔗 [Live Link](${liveLink})`,
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                // Answer callback to stop loading animation
+                await fetch(`${telegramApiUrl}/answerCallbackQuery`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        callback_query_id: callbackQuery.id,
+                        text: 'Post published successfully!'
+                    })
+                });
+
+            } else if (action === 'delete') {
+                await pb.collection('posts').delete(postId);
+
+                // Update Telegram message
+                await fetch(`${telegramApiUrl}/editMessageText`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        message_id: messageId,
+                        text: `${callbackQuery.message.text}\n\n❌ *Status: Deleted via Telegram*`,
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                // Answer callback
+                await fetch(`${telegramApiUrl}/answerCallbackQuery`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        callback_query_id: callbackQuery.id,
+                        text: 'Post deleted.'
+                    })
+                });
+            }
+
+            return NextResponse.json({ success: true });
         }
 
-        const callbackQuery = update.callback_query;
-        const data = callbackQuery.data; // e.g., "publish:RECORD_ID"
-        const chatId = callbackQuery.message.chat.id;
-        const messageId = callbackQuery.message.message_id;
+        // 2. Handle Message (Commands)
+        if (update.message && update.message.text) {
+            const message = update.message;
+            const text = message.text;
+            const chatId = message.chat.id;
 
-        const [action, postId] = data.split(':');
+            // Security Check
+            if (chatId.toString() !== process.env.TELEGRAM_CHAT_ID) {
+                console.warn(`🛑 Unauthorized access attempt from Chat ID: ${chatId}`);
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
 
-        if (!postId) {
-            return NextResponse.json({ error: 'Invalid callback data' }, { status: 400 });
-        }
+            const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
-        // Connect to PocketBase
-        const pb = new PocketBase(PB_URL);
-        await pb.admins.authWithPassword(PB_ADMIN_EMAIL!, PB_ADMIN_PASS!);
+            if (text.startsWith('/auto')) {
+                // Trigger auto generation
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: "🤖 *Auto-Generation Started...*\nChecking RSS feeds for new content.",
+                        parse_mode: 'Markdown'
+                    })
+                });
 
-        const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+                // Run script in background
+                runBloggerScript([]); // No args = auto mode
 
-        if (action === 'publish') {
-            const updatedPost = await pb.collection('posts').update(postId, { published: true });
-            const liveLink = `https://rdev.cloud/blog/${updatedPost.slug}`;
-            
-            // Update Telegram message to show success
-            await fetch(`${telegramApiUrl}/editMessageText`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    message_id: messageId,
-                    text: `${callbackQuery.message.text}\n\n✅ *Status: Published via Telegram*\n🔗 [Live Link](${liveLink})`,
-                    parse_mode: 'Markdown'
-                })
-            });
-
-            // Answer callback to stop loading animation
-            await fetch(`${telegramApiUrl}/answerCallbackQuery`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    callback_query_id: callbackQuery.id,
-                    text: 'Post published successfully!'
-                })
-            });
-
-        } else if (action === 'delete') {
-            await pb.collection('posts').delete(postId);
-
-            // Update Telegram message
-            await fetch(`${telegramApiUrl}/editMessageText`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    message_id: messageId,
-                    text: `${callbackQuery.message.text}\n\n❌ *Status: Deleted via Telegram*`,
-                    parse_mode: 'Markdown'
-                })
-            });
-
-             // Answer callback
-             await fetch(`${telegramApiUrl}/answerCallbackQuery`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    callback_query_id: callbackQuery.id,
-                    text: 'Post deleted.'
-                })
-            });
-        }
-
-        return NextResponse.json({ success: true });
-
-    } catch (e: any) {
-        console.error("Telegram Webhook Error:", e);
-        
-        // Attempt to notify user in Telegram about the error
-        if (TELEGRAM_BOT_TOKEN && req.body) {
-             try {
-                // Need to re-parse body safely as it might have been consumed
-                const clonedReq = await req.clone();
-                const update = await clonedReq.json();
-                if (update?.callback_query?.id) {
-                     await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            } else if (text.startsWith('/blog')) {
+                // Parse command: /blog Topic | Prompt
+                const rawContent = text.replace('/blog', '').trim();
+                
+                if (!rawContent) {
+                    await fetch(`${telegramApiUrl}/sendMessage`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            callback_query_id: update.callback_query.id,
-                            text: `❌ Error: ${e.message}`,
-                            show_alert: true // Show as popup
+                            chat_id: chatId,
+                            text: "⚠️ *Usage:*\n`/blog <Topic>`\n`/blog <Topic> | <Prompt>`\n`/blog <Link>`",
+                            parse_mode: 'Markdown'
                         })
                     });
+                    return NextResponse.json({ success: true });
                 }
-             } catch (innerError) {
-                 console.error("Failed to send error feedback to Telegram", innerError);
-             }
+
+                // Split by first pipe |
+                const parts = rawContent.split('|');
+                const topicOrLink = parts[0].trim();
+                const customPrompt = parts.slice(1).join('|').trim();
+
+                const isLink = topicOrLink.startsWith('http');
+                const scriptArgs = [];
+
+                if (isLink) {
+                   scriptArgs.push(`--link=${encodeURIComponent(topicOrLink)}`);
+                } else {
+                   scriptArgs.push(`--topic=${encodeURIComponent(topicOrLink)}`);
+                }
+
+                if (customPrompt) {
+                    scriptArgs.push(`--prompt=${encodeURIComponent(customPrompt)}`);
+                }
+
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: `📝 *Custom Generation Started...*\n\n**Subject**: ${topicOrLink}\n${customPrompt ? `**Instruction**: ${customPrompt}` : ""}`,
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                 // Run script
+                 runBloggerScript(scriptArgs);
+            }
+
+            return NextResponse.json({ success: true });
         }
 
+        return NextResponse.json({ message: 'Ignored update type' });
+
+    } catch (e: any) {
+        console.error("Telegram Webhook Error:", e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

@@ -291,7 +291,7 @@ async function isPostExists(link, title) {
     }
 }
 
-async function generatePost(newsItem) {
+async function generatePost(newsItem, customPrompt = "") {
     console.log(`🤖 Generating post for: "${newsItem.title}" (${newsItem.source})`);
 
     let supplementaryContext = "";
@@ -343,6 +343,8 @@ async function generatePost(newsItem) {
     - Summary: "${newsItem.content.substring(0, 1500)}..."
 
     ${supplementaryContext ? `SUPPLEMENTARY INFO:\n${supplementaryContext}` : ""}
+
+    ${customPrompt ? `⚠️ **USER CUSTOM INSTRUCTIONS (PRIORITY):**\n${customPrompt}\n` : ""}
 
     🎨 WRITING STYLE (WAJIB):
     - Tulis seperti developer Indonesia senior yang antusias tapi objektif.
@@ -709,26 +711,50 @@ async function main() {
         if (prioritizeTypes.length > 0) console.log(`⭐ Prioritizing types: ${prioritizeTypes.join(', ')}`);
         if (urgentOnly) console.log(`🚨 URGENCE MODE: Only posting critical updates.`);
 
-        // 1. Fetch News
-        let newsItems = await fetchNews(targetFeeds);
-        
-        // 1.5 PRIORITIZATION SORT
-        if (prioritizeTypes.length > 0) {
-           newsItems.sort((a, b) => {
-               // Find the feed definition for each item to check its types
-               const feedA = FEEDS.find(f => f.name === a.source);
-               const feedB = FEEDS.find(f => f.name === b.source);
-               
-               if (!feedA || !feedB) return 0;
-               
-               const aPrioritized = feedA.type.some(t => prioritizeTypes.includes(t));
-               const bPrioritized = feedB.type.some(t => prioritizeTypes.includes(t));
-               
-               if (aPrioritized && !bPrioritized) return -1; // a comes first
-               if (!aPrioritized && bPrioritized) return 1;  // b comes first
-               return 0; // Same priority
-           });
-           console.log(`✨ Re-sorted ${newsItems.length} items based on priority.`);
+        // Custom Argument Processing
+        const topicArg = args.find(arg => arg.startsWith('--topic='));
+        const linkArg = args.find(arg => arg.startsWith('--link='));
+        const promptArg = args.find(arg => arg.startsWith('--prompt='));
+
+        const customTopic = topicArg ? decodeURIComponent(topicArg.split('=')[1]) : null;
+        const customLink = linkArg ? decodeURIComponent(linkArg.split('=')[1]) : null;
+        const customPrompt = promptArg ? decodeURIComponent(promptArg.split('=')[1]) : "";
+
+        let newsItems = [];
+
+        if (customTopic || customLink) {
+            console.log(`🤖 Manual Generation Mode Activated`);
+            // Custom generation - bypass RSS
+            newsItems.push({
+                title: customTopic || "Requested Article",
+                link: customLink || "https://manual-request.local",
+                source: "Telegram Request",
+                content: customPrompt || (customTopic ? `Article about ${customTopic}` : "Write an article based on the link."),
+                pubDate: new Date(),
+                isManual: true // Flag to skip urgency check and duplicate check
+            });
+        } else {
+             // 1. Fetch News
+            newsItems = await fetchNews(targetFeeds);
+            
+            // 1.5 PRIORITIZATION SORT
+            if (prioritizeTypes.length > 0) {
+            newsItems.sort((a, b) => {
+                // Find the feed definition for each item to check its types
+                const feedA = FEEDS.find(f => f.name === a.source);
+                const feedB = FEEDS.find(f => f.name === b.source);
+                
+                if (!feedA || !feedB) return 0;
+                
+                const aPrioritized = feedA.type.some(t => prioritizeTypes.includes(t));
+                const bPrioritized = feedB.type.some(t => prioritizeTypes.includes(t));
+                
+                if (aPrioritized && !bPrioritized) return -1; // a comes first
+                if (!aPrioritized && bPrioritized) return 1;  // b comes first
+                return 0; // Same priority
+            });
+            console.log(`✨ Re-sorted ${newsItems.length} items based on priority.`);
+            }
         }
 
         console.log(`📰 Found ${newsItems.length} total news items.`);
@@ -739,15 +765,17 @@ async function main() {
         for (const item of newsItems) {
             if (processedCount >= maxCount) break;
 
-            // 2. Check duplicates
-            const exists = await isPostExists(item.link, item.title);
-            if (exists) {
-                console.log(`⏭️ Skipping "${item.title}" (Already exists)`);
-                continue;
+            // 2. Check duplicates (Skip for manual)
+            if (!item.isManual) {
+                const exists = await isPostExists(item.link, item.title);
+                if (exists) {
+                    console.log(`⏭️ Skipping "${item.title}" (Already exists)`);
+                    continue;
+                }
             }
 
-            // 2.5 Urgency Check
-            if (urgentOnly) {
+            // 2.5 Urgency Check (Skip for manual)
+            if (urgentOnly && !item.isManual) {
                 const analysis = await checkUrgency(item);
                 if (!analysis.urgent) {
                     console.log(`✋ Skipping (Not Urgent): ${analysis.reason}`);
@@ -761,7 +789,7 @@ async function main() {
             
             let post;
             try {
-                post = await generatePost(item);
+                post = await generatePost(item, customPrompt);
             } catch (genError) {
                 console.log(`⚠️ Generation failed, skipping to next article...`);
                 failedCount++;
