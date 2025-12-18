@@ -9,6 +9,7 @@ import { Loader2, Sparkles, Save, Send, ArrowLeft, Eye, X } from "lucide-react";
 import Link from "next/link";
 import { useConfirm } from "./ConfirmModal";
 import { NovelEditor } from "./NovelEditor";
+import { SeoScoreCard } from "./SeoScoreCard";
 
 interface PostFormProps {
   initialData?: any;
@@ -246,7 +247,8 @@ export function PostForm({ initialData, mode }: PostFormProps) {
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
         {/* AI Generate Button */}
         <div className="flex justify-end gap-2">
           <button
@@ -421,6 +423,28 @@ export function PostForm({ initialData, mode }: PostFormProps) {
           </button>
         </div>
       </div>
+
+      <div className="lg:col-span-1 space-y-6">
+          <SeoScoreCard 
+            title={title} 
+            excerpt={excerpt} 
+            slug={slug} 
+            content={content}
+            onOptimize={(optimized) => {
+                setTitle(optimized.title);
+                setExcerpt(optimized.excerpt);
+                setSlug(optimized.slug);
+                if (optimized.content && optimized.content !== "$undefined") {
+                    setContent(optimized.content);
+                    setEditorKey(prev => prev + 1); // Force re-render to reflect content changes
+                }
+                setHasUnsavedChanges(true);
+            }} 
+          />
+          
+           {/* Tags moved here for better layout, or keep them there? Let's duplication check logic later. For now just add sidebar */}
+      </div>
+    </div>
 
       {/* AI Generate Modal */}
       {showAIModal && (

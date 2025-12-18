@@ -178,14 +178,19 @@ export async function generateBlogPost(topic?: string) {
 
     OUTPUT JSON (Strict Minified JSON, no markdown fencing):
     {
-      "title": "Judul Catchy Bahasa Indonesia",
+      "title": "Judul (STRICT: 50-60 chars)",
       "thumbnail_title": "Judul Singkat Max 5 Kata",
-      "slug": "kebab-case-slug",
-      "excerpt": "2 kalimat rangkuman yang bikin penasaran.",
+      "slug": "kebab-case-slug (Max 70 chars)",
+      "excerpt": "Excerpt (STRICT: 140-160 chars).",
       "content": "Markdown dengan H2 headings (## Heading). Fakta dari source, gaya natural. Use \\n for newlines.",
       "tags": ["React", "Security", "CVE-2025-XXXXX"]
     }
     
+    ⚠️ ATURAN SEO (SUPER STRICT):
+    1. **TITLE**: WAJIB antara 50 - 60 karakter. Hitung karakter termasuk spasi.
+    2. **EXCERPT**: WAJIB antara 140 - 160 karakter.
+    3. **SLUG**: WAJIB di bawah 70 karakter, lowercase, hyphen-only.
+
     ⚠️ TAGS HARUS SPESIFIK & LENGKAP!
     - Sertakan kategori broad (misal: "Frontend", "Backend", "Security")
     - DAN kategori spesifik (misal: "React", "Next.js", "Docker")
@@ -214,7 +219,7 @@ export async function generateBlogPost(topic?: string) {
     4. **NO FAKE URLs**: Do not invent documentation URLs. Only use real, verifiable URLs like react.dev, nextjs.org, nodejs.org, developer.mozilla.org.
 
     STRUCTURE:
-    1. **Title**: Catchy, clear title in Indonesian.
+    1. **Title**: Catchy, clear title in Indonesian (50-60 chars).
     2. **Short Title**: Very short (max 4-5 words) for thumbnail.
     3. **Introduction**: What is this about? Briefly explain the topic.
     4. **Main Content**: (Use H2 and H3 headings)
@@ -225,10 +230,10 @@ export async function generateBlogPost(topic?: string) {
 
     OUTPUT JSON FORMAT (Strict Minified JSON, no markdown fencing):
     {
-      "title": "Indonesian Title",
+      "title": "Indonesian Title (50-60 chars)",
       "thumbnail_title": "Short Title Max 5 words",
       "slug": "kebab-case-slug-based-on-title",
-      "excerpt": "Brief summary (2 sentences).",
+      "excerpt": "Brief summary (140-160 chars).",
       "content": "Full markdown content with escaped newlines (\\n). Include the References section at the end.",
       "tags": ["Tag1", "Tag2", "Tag3"]
     }

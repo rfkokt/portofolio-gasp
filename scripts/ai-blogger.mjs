@@ -408,21 +408,19 @@ async function generatePost(newsItem, customPrompt = "") {
 
     OUTPUT JSON FORMAT (Strict Minified JSON, no markdown fencing):
     {
-        "title": "Judul Catchy Bahasa Indonesia",
+        "title": "Judul Catchy Bahasa Indonesia (STRICT: 50-60 characters including spaces)",
         "thumbnail_title": "Judul Singkat Max 5 Kata",
-        "slug": "kebab-case-slug-based-on-title",
-        "excerpt": "2 kalimat rangkuman yang bikin penasaran.",
+        "slug": "kebab-case-slug-based-on-title (Max 70 chars, remove stop words)",
+        "excerpt": "Rangkuman clicky (STRICT: 140-160 characters).",
         "content": "Markdown dengan H2 headings (## Heading). Fakta dari source, gaya natural. Use \\n for newlines.",
         "tags": ["React", "Security", "CVE-2025-XXXXX", "${newsItem.source}"]
     }
     
-    ⚠️ TAGS HARUS SPESIFIK! Contoh tags yang bagus:
-    - Nama teknologi: "React", "Next.js", "Node.js", "JavaScript"
-    - Tipe masalah: "Security", "Bug Fix", "Performance", "Breaking Change"  
-    - CVE ID jika ada dari source
-    - Nama library yang kena
-    - Source name: "${newsItem.source}"
-    JANGAN pakai placeholder seperti "Tag1", "Tag2"!
+    ⚠️ ATURAN SEO (SUPER STRICT):
+    1. **TITLE**: WAJIB antara 50 - 60 karakter. Hitung karakter termasuk spasi.
+    2. **EXCERPT**: WAJIB antara 140 - 160 karakter.
+    3. **SLUG**: WAJIB di bawah 70 karakter, lowercase, hyphen-only. 
+    4. **TAGS**: Spesifik & Relevan.
     `;
 
     try {

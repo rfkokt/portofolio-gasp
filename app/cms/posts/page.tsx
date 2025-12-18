@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { analyzeSeo } from "@/lib/seo-analyzer";
 import { getPostsForCMS, deletePost, togglePostStatus } from "@/actions/cms-posts";
 import { getAdminSession } from "@/lib/admin-auth";
 import { Plus } from "lucide-react";
@@ -95,6 +96,9 @@ export default async function PostsListPage({
                     Title
                   </th>
                   <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    SEO
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     Author
                   </th>
                   <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -109,7 +113,14 @@ export default async function PostsListPage({
                 </tr>
               </thead>
               <tbody>
-                {result.posts.map((post: any) => (
+                {result.posts.map((post: any) => {
+                  const seo = analyzeSeo(post.title, post.excerpt || '', post.slug, post.content || '');
+                  const score = seo.score;
+                  let colorClass = "bg-red-500/10 text-red-500";
+                  if (score >= 80) colorClass = "bg-green-500/10 text-green-500";
+                  else if (score >= 50) colorClass = "bg-yellow-500/10 text-yellow-500";
+
+                  return (
                   <tr
                     key={post.id}
                     className="border-b border-border last:border-0 hover:bg-foreground/5 transition-colors"
@@ -128,6 +139,11 @@ export default async function PostsListPage({
                     <td className="px-6 py-4">
                       <span className="font-medium text-foreground">
                         {post.title}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 text-xs font-bold rounded-full ${colorClass}`}>
+                        {score}%
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -163,7 +179,7 @@ export default async function PostsListPage({
                       />
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
             {result.pagination && (
