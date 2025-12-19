@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import fpPromise from "@fingerprintjs/fingerprintjs";
 import { pb } from "@/lib/pocketbase";
-import { Share2, Heart, Hand, Zap, Copy, Check, Twitter, Linkedin, Facebook, MessageCircle, BarChart2, X } from "lucide-react";
+import { Share2, Heart, ThumbsUp, Lightbulb, Copy, Check, Twitter, Linkedin, Facebook, MessageCircle, BarChart2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { submitInteraction } from "@/actions/interactions";
@@ -24,16 +24,16 @@ interface FloatingActionBarProps {
 
 const ICONS = {
     clap: {
-        normal: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Clapping%20Hands.png",
-        max: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Love-You%20Gesture.png"
+        normal: <ThumbsUp className="w-6 h-6" />,
+        max: <ThumbsUp className="w-6 h-6 fill-current" />
     },
     love: {
-        normal: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Smiling%20Face%20with%20Heart-Eyes.png",
-        max: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Heart%20on%20Fire.png"
+        normal: <Heart className="w-6 h-6" />,
+        max: <Heart className="w-6 h-6 fill-current" />
     },
     care: {
-        normal: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Nerd%20Face.png",
-        max: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Exploding%20Head.png"
+        normal: <Lightbulb className="w-6 h-6" />,
+        max: <Lightbulb className="w-6 h-6 fill-current" />
     }
 };
 
@@ -44,7 +44,7 @@ export function FloatingActionBar({ postId, slug, title }: FloatingActionBarProp
   const [visitorId, setVisitorId] = useState<string>("");
   const [hasInteracted, setHasInteracted] = useState<Record<string, boolean>>({}); // Just tracks "has interacted *at all*"
   const [userClicks, setUserClicks] = useState<Record<string, number>>({ clap: 0, love: 0, care: 0 });
-  const [particles, setParticles] = useState<{ id: string; x: number; y: number; icon: string }[]>([]);
+  const [particles, setParticles] = useState<{ id: string; x: number; y: number; icon: React.ReactNode }[]>([]);
   
   // Share state
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -351,17 +351,17 @@ export function FloatingActionBar({ postId, slug, title }: FloatingActionBarProp
                             </div>
                         </div>
 
-                         <div className="flex justify-center gap-6">
+                        <div className="flex justify-center gap-6">
                             <ReactionStat 
-                                icon={<img src={ICONS.clap.normal} alt="Clap" className="w-12 h-12" />} 
+                                icon={<ThumbsUp className="w-10 h-10 text-yellow-500" />} 
                                 count={counts.clap} 
                             />
                             <ReactionStat 
-                                icon={<img src={ICONS.love.normal} alt="Love" className="w-12 h-12" />} 
+                                icon={<Heart className="w-10 h-10 text-red-500" />} 
                                 count={counts.love} 
                             />
                             <ReactionStat 
-                                icon={<img src={ICONS.care.normal} alt="Care" className="w-12 h-12" />} 
+                                icon={<Lightbulb className="w-10 h-10 text-violet-500" />} 
                                 count={counts.care} 
                             />
                         </div>

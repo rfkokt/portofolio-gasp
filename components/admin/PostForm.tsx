@@ -438,6 +438,9 @@ export function PostForm({ initialData, mode }: PostFormProps) {
                     setContent(optimized.content);
                     setEditorKey(prev => prev + 1); // Force re-render to reflect content changes
                 }
+                if (optimized.tags && optimized.tags.length > 0) {
+                    setTags(optimized.tags);
+                }
                 setHasUnsavedChanges(true);
             }} 
           />

@@ -48,12 +48,12 @@ export function analyzeSeo(title: string, excerpt: string, slug: string, content
 
     // 2. Excerpt Analysis (Ideal: 120-160 chars)
     const excerptLen = excerpt.length;
-    if (excerptLen >= 120 && excerptLen <= 165) {
+    if (excerptLen >= 120 && excerptLen <= 160) {
         metrics.excerptLength = { score: 20, message: 'Optimal meta description length', status: 'good' };
     } else if (excerptLen > 50 && excerptLen < 120) {
         metrics.excerptLength = { score: 10, message: 'Too short for meta description', status: 'warning' };
         tips.push("Expand the excerpt to summarize the article better (120-160 chars).");
-    } else if (excerptLen > 165) {
+    } else if (excerptLen > 160) {
         metrics.excerptLength = { score: 10, message: 'Too long, may be truncated', status: 'warning' };
         tips.push("Shorten the excerpt to under 160 characters.");
     } else {

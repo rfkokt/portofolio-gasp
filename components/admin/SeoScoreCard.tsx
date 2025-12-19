@@ -11,7 +11,7 @@ interface SeoScoreCardProps {
     excerpt: string;
     slug: string;
     content: string;
-    onOptimize?: (data: { title: string, excerpt: string, slug: string, content?: string }) => void;
+    onOptimize?: (data: { title: string, excerpt: string, slug: string, content?: string, tags?: string[] }) => void;
 }
 
 export function SeoScoreCard({ title, excerpt, slug, content, onOptimize }: SeoScoreCardProps) {
