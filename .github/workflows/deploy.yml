@@ -100,6 +100,22 @@ jobs:
             # Prune old images
             docker image prune -f
 
+      - name: Notify Telegram (Success)
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          -d parse_mode="Markdown" \
+          -d text="🚀 *Deploy Success* (Prod)%0A%0ARepo: ${{ github.repository }}%0ACheck: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Notify Telegram (Failure)
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          -d parse_mode="Markdown" \
+          -d text="🚨 *Deploy Failed* (Prod)%0A%0ARepo: ${{ github.repository }}%0ACheck: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
   deploy-dev:
     if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
@@ -157,3 +173,19 @@ jobs:
             
             # Prune old images
             docker image prune -f
+
+      - name: Notify Telegram (Success)
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          -d parse_mode="Markdown" \
+          -d text="🧪 *Deploy Success* (Dev)%0A%0ARepo: ${{ github.repository }}%0ACheck: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Notify Telegram (Failure)
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          -d parse_mode="Markdown" \
+          -d text="🚨 *Deploy Failed* (Dev)%0A%0ARepo: ${{ github.repository }}%0ACheck: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
