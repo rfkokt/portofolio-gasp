@@ -96,16 +96,7 @@ export async function POST(req: NextRequest) {
             const chatId = callbackQuery.message.chat.id;
             const messageId = callbackQuery.message.message_id;
 
-            // 🔍 DEBUG: Immediate Echo to confirm Webhook is working
-            await fetch(`${telegramApiUrl}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: `🔍 *Debug:* Received request for action: \`${data}\`\nProcessing...`,
-                    parse_mode: 'Markdown'
-                })
-            });
+
 
             const [action, postId] = data.split(':');
 
@@ -178,16 +169,7 @@ export async function POST(req: NextRequest) {
             } catch (actionError: any) {
                 console.error("Callback Action Error:", actionError);
                 
-                 // Send DEBUG alert to user
-                 await fetch(`${telegramApiUrl}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: `❌ *Debug Error:* \`${actionError.message}\``,
-                        parse_mode: 'Markdown'
-                    })
-                });
+
 
                 // Send alert to user
                 await fetch(`${telegramApiUrl}/answerCallbackQuery`, {
