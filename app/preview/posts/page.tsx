@@ -1,15 +1,42 @@
 "use client";
 
+import Link from "next/link";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
+import rehypeSlug from "rehype-slug";
+import { TableOfContents } from "@/components/blog/TableOfContents";
+import { CodeBlock } from "@/components/blog/CodeBlock";
+import { AlertTriangle, X } from "lucide-react";
 import { getPreviewPost } from "@/actions/preview";
 
-// ... (inside component)
+interface PreviewPost {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  cover_image?: string;
+  tags?: string[];
+  published_at?: string;
+}
+
+function BlogPreviewContent() {
+  const [post, setPost] = useState<PreviewPost | null>(null);
+  const [error, setError] = useState("");
+
+  const searchParams = useSearchParams();
+  const postId = searchParams.get('id');
+
+  useEffect(() => {
+    const loadPreview = async () => {
       // 1. If ID is present in URL, fetch from PocketBase (via Server Action)
       if (postId) {
         try {
           const record = await getPreviewPost(postId);
           setPost(record as unknown as PreviewPost);
         } catch (err: any) {
-          setError(`Failed to load draft: ${err.message}`);
+             setError(`Failed to load draft: ${err.message}`);
         }
         return;
       }
