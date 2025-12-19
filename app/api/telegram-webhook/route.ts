@@ -61,6 +61,17 @@ async function runBloggerScript(args: string[] = [], chatId?: string | number) {
     });
 }
 
+export async function GET() {
+    return NextResponse.json({
+        status: 'online',
+        message: 'Telegram Webhook is active',
+        env_check: {
+            has_token: !!process.env.TELEGRAM_BOT_TOKEN,
+            server_time: new Date().toISOString()
+        }
+    });
+}
+
 export async function POST(req: NextRequest) {
     if (!TELEGRAM_BOT_TOKEN) {
         return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
