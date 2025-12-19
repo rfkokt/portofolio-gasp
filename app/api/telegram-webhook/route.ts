@@ -83,13 +83,19 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: 'Invalid callback data' }, { status: 400 });
             }
 
-            // Connect to PocketBase
-            const pb = new PocketBase(PB_URL);
-            await pb.admins.authWithPassword(PB_ADMIN_EMAIL!, PB_ADMIN_PASS!);
-
             const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
             try {
+                // Connect to PocketBase
+                const pb = new PocketBase(PB_URL);
+                
+                // Explicitly check env vars for clearer error message
+                if (!PB_ADMIN_EMAIL || !PB_ADMIN_PASS) {
+                    throw new Error("Missing PB_ADMIN_EMAIL or PB_ADMIN_PASS in server environment.");
+                }
+
+                await pb.admins.authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASS);
+
                 if (action === 'publish') {
                     const updatedPost = await pb.collection('posts').update(postId, { published: true });
                     const liveLink = `https://rdev.cloud/blog/${updatedPost.slug}`;
@@ -149,7 +155,7 @@ export async function POST(req: NextRequest) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         callback_query_id: callbackQuery.id,
-                        text: `❌ Action Failed: ${actionError.message}`,
+                        text: `❌ Error: ${actionError.message}`,
                         show_alert: true
                     })
                 });
