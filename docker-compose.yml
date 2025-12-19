@@ -18,6 +18,7 @@ services:
       - SERPER_API_KEY=${SERPER_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - UNSPLASH_ACCESS_KEY=${UNSPLASH_ACCESS_KEY}
     networks:
       - app_network
 

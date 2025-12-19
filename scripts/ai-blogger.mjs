@@ -11,6 +11,8 @@ const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL;
 const PB_ADMIN_PASS = process.env.PB_ADMIN_PASS;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
+const UNSPLASH_API_URL = 'https://api.unsplash.com/search/photos';
 
 if (!PB_ADMIN_EMAIL || !PB_ADMIN_PASS) {
     console.error('❌ Error: PB_ADMIN_EMAIL and PB_ADMIN_PASS environment variables are required.');
@@ -141,6 +143,34 @@ function generateCoverImageURL(title) {
     const encodedText = encodeURIComponent(lines.join('\n'));
     // Using placehold.co with dark background and fixed font size
     return `https://placehold.co/398x498/1a1a1a/FFF.png?text=${encodedText}&font=montserrat&font_size=28`;
+}
+
+async function searchUnsplashPhoto(query) {
+  if (!UNSPLASH_ACCESS_KEY) return null;
+  try {
+    const url = new URL(UNSPLASH_API_URL);
+    url.searchParams.append('query', query);
+    url.searchParams.append('page', '1');
+    url.searchParams.append('per_page', '1');
+    url.searchParams.append('orientation', 'landscape');
+    url.searchParams.append('client_id', UNSPLASH_ACCESS_KEY);
+
+    const response = await fetch(url.toString(), {
+      dispatcher,
+      headers: { 'Accept-Version': 'v1' }
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    
+    if (data.results && data.results.length > 0) {
+        return data.results[0].urls.regular;
+    }
+    return null;
+  } catch (error) {
+    console.error("❌ Unsplash Error:", error.message);
+    return null;
+  }
 }
 
 async function fetchNews(targetFeeds = FEEDS) {
@@ -604,7 +634,14 @@ async function generatePost(newsItem, customPrompt = "") {
         
         // Use shorter thumbnail title if available, otherwise truncate aggressively
         const coverText = postData.thumbnail_title || postData.title;
-        postData.cover_image = generateCoverImageURL(coverText);
+        
+        // Try Unsplash
+        let unsplashImage = await searchUnsplashPhoto(postData.title);
+        if (!unsplashImage && postData.tags && postData.tags.length > 0) {
+            unsplashImage = await searchUnsplashPhoto(postData.tags[0] + " tech");
+        }
+
+        postData.cover_image = unsplashImage || generateCoverImageURL(coverText);
 
         // Append original link to content if missing (safety net)
         if (!postData.content.includes(newsItem.link)) {

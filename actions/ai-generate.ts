@@ -345,21 +345,51 @@ export async function generateBlogPost(topic?: string) {
         rawContent = rawContent.replace(/\\"/g, '"');
         rawContent = rawContent.replace(/\\n/g, '\n');
 
+        // Tags extraction
+        const tagsMatch = jsonString.match(/"tags"\s*:\s*\[([\s\S]*?)\]/);
+        let extractedTags: string[] = [];
+        if (tagsMatch && tagsMatch[1]) {
+             try {
+                 // Try to parse just the array content
+                 // Wrap in brackets to make it valid JSON array
+                 extractedTags = JSON5.parse(`[${tagsMatch[1]}]`);
+             } catch {
+                 // Fallback clean split
+                 extractedTags = tagsMatch[1]
+                     .split(',')
+                     .map((t: string) => t.trim().replace(/^"|"$/g, ''))
+                     .filter((t: string) => t.length > 0);
+             }
+        }
+
         postData = {
           title: titleMatch ? titleMatch[1] : "Untitled Post",
           thumbnail_title: thumbTitleMatch ? thumbTitleMatch[1] : (titleMatch ? titleMatch[1] : "Untitled"),
           slug: slugMatch ? slugMatch[1] : `post-${Date.now()}`,
           excerpt: excerptMatch ? excerptMatch[1] : "",
           content: rawContent,
-          tags: []
+          tags: extractedTags
         };
         console.log("✅ Emergency Extraction Successful!");
       }
     }
 
-    // Add cover image based on title
+    // Try to get Unsplash image first
     const coverText = postData.thumbnail_title || postData.title;
-    postData.cover_image = generateCoverImageURL(coverText);
+    let unsplashImage = null;
+    
+    // Import dynamically to avoid top-level await issues if any
+    const { searchUnsplashPhoto } = await import('./unsplash');
+    
+    // Try searching with the exact title first
+    unsplashImage = await searchUnsplashPhoto(postData.title);
+    
+    // If no result, try with the shorter thumbnail title or tags
+    if (!unsplashImage && postData.tags && postData.tags.length > 0) {
+        unsplashImage = await searchUnsplashPhoto(postData.tags[0] + " tech");
+    }
+
+    postData.cover_image = unsplashImage || generateCoverImageURL(coverText);
 
     // Safety net: Append reference link if missing from content
     if (sourceUrl && !postData.content.includes(sourceUrl)) {
