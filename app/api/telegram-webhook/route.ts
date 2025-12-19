@@ -67,8 +67,16 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const update = await req.json();
-        console.log("📨 Webhook received:", JSON.stringify(update, null, 2));
+        let update;
+        try {
+            update = await req.json();
+            console.log("📨 Webhook received:", JSON.stringify(update, null, 2));
+        } catch (jsonError) {
+            console.error("Invalid JSON body:", jsonError);
+            return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+        }
+
+        const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
         // 1. Handle Callback Query (Buttons)
         if (update.callback_query) { 
@@ -77,13 +85,22 @@ export async function POST(req: NextRequest) {
             const chatId = callbackQuery.message.chat.id;
             const messageId = callbackQuery.message.message_id;
 
+            // 🔍 DEBUG: Immediate Echo to confirm Webhook is working
+            await fetch(`${telegramApiUrl}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: `🔍 *Debug:* Received request for action: \`${data}\`\nProcessing...`,
+                    parse_mode: 'Markdown'
+                })
+            });
+
             const [action, postId] = data.split(':');
 
             if (!postId) {
                 return NextResponse.json({ error: 'Invalid callback data' }, { status: 400 });
             }
-
-            const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
             try {
                 // Connect to PocketBase
@@ -149,6 +166,18 @@ export async function POST(req: NextRequest) {
                 }
             } catch (actionError: any) {
                 console.error("Callback Action Error:", actionError);
+                
+                 // Send DEBUG alert to user
+                 await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: `❌ *Debug Error:* \`${actionError.message}\``,
+                        parse_mode: 'Markdown'
+                    })
+                });
+
                 // Send alert to user
                 await fetch(`${telegramApiUrl}/answerCallbackQuery`, {
                     method: 'POST',
@@ -175,8 +204,6 @@ export async function POST(req: NextRequest) {
                 console.warn(`🛑 Unauthorized access attempt from Chat ID: ${chatId}`);
                 return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
             }
-
-            const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
             if (text.startsWith('/auto')) {
                 // Trigger auto generation
@@ -269,7 +296,7 @@ export async function POST(req: NextRequest) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: chatId,
-                         text: "❓ *Unknown Command*\n\nI didn't recognize that command. Type `/help` to see what I can do.",
+                        text: "❓ *Unknown Command*\n\nI didn't recognize that command. Type `/help` to see what I can do.",
                         parse_mode: 'Markdown'
                     })
                 });
