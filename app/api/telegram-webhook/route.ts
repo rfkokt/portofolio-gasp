@@ -89,54 +89,68 @@ export async function POST(req: NextRequest) {
 
             const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
-            if (action === 'publish') {
-                const updatedPost = await pb.collection('posts').update(postId, { published: true });
-                const liveLink = `https://rdev.cloud/blog/${updatedPost.slug}`;
-                
-                // Update Telegram message to show success
-                await fetch(`${telegramApiUrl}/editMessageText`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        message_id: messageId,
-                        text: `${callbackQuery.message.text}\n\n✅ *Status: Published via Telegram*\n🔗 [Live Link](${liveLink})`,
-                        parse_mode: 'Markdown'
-                    })
-                });
+            try {
+                if (action === 'publish') {
+                    const updatedPost = await pb.collection('posts').update(postId, { published: true });
+                    const liveLink = `https://rdev.cloud/blog/${updatedPost.slug}`;
+                    
+                    // Update Telegram message to show success
+                    await fetch(`${telegramApiUrl}/editMessageText`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            message_id: messageId,
+                            text: `${callbackQuery.message.text}\n\n✅ *Status: Published via Telegram*\n🔗 [Live Link](${liveLink})`,
+                            parse_mode: 'Markdown'
+                        })
+                    });
 
-                // Answer callback to stop loading animation
+                    // Answer callback
+                    await fetch(`${telegramApiUrl}/answerCallbackQuery`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            callback_query_id: callbackQuery.id,
+                            text: '✅ Post published successfully!'
+                        })
+                    });
+
+                } else if (action === 'delete') {
+                    await pb.collection('posts').delete(postId);
+
+                    // Update Telegram message
+                    await fetch(`${telegramApiUrl}/editMessageText`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            message_id: messageId,
+                            text: `${callbackQuery.message.text}\n\n❌ *Status: Deleted via Telegram*`,
+                            parse_mode: 'Markdown'
+                        })
+                    });
+
+                    // Answer callback
+                    await fetch(`${telegramApiUrl}/answerCallbackQuery`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            callback_query_id: callbackQuery.id,
+                            text: '🗑️ Post deleted.'
+                        })
+                    });
+                }
+            } catch (actionError: any) {
+                console.error("Callback Action Error:", actionError);
+                // Send alert to user
                 await fetch(`${telegramApiUrl}/answerCallbackQuery`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         callback_query_id: callbackQuery.id,
-                        text: 'Post published successfully!'
-                    })
-                });
-
-            } else if (action === 'delete') {
-                await pb.collection('posts').delete(postId);
-
-                // Update Telegram message
-                await fetch(`${telegramApiUrl}/editMessageText`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        message_id: messageId,
-                        text: `${callbackQuery.message.text}\n\n❌ *Status: Deleted via Telegram*`,
-                        parse_mode: 'Markdown'
-                    })
-                });
-
-                // Answer callback
-                await fetch(`${telegramApiUrl}/answerCallbackQuery`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        callback_query_id: callbackQuery.id,
-                        text: 'Post deleted.'
+                        text: `❌ Action Failed: ${actionError.message}`,
+                        show_alert: true
                     })
                 });
             }
