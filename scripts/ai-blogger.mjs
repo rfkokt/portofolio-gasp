@@ -1,5 +1,11 @@
 import PocketBase from 'pocketbase';
-import 'dotenv/config';
+// import 'dotenv/config'; // Static import causes issues in Docker standalone structure
+// Dynamic import for local dev support
+try {
+    await import('dotenv/config');
+} catch (e) {
+    // Ignore in production (env vars provided by Docker)
+}
 import { fetch, Agent } from 'undici';
 import JSON5 from 'json5';
 import Parser from 'rss-parser';
