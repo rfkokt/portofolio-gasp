@@ -13,19 +13,50 @@ function escapeShellArg(arg: string) {
 }
 
 // Execute script asynchronously
-async function runBloggerScript(args: string[] = []) {
+async function runBloggerScript(args: string[] = [], chatId?: string | number) {
     const { exec } = await import('child_process'); // Dynamic import to avoid edge runtime issues if any (though this is node runtime)
     const scriptPath = path.join(process.cwd(), "scripts", "ai-blogger.mjs");
     
     console.log(`🚀 Spawning blogger: node ${scriptPath} ${args.join(' ')}`);
 
+
     exec(`node "${scriptPath}" ${args.join(' ')}`, {
-        env: { ...process.env, MAX_BLOGS: '1' } // Force 1 blog for manual trigger
-    }, (error, stdout, stderr) => {
+        env: { ...process.env, MAX_BLOGS: '1' } 
+    }, async (error, stdout, stderr) => {
+        const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+        
         if (error) {
             console.error(`❌ Script error:`, error);
+            if (chatId) {
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: `❌ *Generation Failed*\n\nError: \`${error.message}\`\nStderr: \`${stderr?.substring(0, 500)}\``,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            }
         } else {
             console.log(`✅ Script finished. Stdout:`, stdout);
+            
+            // Check if "No new articles" message is in stdout
+            if (stdout.includes("No new articles") || stdout.includes("skipped")) {
+                 if (chatId) {
+                    await fetch(`${telegramApiUrl}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            text: `ℹ️ *Generation Finished*\n\nNo new relevant articles found matching criteria (or all were skipped).`,
+                            parse_mode: 'Markdown'
+                        })
+                    });
+                }
+            }
+            // If success, the script itself sends the "New Post" notification with buttons, 
+            // so we don't need to double-send unless we want a summary.
         }
     });
 }
@@ -140,7 +171,7 @@ export async function POST(req: NextRequest) {
                 });
 
                 // Run script in background
-                runBloggerScript([]); // No args = auto mode
+                runBloggerScript([], chatId); // No args = auto mode
 
             } else if (text.startsWith('/blog')) {
                 // Parse command: /blog Topic | Prompt
@@ -188,7 +219,7 @@ export async function POST(req: NextRequest) {
                 });
 
                  // Run script
-                 runBloggerScript(scriptArgs);
+                 runBloggerScript(scriptArgs, chatId);
 
             } else if (text.startsWith('/help') || text.startsWith('/start')) {
                 await fetch(`${telegramApiUrl}/sendMessage`, {
