@@ -13,6 +13,7 @@ const commands = [
     { command: "promo", description: "🕵️ Deal Hunter (Games/Tools)" },
     { command: "story", description: "📖 Inspiration/Success Hunter" },
     { command: "blog", description: "📝 /blog Topic | Custom Instruction" },
+    { command: "set_webhook", description: "⚙️ Reset Webhook URL" },
     { command: "help", description: "❓ Show usage examples" }
 ];
 

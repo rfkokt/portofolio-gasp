@@ -890,7 +890,8 @@ async function main() {
             try {
                 post = await generatePost(item, customPrompt);
             } catch (genError) {
-                console.log(`⚠️ Generation failed, skipping to next article...`);
+                console.log(`⚠️ Generation failed:`, genError);
+                await sendErrorNotification(`Attempt failed for "${item.title}": ${genError.message}`);
                 failedCount++;
                 continue;
             }

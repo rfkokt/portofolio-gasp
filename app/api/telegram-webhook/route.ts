@@ -513,7 +513,7 @@ export async function POST(req: NextRequest) {
                 // Run script in background
                 runStoryHunterScript(chatId);
 
-            } else if (text.startsWith('/set-webhook')) {
+            } else if (text.startsWith('/set_webhook')) {
                 // Set Webhook
                  const webhookUrl = "https://rdev.cloud/api/telegram-webhook";
                  const setUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook?url=${encodeURIComponent(webhookUrl)}&allowed_updates=[]`;
