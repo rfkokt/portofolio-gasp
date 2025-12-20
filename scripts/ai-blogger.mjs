@@ -431,7 +431,7 @@ async function generatePost(newsItem, customPrompt = "") {
        - You MUST add a "## Referensi" section at the end.
        - Include the Primary Source.
        - Include 1-2 relevant Supplementary Sources found in search.
-       - Format: `- [Title](URL)`
+       - Format: - [Title](URL)
 
     ⚠️ CRITICAL RULES - FAKTA HARUS AKURAT:
     
