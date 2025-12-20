@@ -465,3 +465,12 @@ body {
   opacity: 0.8;
   background-color: #000 !important;
 }
+
+/* Scrollbar Hide Utility */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}

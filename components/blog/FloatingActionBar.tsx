@@ -20,6 +20,8 @@ interface FloatingActionBarProps {
   postId: string;
   slug: string;
   title: string;
+  className?: string;
+  variant?: "fixed" | "inline";
 }
 
 const ICONS = {
@@ -39,10 +41,10 @@ const ICONS = {
 
 const MAX_CLICKS = 5;
 
-export function FloatingActionBar({ postId, slug, title }: FloatingActionBarProps) {
+export function FloatingActionBar({ postId, slug, title, className, variant = "fixed" }: FloatingActionBarProps) {
   const [counts, setCounts] = useState<InteractionCounts>({ clap: 0, love: 0, care: 0, view: 0, share: 0 });
   const [visitorId, setVisitorId] = useState<string>("");
-  const [hasInteracted, setHasInteracted] = useState<Record<string, boolean>>({}); // Just tracks "has interacted *at all*"
+  const [hasInteracted, setHasInteracted] = useState<Record<string, boolean>>({}); 
   const [userClicks, setUserClicks] = useState<Record<string, number>>({ clap: 0, love: 0, care: 0 });
   const [particles, setParticles] = useState<{ id: string; x: number; y: number; icon: React.ReactNode }[]>([]);
   
@@ -195,14 +197,25 @@ export function FloatingActionBar({ postId, slug, title }: FloatingActionBarProp
 
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/blog/${slug}` : '';
 
+  const containerClass = variant === 'fixed' 
+    ? "fixed bottom-4 left-4 right-4 z-50 sm:bottom-8 sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto"
+    : "w-full relative z-10";
+
+  const innerClass = variant === 'fixed'
+    ? "rounded-2xl sm:rounded-full w-full sm:w-auto justify-evenly sm:justify-start gap-0 sm:gap-1 p-2 sm:p-2 sm:pl-4 sm:pr-2"
+    : "rounded-xl w-full justify-between p-2 px-4";
+
   return (
     <>
-        <div className="fixed bottom-4 left-4 right-4 z-50 sm:bottom-8 sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto">
+        <div className={cn(containerClass, className)}>
         <motion.div 
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="flex items-center justify-evenly sm:justify-start gap-0 sm:gap-1 p-2 sm:p-2 sm:pl-4 sm:pr-2 bg-background/95 backdrop-blur-xl border border-foreground/20 rounded-2xl sm:rounded-full shadow-2xl relative w-full sm:w-auto"
+            className={cn(
+                "flex items-center bg-background/95 backdrop-blur-xl border border-foreground/20 shadow-2xl relative",
+                innerClass
+            )}
         >
             <InteractionButton 
                 icon={userClicks.clap >= MAX_CLICKS ? ICONS.clap.max : ICONS.clap.normal} 

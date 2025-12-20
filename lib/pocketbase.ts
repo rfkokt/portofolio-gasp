@@ -18,7 +18,7 @@ export async function getPosts(page = 1, limit = 10, search = "") {
     if (search) {
         // Sanitize search input to prevent injection
         const sanitizedSearch = search.replace(/"/g, '\\"');
-        filter += ` && (title ~ "${sanitizedSearch}" || content ~ "${sanitizedSearch}")`;
+        filter += ` && (title ~ "${sanitizedSearch}" || content ~ "${sanitizedSearch}" || tags ~ "${sanitizedSearch}")`;
     }
     
     return await pb.collection('posts').getList<PostRecord>(page, limit, {
