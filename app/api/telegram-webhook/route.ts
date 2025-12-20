@@ -164,7 +164,90 @@ async function runDealHunterScript(chatId?: string | number) {
     });
 
     child.on('error', async (err) => {
-        console.error('Failed to start Deal Hunter:', err);
+         const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+         if (chatId) {
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: `❌ *Spawn Failed*\n\nError: \`${err.message}\``,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            }
+    });
+}
+
+// Execute Story Hunter script asynchronously
+async function runStoryHunterScript(chatId?: string | number) {
+    const scriptName = "story-hunter.mjs";
+    const scriptPath = [process.cwd(), 'scripts', scriptName].join('/');
+    
+    console.log(`🚀 Spawning Story Hunter: node ${scriptPath}`);
+
+    const child = spawn('node', [scriptPath], {
+        env: { ...process.env }, 
+        stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.on('data', (data) => {
+        stdout += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+        stderr += data.toString();
+    });
+
+    child.on('close', async (code) => {
+        const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+        
+        if (code !== 0) {
+            console.error(`❌ Story Hunter exited with code ${code}`);
+            if (chatId) {
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: `❌ *Story Hunt Failed*\n\nExit Code: ${code}\nStderr: \`${stderr?.substring(0, 500) || 'Unknown error'}\``,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            }
+        } else {
+            console.log(`✅ Story Hunter finished.`);
+            
+            if (chatId) {
+                const match = stdout.match(/Generated Story: (.*)/g);
+                const count = match ? match.length : 0;
+                
+                let msg = `✅ *Inspiration Hunt Finished*`;
+                if (count > 0) {
+                    msg += `\n\nFound ${count} new inspiring stories!`;
+                } else {
+                    msg += `\n\nNo new stories found right now.`;
+                }
+
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: msg,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            }
+        }
+    });
+
+
+    child.on('error', async (err) => {
+        console.error('Failed to start Story Hunter:', err);
         const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
         if (chatId) {
             await fetch(`${telegramApiUrl}/sendMessage`, {
@@ -404,6 +487,21 @@ export async function POST(req: NextRequest) {
                 // Run script in background
                 runDealHunterScript(chatId);
 
+            } else if (text.startsWith('/story')) {
+                // Trigger story hunter
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: "📖 *Hunting for Stories...*\nScanning Reddit for success stories & milestones...",
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                // Run script in background
+                runStoryHunterScript(chatId);
+
             } else if (text.startsWith('/help') || text.startsWith('/start')) {
                 await fetch(`${telegramApiUrl}/sendMessage`, {
                     method: 'POST',
@@ -415,6 +513,8 @@ export async function POST(req: NextRequest) {
                               "Trigger automatic blog generation based on RSS feeds.\n\n" +
                               "🔹 `/promo`\n" +
                               "Hunt for new Developer Deals, Games, & AI Models (Deal Hunter).\n\n" +
+                              "🔹 `/story`\n" +
+                              "Find inspirational Indie Hacker stories & revenue milestones.\n\n" +
                               "🔹 `/blog <Topic>`\n" +
                               "Generate a blog post about a specific topic.\n" +
                               "Example: `/blog Next.js 15 Features`\n\n" +

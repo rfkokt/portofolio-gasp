@@ -18,6 +18,12 @@ const CATEGORIES: Category[] = [
     image: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=800&auto=format&fit=crop" 
   },
   { 
+    id: "stories", 
+    name: "Stories", 
+    tag: "Story",
+    image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=800&auto=format&fit=crop" 
+  },
+  { 
     id: "data", 
     name: "Data", 
     tag: "Data",

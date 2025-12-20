@@ -11,6 +11,7 @@ if (!TELEGRAM_BOT_TOKEN) {
 const commands = [
     { command: "auto", description: "🤖 Auto-generate from RSS" },
     { command: "promo", description: "🕵️ Deal Hunter (Games/Tools)" },
+    { command: "story", description: "📖 Inspiration/Success Hunter" },
     { command: "blog", description: "📝 /blog Topic | Custom Instruction" },
     { command: "help", description: "❓ Show usage examples" }
 ];

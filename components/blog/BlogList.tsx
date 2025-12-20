@@ -151,11 +151,14 @@ export function BlogList({ posts: initialPosts, totalPosts }: BlogListProps) {
 
         {posts.map((post, i) => {
             const isDeal = post.tags?.some(tag => ['Deal', 'Promo', 'Game', 'Free', 'Offer'].includes(tag));
+            const isStory = post.tags?.some(tag => ['Story', 'Indie Hacker', 'Success', 'Motivation'].includes(tag));
+            const showAsBigCard = isDeal || isStory;
+
             const dateStr = new Date(post.published_at || post.created).toLocaleDateString('en-US', {
                 year: 'numeric', month: 'long', day: 'numeric'
             });
 
-            if (isDeal) {
+            if (showAsBigCard) {
                 return (
                     <article
                         key={post.id}
@@ -163,7 +166,7 @@ export function BlogList({ posts: initialPosts, totalPosts }: BlogListProps) {
                     >
                         <Link href={`/blog/${post.slug}`} className="block p-6 md:py-10">
                             <div className="flex flex-col md:flex-row gap-8 items-start">
-                                {/* Thumbnail for Deals */}
+                                {/* Thumbnail */}
                                 <div className="w-full md:w-80 shrink-0 aspect-video relative rounded-xl overflow-hidden border border-border/50 shadow-sm group-hover:shadow-md transition-all">
                                     {post.cover_image ? (
                                         <img 
@@ -176,8 +179,8 @@ export function BlogList({ posts: initialPosts, totalPosts }: BlogListProps) {
                                             No Image
                                         </div>
                                     )}
-                                    <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">
-                                        PROMO
+                                    <div className={`absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm ${isStory ? "bg-indigo-600" : "bg-red-500"}`}>
+                                        {isStory ? "STORY" : "PROMO"}
                                     </div>
                                 </div>
 
@@ -201,7 +204,7 @@ export function BlogList({ posts: initialPosts, totalPosts }: BlogListProps) {
                                     
                                     <div className="mt-4 flex items-center text-sm font-medium text-foreground ">
                                         <span className="group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
-                                            Check Deal
+                                            {isStory ? "Read Story" : "Check Deal"}
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                                         </span>
                                     </div>
