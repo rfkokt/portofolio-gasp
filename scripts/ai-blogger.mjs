@@ -365,6 +365,7 @@ async function generatePost(newsItem, customPrompt = "") {
             const qData = await queryResponse.json();
             const qText = qData.content?.[0]?.text || "[]";
             const queries = JSON5.parse(qText.match(/\[[\s\S]*\]/)?.[0] || "[]");
+            console.log(`   Querying: ${queries.join(", ")}`);
 
             // B. Search & Fetch
             let found = 0;
