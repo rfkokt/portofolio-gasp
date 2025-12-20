@@ -16,7 +16,8 @@ function escapeShellArg(arg: string) {
 
 // Execute script asynchronously safely using spawn
 async function runBloggerScript(args: string[] = [], chatId?: string | number) {
-    const scriptPath = path.join(process.cwd(), "scripts", "ai-blogger.mjs");
+    const scriptName = "ai-blogger.mjs";
+    const scriptPath = path.resolve(process.cwd(), "scripts", scriptName);
     
     console.log(`🚀 Spawning blogger: node ${scriptPath} ${args.join(' ')}`);
 
@@ -93,7 +94,8 @@ async function runBloggerScript(args: string[] = [], chatId?: string | number) {
 
 // Execute Deal Hunter script asynchronously
 async function runDealHunterScript(chatId?: string | number) {
-    const scriptPath = path.join(process.cwd(), "scripts", "deal-hunter.mjs");
+    const scriptName = "deal-hunter.mjs";
+    const scriptPath = path.resolve(process.cwd(), "scripts", scriptName);
     
     console.log(`🚀 Spawning Deal Hunter: node ${scriptPath}`);
 
