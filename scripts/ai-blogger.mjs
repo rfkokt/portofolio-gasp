@@ -282,6 +282,23 @@ _Select an action below or wait 15m for auto-publish._
     }
 }
 
+async function sendErrorNotification(errorMsg) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+    try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: `❌ *Blog Generation Failed*\n\nError: \`${errorMsg.substring(0, 500)}\``,
+                parse_mode: 'Markdown'
+            })
+        });
+    } catch (e) {
+        console.error("Failed to send error notification:", e);
+    }
+}
+
 async function isPostExists(link, title) {
     try {
         // Extract key parts of the URL for matching
@@ -928,10 +945,12 @@ async function main() {
             console.log(`   ℹ️ No new articles to publish (all existing or skipped).`);
         }
 
-    } catch (err) {
-        console.error('❌ Script failed:', err);
+    } catch (criticalError) {
+        console.error("❌ CRITICAL SCRIPT ERROR:", criticalError);
+        await sendErrorNotification(criticalError.message);
         process.exit(1);
     }
 }
 
 main();
+
