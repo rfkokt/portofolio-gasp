@@ -1,9 +1,13 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const ADMIN_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_SECRET || 'super-secret-admin-key-change-in-production'
-);
+const secret = process.env.ADMIN_SECRET;
+
+if (!secret) {
+  throw new Error('ADMIN_SECRET environment variable is not set');
+}
+
+const ADMIN_SECRET = new TextEncoder().encode(secret);
 
 const COOKIE_NAME = 'admin_session';
 

@@ -1,22 +1,13 @@
 "use server";
 
-import PocketBase from "pocketbase";
+// plain PocketBase import removed
 import { logAdminAction } from "./admin-logs";
 import { getAdminSession } from "@/lib/admin-auth";
 
-const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || "https://pocketbase.rdev.cloud");
-pb.autoCancellation(false);
+import { createAdminClient } from '@/lib/pb-client';
 
-async function authenticateAdmin() {
-  const email = process.env.PB_ADMIN_EMAIL;
-  const pass = process.env.PB_ADMIN_PASS;
-
-  if (!email || !pass) {
-    throw new Error("PocketBase admin credentials not configured");
-  }
-
-  await pb.admins.authWithPassword(email, pass);
-}
+// Removed global pb
+// Removed global pb and authenticateAdmin helper
 
 export interface ProjectData {
   title: string;
@@ -34,7 +25,7 @@ export async function getProjectsForCMS(
   search: string = ""
 ) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
 
     let filterParts: string[] = [];
@@ -84,7 +75,7 @@ export async function getProjectsForCMS(
 
 export async function getProjectById(id: string) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const project = await pb.collection("projects").getOne(id);
     return { success: true, project };
   } catch (error: any) {
@@ -95,7 +86,7 @@ export async function getProjectById(id: string) {
 
 export async function createProject(data: ProjectData) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
 
     const projectData = {
@@ -115,7 +106,7 @@ export async function createProject(data: ProjectData) {
 
 export async function updateProject(id: string, data: Partial<ProjectData>) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
     
     if (!session) {
@@ -152,7 +143,7 @@ export async function updateProject(id: string, data: Partial<ProjectData>) {
 // Create project with image file upload support
 export async function createProjectWithImage(formData: FormData) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
 
     // Extract fields from FormData
@@ -198,7 +189,7 @@ export async function createProjectWithImage(formData: FormData) {
 // Update project with image file upload support
 export async function updateProjectWithImage(id: string, formData: FormData) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
 
     if (!session) {
@@ -262,7 +253,7 @@ export async function updateProjectWithImage(id: string, formData: FormData) {
 
 export async function deleteProject(id: string) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
     
     if (!session) {

@@ -2,9 +2,16 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const ADMIN_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_SECRET || 'super-secret-admin-key-change-in-production'
-);
+const secret = process.env.ADMIN_SECRET;
+
+if (!secret) {
+  console.error('ADMIN_SECRET is missing in middleware');
+  // Just warn in middleware to avoid crashing the whole edge runtime instantly on start/build if env is weird, 
+  // but keeping it secure (undefined secret won't verify valid tokens signed with a real secret).
+  // However, `jose` might throw if secret is empty.
+}
+
+const ADMIN_SECRET = new TextEncoder().encode(secret || '');
 
 // Routes that require admin role
 const ADMIN_ONLY_ROUTES = ['/cms/admins'];

@@ -1,25 +1,27 @@
 "use server";
 
-import PocketBase from 'pocketbase';
+// plain PocketBase import removed
 import { getAdminSession } from '@/lib/admin-auth';
 
-const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://pocketbase.rdev.cloud');
-pb.autoCancellation(false);
+import { createAdminClient } from '@/lib/pb-client';
 
-async function authenticatePocketBase() {
-  const email = process.env.PB_ADMIN_EMAIL;
-  const pass = process.env.PB_ADMIN_PASS;
-  if (email && pass) {
-    await pb.admins.authWithPassword(email, pass);
-  }
-}
+// Removed global pb
+// Global admin action logger
+// Uses createAdminClient inside logAdminAction to ensure fresh authenticated instance if needed.
+// Note: We might want logAdminAction to accept an existing pb client to re-use connection if performance is key,
+// but for safety and simplicity, we'll instantiate it or use the one from scope if passed (refactor needed).
+// For now, let's keep it simple: logAdminAction creates its own client or we pass it? 
+// Actually, creating a new client recursively might be bad if we are identifying by session. 
+// But logAdminAction takes `action` and `details`. It gets session internally.
+
+// Ideally logAdminAction should be lightweight.
 
 export async function logAdminAction(action: string, details?: string) {
   try {
     const session = await getAdminSession();
     if (!session) return;
 
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
 
     // Get admin ID
     const admin = await pb.collection('cms_admins').getFirstListItem(`username="${session.username}"`);
@@ -38,7 +40,7 @@ export async function logAdminAction(action: string, details?: string) {
 
 export async function getAdminLogs(adminId?: string, limit: number = 50) {
   try {
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
 
     const result = await pb.collection('admin_logs').getList(1, limit);
 

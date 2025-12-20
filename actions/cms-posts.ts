@@ -1,22 +1,13 @@
 "use server";
 
-import PocketBase from "pocketbase";
+// plain PocketBase import removed
 import { logAdminAction } from "./admin-logs";
 import { getAdminSession } from "@/lib/admin-auth";
 
-const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || "https://pocketbase.rdev.cloud");
-pb.autoCancellation(false); // Disable auto-cancellation to prevent request conflicts
+import { createAdminClient } from '@/lib/pb-client';
 
-async function authenticateAdmin() {
-  const email = process.env.PB_ADMIN_EMAIL;
-  const pass = process.env.PB_ADMIN_PASS;
-
-  if (!email || !pass) {
-    throw new Error("PocketBase admin credentials not configured");
-  }
-
-  await pb.admins.authWithPassword(email, pass);
-}
+// Removed global pb
+// Removed global pb and authenticateAdmin helper
 
 export interface PostData {
   title: string;
@@ -36,7 +27,7 @@ export async function getPostsForCMS(
   author: string = ""
 ) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
 
     let filterParts: string[] = [];
@@ -98,7 +89,7 @@ export async function getPostsForCMS(
 
 export async function getPostById(id: string) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const post = await pb.collection("posts").getOne(id);
     return { success: true, post };
   } catch (error: any) {
@@ -109,7 +100,7 @@ export async function getPostById(id: string) {
 
 export async function createPost(data: PostData) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
 
     // Generate published_at if publishing
@@ -131,7 +122,7 @@ export async function createPost(data: PostData) {
 
 export async function updatePost(id: string, data: Partial<PostData>) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
     
     if (!session) {
@@ -172,7 +163,7 @@ export async function updatePost(id: string, data: Partial<PostData>) {
 
 export async function deletePost(id: string) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
     
     if (!session) {
@@ -205,7 +196,7 @@ export async function deletePost(id: string) {
 
 export async function togglePostStatus(id: string, published: boolean) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
     
     if (!session) {

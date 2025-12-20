@@ -1,20 +1,13 @@
 "use server";
 
-import PocketBase from 'pocketbase';
+// plain PocketBase import removed
 import bcrypt from 'bcryptjs';
 import { getAdminSession } from '@/lib/admin-auth';
 import { logAdminAction } from './admin-logs';
+import { createAdminClient } from '@/lib/pb-client';
 
-const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://pocketbase.rdev.cloud');
-pb.autoCancellation(false);
-
-async function authenticatePocketBase() {
-  const email = process.env.PB_ADMIN_EMAIL;
-  const pass = process.env.PB_ADMIN_PASS;
-  if (email && pass) {
-    await pb.admins.authWithPassword(email, pass);
-  }
-}
+// Removed global pb instance and authenticatePocketBase helper
+// Using createAdminClient() instead for isolation
 
 export async function changePassword(currentPassword: string, newPassword: string) {
   try {
@@ -23,7 +16,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
       return { success: false, error: 'Not authenticated' };
     }
 
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
 
     // Get current admin
     const admin = await pb.collection('cms_admins').getFirstListItem(`username="${session.username}"`);
@@ -57,7 +50,7 @@ export async function getAdmins() {
       return { success: false, error: 'Admin access required', admins: [] };
     }
 
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
     const result = await pb.collection('cms_admins').getList(1, 100);
     return { 
       success: true, 
@@ -76,7 +69,7 @@ export async function createAdmin(username: string, password: string, role: 'adm
       return { success: false, error: 'Admin access required' };
     }
 
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
 
     // Check if username exists
     try {
@@ -106,7 +99,7 @@ export async function deleteAdmin(id: string) {
       return { success: false, error: 'Admin access required' };
     }
 
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
 
     // Get admin to check if it's the current user
     const admin = await pb.collection('cms_admins').getOne(id);
@@ -125,7 +118,7 @@ export async function deleteAdmin(id: string) {
 
 export async function getAdminById(id: string) {
   try {
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
     const admin = await pb.collection('cms_admins').getOne(id);
     return { 
       success: true, 
@@ -144,7 +137,7 @@ export async function updateAdminRole(id: string, role: 'admin' | 'user') {
       return { success: false, error: 'Admin access required' };
     }
 
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
     
     // Get admin to update
     const targetAdmin = await pb.collection('cms_admins').getOne(id);
@@ -165,7 +158,7 @@ export async function updateAdminPassword(id: string, newPassword: string) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
     
     // Get the target admin
     const targetAdmin = await pb.collection('cms_admins').getOne(id);
@@ -195,7 +188,7 @@ export async function updateAdminUsername(id: string, newUsername: string) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
     
     // Get the target admin
     const targetAdmin = await pb.collection('cms_admins').getOne(id);

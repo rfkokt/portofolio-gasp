@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { spawn } from "child_process";
 import path from "path";
+import { getAdminSession } from "@/lib/admin-auth";
 
 // Force inclusion of dependencies used by the external script (ai-blogger.mjs)
 import "rss-parser";
@@ -14,6 +15,14 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for AI generation
 
 export async function GET(request: NextRequest) {
+  const session = await getAdminSession();
+  if (!session) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { 
+      status: 401, 
+      headers: { "Content-Type": "application/json" } 
+    });
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const count = parseInt(searchParams.get("count") || "1");
 

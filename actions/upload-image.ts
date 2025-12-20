@@ -1,24 +1,17 @@
 "use server";
 
-import PocketBase from "pocketbase";
+// plain PocketBase import removed
 import { getAdminSession } from "@/lib/admin-auth";
 
-const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || "https://pocketbase.rdev.cloud");
-pb.autoCancellation(false);
+import { createAdminClient } from '@/lib/pb-client';
 
-async function authenticateAdmin() {
-  const email = process.env.PB_ADMIN_EMAIL;
-  const pass = process.env.PB_ADMIN_PASS;
-  if (!email || !pass) {
-    throw new Error("PocketBase admin credentials not configured");
-  }
-  await pb.admins.authWithPassword(email, pass);
-}
+// Removed global pb
+// Removed global pb and authenticateAdmin helper
 
 // Upload image to a dedicated media collection and return the URL
 export async function uploadContentImage(formData: FormData) {
   try {
-    await authenticateAdmin();
+    const pb = await createAdminClient();
     const session = await getAdminSession();
     
     const file = formData.get("file") as File;

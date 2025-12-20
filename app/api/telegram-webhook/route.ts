@@ -1,39 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import PocketBase from 'pocketbase';
 import path from 'path';
+import { spawn } from 'child_process';
 
 const PB_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://43.134.114.243:8090';
 const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL;
 const PB_ADMIN_PASS = process.env.PB_ADMIN_PASS;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_SECRET_TOKEN = process.env.TELEGRAM_SECRET_TOKEN;
 
 // Helper to escape shell args (basic)
 function escapeShellArg(arg: string) {
     return `'${arg.replace(/'/g, "'\\''")}'`;
 }
 
-// Execute script asynchronously
+// Execute script asynchronously safely using spawn
 async function runBloggerScript(args: string[] = [], chatId?: string | number) {
-    const { exec } = await import('child_process'); // Dynamic import to avoid edge runtime issues if any (though this is node runtime)
     const scriptPath = path.join(process.cwd(), "scripts", "ai-blogger.mjs");
     
     console.log(`🚀 Spawning blogger: node ${scriptPath} ${args.join(' ')}`);
 
+    const child = spawn('node', [scriptPath, ...args], {
+        env: { ...process.env, MAX_BLOGS: '1' },
+        stdio: ['ignore', 'pipe', 'pipe']
+    });
 
-    exec(`node "${scriptPath}" ${args.join(' ')}`, {
-        env: { ...process.env, MAX_BLOGS: '1' } 
-    }, async (error, stdout, stderr) => {
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.on('data', (data) => {
+        stdout += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+        stderr += data.toString();
+    });
+
+    child.on('close', async (code) => {
         const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
         
-        if (error) {
-            console.error(`❌ Script error:`, error);
+        if (code !== 0) {
+            console.error(`❌ Script exited with code ${code}`);
+            console.error(`Stderr:`, stderr);
+            
             if (chatId) {
                 await fetch(`${telegramApiUrl}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: chatId,
-                        text: `❌ *Generation Failed*\n\nError: \`${error.message}\`\nStderr: \`${stderr?.substring(0, 500)}\``,
+                        text: `❌ *Generation Failed*\n\nExit Code: ${code}\nStderr: \`${stderr?.substring(0, 500) || 'Unknown error'}\``,
                         parse_mode: 'Markdown'
                     })
                 });
@@ -55,9 +71,23 @@ async function runBloggerScript(args: string[] = [], chatId?: string | number) {
                     });
                 }
             }
-            // If success, the script itself sends the "New Post" notification with buttons, 
-            // so we don't need to double-send unless we want a summary.
         }
+    });
+
+    child.on('error', async (err) => {
+        console.error('Failed to start subprocess:', err);
+         const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+         if (chatId) {
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: `❌ *Spawn Failed*\n\nError: \`${err.message}\``,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            }
     });
 }
 
@@ -75,6 +105,15 @@ export async function GET() {
 export async function POST(req: NextRequest) {
     if (!TELEGRAM_BOT_TOKEN) {
         return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
+    }
+
+    // Verify Secret Token if configured
+    if (TELEGRAM_SECRET_TOKEN) {
+        const secretToken = req.headers.get('x-telegram-bot-api-secret-token');
+        if (secretToken !== TELEGRAM_SECRET_TOKEN) {
+            console.warn('🛑 Unauthorized webhook attempt (invalid secret token)');
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
     }
 
     try {

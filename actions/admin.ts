@@ -3,7 +3,7 @@
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { signAdminToken, getAdminCookieName, getAdminSession, AdminRole } from '@/lib/admin-auth';
-import PocketBase from 'pocketbase';
+// plain PocketBase import removed
 import bcrypt from 'bcryptjs';
 import { logAdminAction } from './admin-logs';
 
@@ -12,16 +12,13 @@ declare global {
   var loginAttempts: Map<string, { count: number, firstAttempt: number }> | undefined;
 }
 
-const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://pocketbase.rdev.cloud');
-pb.autoCancellation(false);
+import { createAdminClient } from '@/lib/pb-client';
 
-async function authenticatePocketBase() {
-  const email = process.env.PB_ADMIN_EMAIL;
-  const pass = process.env.PB_ADMIN_PASS;
-  if (email && pass) {
-    await pb.admins.authWithPassword(email, pass);
-  }
-}
+// Removed global pb
+// Removed global pb autoCancellation
+
+
+// Removed authenticatePocketBase helper
 
 export async function loginAdmin(username: string, password: string) {
   try {
@@ -47,7 +44,7 @@ export async function loginAdmin(username: string, password: string) {
       return { success: false, error: 'Too many login attempts. Please try again later.' };
     }
 
-    await authenticatePocketBase();
+    const pb = await createAdminClient();
 
     // Find admin by username
     const admin = await pb.collection('cms_admins').getFirstListItem(`username="${username}"`);
