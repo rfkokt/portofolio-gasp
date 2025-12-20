@@ -141,9 +141,9 @@ async function fetchNews(targetFeeds = FEEDS) {
                 // Basic Keyword Filter to reduce noise before AI
                 const textToCheck = (item.title + " " + item.content).toLowerCase();
                 const keywords = [
-                    'free', 'promo', 'code', 'discount', 'deal', 'offer', 'lifetime', 'credits', 'trial', // General
+                    'free', 'promo', 'code', 'discount', 'deal', 'offer', 'lifetime', 'credits', // Deal terms
                     '100%', 'off', 'steam', 'epic', 'gog', 'giveaway', // Games
-                    'release', 'model', 'weights', 'open source', 'hugging face', 'ollama' // AI
+                    'model', 'weights', 'hugging face', 'ollama' // AI Models (specific)
                 ];
                 const hasKeyword = keywords.some(k => textToCheck.includes(k));
                 
@@ -243,15 +243,16 @@ async function generateDealPost(newsItem) {
     - Content: "${newsItem.content.substring(0, 2000)}..."
 
     TASK:
-    1. **VERIFY (STRICT)**: Is this a **WORKING** and **VERIFIED** deal?
+    1. **VERIFY (STRICT)**: Is this a **CLAIMABLE DEAL**?
        - ✅ VALID: 
-         - **Explicit Confirmation**: Text contains "Confirmed", "Works", "Just redeemed", "Got it".
-         - **Official Sources**: Official store links (Epic, Steam page), Reputable maintainers (e.g. Meta releasing Llama).
-         - **Positive Sentiment**: Users discussing *how* to use it, not *if* it works.
-       - ❌ INVALID: 
-         - **Unverified**: "Does this work?", "Is this legit?", "Anyone tried this?".
-         - **Expired/Broken**: "Expired", "Not working", "OOS" (Out of Stock).
-         - **Sketchy**: Random referral links without context.
+         - **Financial Benefit**: "100% Off", "Free Credits ($100)", "Lifetime Deal (LTD)", "Premium for Free".
+         - **Game Giveaways**: "Free to Keep" on Steam/Epic/GOG.
+         - **Major AI Model**: Llama-3, Mistral, etc. (Something users can DOWNLOAD/USE locally).
+       - ❌ INVALID (REJECT THESE): 
+         - **Feature Updates**: "v2.0 Released", "New Editor Added", "Bug Fixes".
+         - **Standard Free Tiers**: "Our app has a free plan" (Unless it's a special launch promo code).
+         - **Showcases**: "Look at my new app" (Without a promo code).
+         - **Broken/Expired**: "Deal Ended".
 
     2. **EXTRACT**: What is the deal? (e.g. "Free Game", "New Open Model", "2 Months Free", "$100 Credits").
 
@@ -262,14 +263,14 @@ async function generateDealPost(newsItem) {
 
     JSON OUTPUT FORMAT:
     {
-        "valid": boolean (true ONLY if verified/working),
+        "valid": boolean (TRUE only for claimable deals/discounts/models. FALSE for news/updates),
         "post": {
             "title": "Deal Title (Max 60 chars) - e.g. [FREE] GTA V di Epic Games Store!",
             "thumbnail_title": "Short Title",
             "slug": "kebab-case-slug",
             "excerpt": "Short summary of the deal (Max 150 chars).",
             "content": "Markdown content. MUST have headings. \\nFor Games: Link to store, deadline.\\nFor AI: Specs, where to download.\\nFor SaaS: Coupon code & steps.\\n\\n> [!TIP]\\n> **Status**: Verified Works ✅ (Based on sauce)",
-            "tags": ["Deal", "Game", "AI", "Epic", "Steam"]
+            "tags": ["Deal", "Verified", "Game", "AI", "Epic", "Steam"] // Always include "Verified" if valid
         }
     }
     

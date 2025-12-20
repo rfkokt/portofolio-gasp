@@ -28,6 +28,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const relatedPosts = relatedPostsResult.items.slice(0, 2);
 
   const isPromo = post.tags?.some((tag: string) => ['Deal', 'Promo', 'Game', 'Free', 'Offer'].includes(tag));
+  const isVerified = post.tags?.includes('Verified');
 
   if (isPromo) {
     return (
@@ -46,6 +47,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm tracking-widest uppercase animate-pulse">
                             Active Promo
                         </span>
+                        {isVerified && (
+                             <span className="bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm tracking-widest uppercase">
+                                Verified
+                            </span>
+                        )}
                         <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
                             {new Date(post.published_at || post.created).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </span>
@@ -107,7 +113,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                                 <div className="space-y-4 text-sm text-muted-foreground">
                                     <div className="flex justify-between border-b border-border/50 pb-2">
                                         <span>Verified</span>
-                                        <span className="text-foreground font-mono font-bold text-green-600">YES ✅</span>
+                                        <span className={`font-mono font-bold ${isVerified ? "text-green-600" : "text-yellow-600"}`}>
+                                            {isVerified ? "YES ✅" : "Checking ⏳"}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between border-b border-border/50 pb-2">
                                         <span>Type</span>
