@@ -1,8 +1,13 @@
-import { createAdminClient } from '../lib/pb-client';
+import PocketBase from 'pocketbase';
+// Dynamic import for local dev support
+try {
+    await import('dotenv/config');
+} catch (e) {
+    // Ignore in production
+}
 import { fetch, Agent } from 'undici';
 import JSON5 from 'json5';
 import Parser from 'rss-parser';
-import 'dotenv/config';
 
 // Configuration
 const Z_AI_API_KEY = process.env.Z_AI_API_KEY;
@@ -45,11 +50,32 @@ const FEEDS = [
 
 const parser = new Parser();
 
+// --- AUTH HELPER (Inlined for standalone stability) ---
+function createPocketBaseClient() {
+  const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://pocketbase.rdev.cloud');
+  pb.autoCancellation(false);
+  return pb;
+}
+
+async function createAdminClient() {
+  const pb = createPocketBaseClient();
+  const email = process.env.PB_ADMIN_EMAIL;
+  const pass = process.env.PB_ADMIN_PASS;
+  
+  if (!email || !pass) {
+    throw new Error('PB_ADMIN_EMAIL or PB_ADMIN_PASS is not set in environment variables.');
+  }
+  
+  await pb.admins.authWithPassword(email, pass);
+  return pb;
+}
+// --------------------------------------------------------
+
 // Helper to wrap text for the image
-function generateCoverImageURL(title: string): string {
+function generateCoverImageURL(title) {
     const MAX_LINE_LENGTH = 18;
     const words = title.split(' ');
-    let lines: string[] = [];
+    let lines = [];
     let currentLine = words[0];
 
     for (let i = 1; i < words.length; i++) {
@@ -65,7 +91,7 @@ function generateCoverImageURL(title: string): string {
     return `https://placehold.co/398x498/1a1a1a/FFF.png?text=${encodedText}&font=montserrat&font_size=28`;
 }
 
-async function searchUnsplashPhoto(query: string): Promise<string | null> {
+async function searchUnsplashPhoto(query) {
   if (!UNSPLASH_ACCESS_KEY) return null;
   try {
     const url = new URL(UNSPLASH_API_URL);
@@ -81,7 +107,7 @@ async function searchUnsplashPhoto(query: string): Promise<string | null> {
     });
 
     if (!response.ok) return null;
-    const data = await response.json() as any;
+    const data = await response.json();
     if (data.results && data.results.length > 0) return data.results[0].urls.regular;
     return null;
   } catch (error) {
@@ -89,18 +115,9 @@ async function searchUnsplashPhoto(query: string): Promise<string | null> {
   }
 }
 
-interface NewsItem {
-    source: string;
-    title: string;
-    link: string;
-    pubDate: Date;
-    content: string;
-    guid: string;
-}
-
-async function fetchNews(targetFeeds = FEEDS): Promise<NewsItem[]> {
+async function fetchNews(targetFeeds = FEEDS) {
     console.log(`📡 Hunting deals from ${targetFeeds.length} sources...`);
-    let sourceGroups: Record<string, NewsItem[]> = {};
+    let sourceGroups = {};
 
     for (const feed of targetFeeds) {
         try {
@@ -135,13 +152,13 @@ async function fetchNews(targetFeeds = FEEDS): Promise<NewsItem[]> {
 
             sourceGroups[feed.name] = recentItems;
 
-        } catch (e: any) {
+        } catch (e) {
             console.error(`❌ Failed to fetch ${feed.name}:`, e.message);
         }
     }
 
     // Interleave
-    const balancedNews: NewsItem[] = [];
+    const balancedNews = [];
     const feedNames = Object.keys(sourceGroups);
     if (feedNames.length === 0) return [];
     const maxItems = Math.max(...feedNames.map(name => sourceGroups[name].length));
@@ -154,7 +171,7 @@ async function fetchNews(targetFeeds = FEEDS): Promise<NewsItem[]> {
     return balancedNews;
 }
 
-async function sendTelegramNotification(post: any) {
+async function sendTelegramNotification(post) {
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
     try {
         const message = `
@@ -187,12 +204,12 @@ _Verify validity before posting!_
             })
         });
         console.log("📱 Telegram Deal Alert sent!");
-    } catch (e: any) {
+    } catch (e) {
         console.error("❌ Failed to send Telegram:", e.message);
     }
 }
 
-async function isPostExists(pb: any, link: string, title: string): Promise<boolean> {
+async function isPostExists(pb, link, title) {
     try {
         const url = new URL(link);
         const pathPart = url.pathname.split('/').filter(Boolean).slice(-2).join('/');
@@ -202,7 +219,7 @@ async function isPostExists(pb: any, link: string, title: string): Promise<boole
             `content ~ "${link}"`,
             pathPart.length > 5 ? `content ~ "${pathPart}"` : null,
             titleWords.length > 10 ? `title ~ "${titleWords}"` : null,
-        ].filter(Boolean) as string[];
+        ].filter(Boolean);
 
         for (const check of checks) {
             const result = await pb.collection('posts').getList(1, 1, { filter: check });
@@ -214,7 +231,7 @@ async function isPostExists(pb: any, link: string, title: string): Promise<boole
     }
 }
 
-async function generateDealPost(newsItem: NewsItem) {
+async function generateDealPost(newsItem) {
     console.log(`🤖 Analyzing deal: "${newsItem.title}"`);
 
     const systemPrompt = `
@@ -262,7 +279,7 @@ async function generateDealPost(newsItem: NewsItem) {
     try {
         const response = await fetch(ANTHROPIC_ENDPOINT, {
             dispatcher, method: 'POST',
-            headers: { 'x-api-key': Z_AI_API_KEY!, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+            headers: { 'x-api-key': Z_AI_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
             body: JSON.stringify({
                 model: "glm-4.6v", max_tokens: 3000,
                 messages: [{ role: "user", content: `Analyze and extract deal. Output JSON only. \n\n ${systemPrompt}` }]
@@ -270,7 +287,7 @@ async function generateDealPost(newsItem: NewsItem) {
         });
 
         if (!response.ok) throw new Error("API Error");
-        const data = await response.json() as any;
+        const data = await response.json();
         const content = data.content?.[0]?.text;
         
         const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -298,7 +315,7 @@ async function generateDealPost(newsItem: NewsItem) {
 
         return postData;
 
-    } catch (e: any) {
+    } catch (e) {
         console.error("Failed to generate deal:", e.message);
         return null;
     }
@@ -312,9 +329,9 @@ async function main() {
     const dryRun = args.includes('--dry-run');
 
     try {
-        console.log(`🔌 Connecting to PocketBase using Admin Client from lib...`);
+        console.log(`🔌 Connecting to PocketBase using Inlined Client...`);
         
-        // Use the CENTRALIZED admin client logic
+        // Use INLINED admin client
         const pb = await createAdminClient();
 
         const dealItems = await fetchNews();

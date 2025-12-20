@@ -91,6 +91,91 @@ async function runBloggerScript(args: string[] = [], chatId?: string | number) {
     });
 }
 
+// Execute Deal Hunter script asynchronously
+async function runDealHunterScript(chatId?: string | number) {
+    const scriptPath = path.join(process.cwd(), "scripts", "deal-hunter.mjs");
+    
+    console.log(`🚀 Spawning Deal Hunter: node ${scriptPath}`);
+
+    const child = spawn('node', [scriptPath], {
+        env: { ...process.env }, // Inherit env vars including auth
+        stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.on('data', (data) => {
+        stdout += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+        stderr += data.toString();
+    });
+
+    child.on('close', async (code) => {
+        const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+        
+        if (code !== 0) {
+            console.error(`❌ Deal Hunter exited with code ${code}`);
+            console.error(`Stderr:`, stderr);
+            
+            if (chatId) {
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: `❌ *Promo Hunt Failed*\n\nExit Code: ${code}\nStderr: \`${stderr?.substring(0, 500) || 'Unknown error'}\``,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            }
+        } else {
+            console.log(`✅ Deal Hunter finished. Stdout:`, stdout);
+            
+            if (chatId) {
+                // Parse stdout to count deals found
+                const match = stdout.match(/Generated Deal: (.*)/g);
+                const count = match ? match.length : 0;
+                
+                let msg = `✅ *Promo Hunt Finished*`;
+                if (count > 0) {
+                    msg += `\n\nFound ${count} new deal(s)! Check the channel/chat for alerts.`;
+                } else {
+                    msg += `\n\nNo new deals found right now. Try again later!`;
+                }
+
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: msg,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            }
+        }
+    });
+
+    child.on('error', async (err) => {
+        console.error('Failed to start Deal Hunter:', err);
+        const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+        if (chatId) {
+            await fetch(`${telegramApiUrl}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: `❌ *Spawn Failed*\n\nError: \`${err.message}\``,
+                    parse_mode: 'Markdown'
+                })
+            });
+        }
+    });
+}
+
 export async function GET() {
     return NextResponse.json({
         status: 'online',
@@ -300,15 +385,32 @@ export async function POST(req: NextRequest) {
                  // Run script
                  runBloggerScript(scriptArgs, chatId);
 
+            } else if (text.startsWith('/promo')) {
+                // Trigger deal hunter
+                await fetch(`${telegramApiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: "🕵️‍♂️ *Hunting for Deals...*\nScanning Reddit & Product Hunt for dev promos. This may take a minute.",
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                // Run script in background
+                runDealHunterScript(chatId);
+
             } else if (text.startsWith('/help') || text.startsWith('/start')) {
                 await fetch(`${telegramApiUrl}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: chatId,
-                        text: "🤖 *Quis AI Blogger Bot Commands:*\n\n" +
+                        text: "🤖 *Quis AI Bot Commands:*\n\n" +
                               "🔹 `/auto`\n" +
                               "Trigger automatic blog generation based on RSS feeds.\n\n" +
+                              "🔹 `/promo`\n" +
+                              "Hunt for new Developer Deals, Games, & AI Models (Deal Hunter).\n\n" +
                               "🔹 `/blog <Topic>`\n" +
                               "Generate a blog post about a specific topic.\n" +
                               "Example: `/blog Next.js 15 Features`\n\n" +

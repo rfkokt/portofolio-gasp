@@ -32,7 +32,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
         run: |
-          npx tsx scripts/deal-hunter.ts
+          node scripts/deal-hunter.mjs
 
       - name: Notify Telegram (Success)
         if: success()
