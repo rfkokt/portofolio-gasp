@@ -17,7 +17,8 @@ function escapeShellArg(arg: string) {
 // Execute script asynchronously safely using spawn
 async function runBloggerScript(args: string[] = [], chatId?: string | number) {
     const scriptName = "ai-blogger.mjs";
-    const scriptPath = path.resolve(process.cwd(), "scripts", scriptName);
+    // Bypass Next.js tracing by not using path.join/resolve with literal strings
+    const scriptPath = [process.cwd(), 'scripts', scriptName].join('/');
     
     console.log(`🚀 Spawning blogger: node ${scriptPath} ${args.join(' ')}`);
 
@@ -95,7 +96,8 @@ async function runBloggerScript(args: string[] = [], chatId?: string | number) {
 // Execute Deal Hunter script asynchronously
 async function runDealHunterScript(chatId?: string | number) {
     const scriptName = "deal-hunter.mjs";
-    const scriptPath = path.resolve(process.cwd(), "scripts", scriptName);
+     // Bypass Next.js tracing by not using path.join/resolve with literal strings
+    const scriptPath = [process.cwd(), 'scripts', scriptName].join('/');
     
     console.log(`🚀 Spawning Deal Hunter: node ${scriptPath}`);
 
