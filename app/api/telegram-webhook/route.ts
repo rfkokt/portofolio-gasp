@@ -427,44 +427,57 @@ export async function POST(req: NextRequest) {
             } else if (text.startsWith('/blog')) {
                 // Parse command: /blog Topic | Prompt
                 const rawContent = text.replace('/blog', '').trim();
+            } else if (text.startsWith('/blog')) {
+                const rawText = text.replace('/blog', '').trim();
                 
-                if (!rawContent) {
+                if (!rawText) {
                     await fetch(`${telegramApiUrl}/sendMessage`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             chat_id: chatId,
-                            text: "⚠️ *Usage:*\n`/blog <Topic>`\n`/blog <Topic> | <Prompt>`\n`/blog <Link>`",
+                            text: "⚠️ *Usage:*\n`/blog <Topic>`\n`/blog <Link> [Instruction]`",
                             parse_mode: 'Markdown'
                         })
                     });
                     return NextResponse.json({ success: true });
                 }
 
-                // Split by first pipe |
-                const parts = rawContent.split('|');
-                const topicOrLink = parts[0].trim();
-                const customPrompt = parts.slice(1).join('|').trim();
+                let topic = "";
+                let prompt = "";
+                let isUrl = false;
 
-                const isLink = topicOrLink.startsWith('http');
-                const scriptArgs = [];
-
-                if (isLink) {
-                   scriptArgs.push(`--link=${encodeURIComponent(topicOrLink)}`);
+                if (rawText.includes('|')) {
+                    // Explicit separator
+                    const parts = rawText.split('|');
+                    topic = parts[0].trim();
+                    prompt = parts.slice(1).join('|').trim();
+                    isUrl = topic.startsWith('http');
                 } else {
-                   scriptArgs.push(`--topic=${encodeURIComponent(topicOrLink)}`);
+                     // Smart parsing
+                     if (rawText.startsWith('http')) {
+                        const firstSpace = rawText.indexOf(' ');
+                        if (firstSpace !== -1) {
+                            topic = rawText.substring(0, firstSpace).trim();
+                            prompt = rawText.substring(firstSpace + 1).trim();
+                        } else {
+                            topic = rawText;
+                        }
+                        isUrl = true;
+                    } else {
+                        topic = rawText;
+                    }
                 }
 
-                if (customPrompt) {
-                    scriptArgs.push(`--prompt=${encodeURIComponent(customPrompt)}`);
-                }
+                const scriptArgs = isUrl ? [`--link=${topic}`] : [`--topic=${topic}`];
+                if (prompt) scriptArgs.push(`--prompt=${prompt}`);
 
                 await fetch(`${telegramApiUrl}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: chatId,
-                        text: `📝 *Custom Generation Started...*\n\n**Subject**: ${topicOrLink}\n${customPrompt ? `**Instruction**: ${customPrompt}` : ""}`,
+                        text: `📝 *Generating...*\n\n**Source**: ${topic}\n${prompt ? `**Instruction**: ${prompt}` : ""}`,
                         parse_mode: 'Markdown'
                     })
                 });

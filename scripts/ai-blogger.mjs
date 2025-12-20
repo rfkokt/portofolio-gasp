@@ -783,14 +783,37 @@ async function main() {
 
         if (customTopic || customLink) {
             console.log(`🤖 Manual Generation Mode Activated`);
+            
+            let manualContent = "";
+            let sourceName = "Telegram Request";
+
+            if (customLink) {
+                console.log(`🔗 Fetching source content: ${customLink}`);
+                if (customLink.startsWith('http')) {
+                    const fetchedHtml = await fetchUrlContent(customLink);
+                    if (fetchedHtml) {
+                         manualContent = fetchedHtml;
+                         console.log(`✅ Loaded ${manualContent.length} chars from source.`);
+                         try {
+                            const urlObj = new URL(customLink);
+                            sourceName = urlObj.hostname;
+                         } catch (e) {}
+                    } else {
+                         console.warn(`⚠️ Failed to fetch source content.`);
+                         manualContent = "Failed to fetch content from URL. Rely on research.";
+                    }
+                }
+            }
+
             // Custom generation - bypass RSS
             newsItems.push({
                 title: customTopic || "Requested Article",
                 link: customLink || "https://manual-request.local",
-                source: "Telegram Request",
-                content: customPrompt || (customTopic ? `Article about ${customTopic}` : "Write an article based on the link."),
+                source: sourceName,
+                content: (customPrompt ? `INSTRUCTION: ${customPrompt}\n\n` : "") + 
+                         (manualContent ? `SOURCE CONTENT:\n${manualContent}` : (customTopic ? `Article about ${customTopic}` : "Write an article based on the link.")),
                 pubDate: new Date(),
-                isManual: true // Flag to skip urgency check and duplicate check
+                isManual: true 
             });
         } else {
              // 1. Fetch News
