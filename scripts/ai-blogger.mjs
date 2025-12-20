@@ -342,7 +342,7 @@ async function generatePost(newsItem, customPrompt = "") {
                 headers: { 'x-api-key': Z_AI_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
                 body: JSON.stringify({
                     model: "glm-4.6v", max_tokens: 200,
-                    messages: [{ role: "user", content: `Generate 2 search queries to find MORE DETAILS about: "${newsItem.title}"\nOUTPUT JSON: ["q1", "q2"]` }]
+                    messages: [{ role: "user", content: `Generate 2 DISTINCT search queries to find MORE DETAILS about: "${newsItem.title}"\n1. Technical details/specs.\n2. Impact/Competitors/Future trends.\nOUTPUT JSON: ["q1", "q2"]` }]
                 })
             });
             const qData = await queryResponse.json();
@@ -396,6 +396,24 @@ async function generatePost(newsItem, customPrompt = "") {
     - Jelaskan istilah asing jika terlalu niche.
     - Selalu berikan contoh kasus nyata.
     - Jika bahas Framework/Library, sebutkan versi minimal yang dibutuhkan.
+
+    🕵️‍♂️ SEO STRATEGY (ON-PAGE SEO STRONG):
+    1. **Primary Keyword**: Identify the most relevant search term (e.g., "Next.js 15 Features", "Cara Fix CORS").
+    2. **Placement (MANDATORY)**:
+       - Keyword must appear in **Title**.
+       - Keyword must appear in **First Paragraph (Introduction)**.
+       - Keyword must appear in at least one **H2**.
+    3. **Research Integration**:
+       - You have ${`SUPPLEMENTARY INFO`} from deep search.
+       - **MUST** combine facts from primary + supplementary sources.
+       - Quote stats/numbers from supplementary sources to make the article "Rich".
+    4. **Interlinking**:
+       - If mentioning general terms (API, SEO, React), assume user has basic knowledge but link to official docs if technical.
+    5. **Citation & References (MANDATORY)**:
+       - You MUST add a "## Referensi" section at the end.
+       - Include the Primary Source.
+       - Include 1-2 relevant Supplementary Sources found in search.
+       - Format: `- [Title](URL)`
 
     ⚠️ CRITICAL RULES - FAKTA HARUS AKURAT:
     

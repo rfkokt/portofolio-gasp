@@ -502,6 +502,35 @@ export async function POST(req: NextRequest) {
                 // Run script in background
                 runStoryHunterScript(chatId);
 
+            } else if (text.startsWith('/set-webhook')) {
+                // Set Webhook
+                 const webhookUrl = "https://rdev.cloud/api/telegram-webhook";
+                 const setUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook?url=${encodeURIComponent(webhookUrl)}&allowed_updates=[]`;
+                 
+                 try {
+                     const response = await fetch(setUrl);
+                     const result = await response.json();
+                     
+                     await fetch(`${telegramApiUrl}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            text: `⚙️ *Webhook Update*\n\nResult: \`${JSON.stringify(result)}\``,
+                            parse_mode: 'Markdown'
+                        })
+                    });
+                 } catch (e: any) {
+                     await fetch(`${telegramApiUrl}/sendMessage`, {
+                        headers: { 'Content-Type': 'application/json' },
+                        method: 'POST',
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            text: `❌ Error setting webhook: ${e.message}`,
+                        })
+                    });
+                 }
+
             } else if (text.startsWith('/help') || text.startsWith('/start')) {
                 await fetch(`${telegramApiUrl}/sendMessage`, {
                     method: 'POST',
