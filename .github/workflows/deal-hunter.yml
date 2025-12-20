@@ -1,0 +1,35 @@
+name: Deal Hunter Automation
+
+on:
+  schedule:
+    # Run daily at 02:00 UTC (09:00 WIB)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  hunt-deals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Deal Hunter Script
+        env:
+          Z_AI_API_KEY: ${{ secrets.Z_AI_API_KEY }}
+          NEXT_PUBLIC_POCKETBASE_URL: ${{ secrets.NEXT_PUBLIC_POCKETBASE_URL }}
+          PB_ADMIN_EMAIL: ${{ secrets.PB_ADMIN_EMAIL }}
+          PB_ADMIN_PASS: ${{ secrets.PB_ADMIN_PASS }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+        run: |
+          npx tsx scripts/deal-hunter.ts
