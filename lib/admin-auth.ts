@@ -3,11 +3,13 @@ import { cookies } from 'next/headers';
 
 const secret = process.env.ADMIN_SECRET;
 
-if (!secret) {
-  throw new Error('ADMIN_SECRET environment variable is not set');
+function getAdminSecret() {
+  const s = process.env.ADMIN_SECRET;
+  if (!s) {
+    throw new Error('ADMIN_SECRET environment variable is not set');
+  }
+  return new TextEncoder().encode(s);
 }
-
-const ADMIN_SECRET = new TextEncoder().encode(secret);
 
 const COOKIE_NAME = 'admin_session';
 
@@ -23,12 +25,12 @@ export async function signAdminToken(username: string, role: AdminRole = 'user')
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('24h')
-    .sign(ADMIN_SECRET);
+    .sign(getAdminSecret());
 }
 
 export async function verifyAdminToken(token: string): Promise<AdminSession | null> {
   try {
-    const { payload } = await jwtVerify(token, ADMIN_SECRET);
+    const { payload } = await jwtVerify(token, getAdminSecret());
     return { 
       username: payload.username as string,
       role: (payload.role as AdminRole) || 'user'

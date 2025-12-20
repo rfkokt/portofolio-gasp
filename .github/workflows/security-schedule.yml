@@ -34,3 +34,19 @@ jobs:
         run: |
           node scripts/ai-blogger.mjs --count=1 --type=frontend,node,security --prioritize=frontend,node --urgent-only
           node scripts/auto-publish.mjs
+
+      - name: Notify Telegram (Success)
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          -d parse_mode="Markdown" \
+          -d text="🛡️ *Security Check Passed*%0A%0AWeekly automated scan completed. No critical issues found (or they were handled).%0A%0ARun: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Notify Telegram (Failure)
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          -d parse_mode="Markdown" \
+          -d text="🚨 *Security Check Failed*%0A%0ASecurity scan encountered an error! Immediate investigation required.%0A%0ACheck Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
