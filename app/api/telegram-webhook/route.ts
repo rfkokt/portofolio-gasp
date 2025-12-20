@@ -424,9 +424,7 @@ export async function POST(req: NextRequest) {
                 // Run script in background
                 runBloggerScript([], chatId); // No args = auto mode
 
-            } else if (text.startsWith('/blog')) {
-                // Parse command: /blog Topic | Prompt
-                const rawContent = text.replace('/blog', '').trim();
+
             } else if (text.startsWith('/blog')) {
                 const rawText = text.replace('/blog', '').trim();
                 
