@@ -1,0 +1,31 @@
+name: Pain Point Hunter
+
+on:
+  schedule:
+    # Run daily at 10:00 UTC (17:00 WIB) - Pas pulang kerja untuk brainstorming
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+jobs:
+  find-problems:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Hunt for Pain Points
+        env:
+          Z_AI_API_KEY: ${{ secrets.Z_AI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node scripts/pain-hunter.mjs
