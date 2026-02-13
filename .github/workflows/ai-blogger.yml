@@ -32,5 +32,5 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          node scripts/ai-blogger.mjs
+          node scripts/ai-blogger.mjs --count=3
           node scripts/auto-publish.mjs

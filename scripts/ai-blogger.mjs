@@ -17,6 +17,7 @@ const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL;
 const PB_ADMIN_PASS = process.env.PB_ADMIN_PASS;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 const UNSPLASH_API_URL = 'https://api.unsplash.com/search/photos';
 
@@ -279,6 +280,21 @@ _Select an action below or wait 15m for auto-publish._
         console.log("📱 Telegram notification (with buttons) sent!");
     } catch (e) {
         console.error("❌ Failed to send Telegram notification:", e.message);
+    }
+}
+
+async function sendDiscordNotification(post) {
+    if (!DISCORD_WEBHOOK_URL) return;
+    try {
+        const message = `🚀 **New Post Generated (DRAFT)**\n\n**${post.title}**\n\n${post.excerpt}\n\n🔗 Preview: https://rdev.cloud/preview/posts?id=${post.id}`;
+        await fetch(DISCORD_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: message })
+        });
+        console.log("🟣 Discord notification sent!");
+    } catch (e) {
+        console.error("❌ Failed to send Discord notification:", e.message);
     }
 }
 
@@ -923,6 +939,7 @@ async function main() {
 
                 // Send Notification
                 await sendTelegramNotification(post);
+                await sendDiscordNotification(post);
 
                 processedCount++;
                 
