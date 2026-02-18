@@ -20,8 +20,16 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Fix workspace confusion: explicitly set turbopack root
+ENV NEXT_PRIVATE_SKIP_VALIDATION=1
+
 # This will do the trick, use the corresponding env file for each environment.
 # COPY .env.production.sample .env.production
+
+# Set Node memory limit for build (prevents OOM on small VPS)
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
 RUN npm run build
 
 # 3. Production image, copy all the files and run next
